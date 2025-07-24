@@ -1,17 +1,22 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useRef } from "react"
+import { useRouter } from "next/navigation"
 import { Search, Moon, Sun, Menu, X, ChevronDown } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useTheme } from "../contexts/theme-context"
 import Link from "next/link"
-import { useLanguage } from "@/app/contexts/language-context" // 정확한 경로로
+import { useLanguage } from "@/app/contexts/language-context"
 import LanguageSwitcher from "./language-switcher"
 
 export default function Header() {
   const { theme, toggleTheme } = useTheme()
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null)
+  const [isSearchOpen, setIsSearchOpen] = useState(false)
+  const [searchQuery, setSearchQuery] = useState("")
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const router = useRouter()
   const { t, locale } = useLanguage()
 
   const getLocalizedPath = (path: string) => {
@@ -75,27 +80,39 @@ export default function Header() {
   ]
 
   const handleMouseEnter = (title: string) => {
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current)
+    }
     setActiveDropdown(title)
   }
 
   const handleMouseLeave = () => {
-    setTimeout(() => {
+    timeoutRef.current = setTimeout(() => {
       setActiveDropdown(null)
     }, 300)
   }
 
   const handleDropdownMouseEnter = () => {
-    // 드롭다운에 마우스가 들어오면 닫히지 않도록 합니다
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current)
+    }
   }
 
   const handleDropdownMouseLeave = () => {
     setActiveDropdown(null)
   }
 
+  const handleSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (searchQuery.trim()) {
+      router.push(`/search?q=${encodeURIComponent(searchQuery.trim())}`)
+      setIsSearchOpen(false)
+    }
+  }
+
   return (
     <>
       <header className="fixed top-0 left-0 right-0 z-50">
-        {/* 메인 네비게이션 배경 - 모든 그림자와 경계선 제거 */}
         <div className="absolute inset-0 bg-white dark:bg-black"></div>
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
@@ -106,9 +123,7 @@ export default function Header() {
                 href={getLocalizedPath("/")}
                 className="flex items-center space-x-2 text-2xl font-bold transition-opacity hover:opacity-80 text-black dark:text-white"
               >
-                <span className="text-black dark:text-white" style={{ fontSize: "0.875rem" }}>
-                  ●
-                </span>
+                <span className="text-black dark:text-white" style={{ fontSize: "0.875rem" }}>●</span>
                 <span>Aurum</span>
               </Link>
             </div>
@@ -130,7 +145,6 @@ export default function Header() {
                     <ChevronDown className="ml-1 h-3 w-3 transition-transform group-hover:rotate-180" />
                   </a>
 
-                  {/* Multi-column Dropdown Menu */}
                   {activeDropdown === item.title && (
                     <div
                       className="absolute top-full left-1/2 transform -translate-x-1/2 mt-0 z-50"
@@ -167,16 +181,33 @@ export default function Header() {
               ))}
             </nav>
 
-            {/* Right Side Icons */}
+            {/* Right Side */}
             <div className="flex items-center space-x-4">
+              {/* Search input + toggle button */}
+              {isSearchOpen && (
+                <form onSubmit={handleSearchSubmit}>
+                  <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder={t("searchPlaceholder") || "검색어를 입력하세요"}
+                    className="px-3 py-1 text-sm border rounded-md dark:bg-gray-800 dark:text-white dark:border-gray-600 focus:outline-none"
+                    autoFocus
+                  />
+                </form>
+              )}
+
+              {/* 
               <Button
                 variant="ghost"
                 size="sm"
                 className="hidden sm:flex transition-colors text-gray-800 hover:text-black dark:text-gray-200 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800"
                 aria-label={t("search")}
+                onClick={() => setIsSearchOpen((prev) => !prev)}
               >
                 <Search className="h-4 w-4" />
               </Button>
+              */}
 
               <LanguageSwitcher />
 
@@ -190,7 +221,7 @@ export default function Header() {
                 {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
               </Button>
 
-              {/* Mobile menu button */}
+              {/* Mobile menu */}
               <Button
                 variant="ghost"
                 size="sm"
@@ -201,40 +232,6 @@ export default function Header() {
               </Button>
             </div>
           </div>
-
-          {/* Mobile Navigation */}
-          {isMobileMenuOpen && (
-            <div className="md:hidden">
-              <div className="px-2 pt-2 pb-3 space-y-1 bg-white dark:bg-black">
-                {menuItems.map((item) => (
-                  <div key={item.title} className="space-y-2">
-                    <div className="px-3 py-2 text-base font-medium text-gray-900 dark:text-gray-100 border-b border-gray-100 dark:border-gray-800">
-                      {item.title}
-                    </div>
-                    {item.columns.map((column, columnIndex) => (
-                      <div key={columnIndex} className="pl-4 space-y-1">
-                        {column.category && (
-                          <div className="text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wide px-3 py-1">
-                            {column.category}
-                          </div>
-                        )}
-                        {column.items.map((subItem, itemIndex) => (
-                          <Link
-                            key={itemIndex}
-                            href={subItem.href}
-                            className="block px-6 py-2 text-sm text-gray-700 dark:text-gray-300 hover:text-yellow-600 dark:hover:text-yellow-400 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors duration-200"
-                            onClick={() => setIsMobileMenuOpen(false)}
-                          >
-                            {subItem.name}
-                          </Link>
-                        ))}
-                      </div>
-                    ))}
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
         </div>
       </header>
     </>
