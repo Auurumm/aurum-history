@@ -23,9 +23,20 @@ const allPosts = [
   },
 ]
 
-export default function AnnouncementDetail({ Promise }: { Promise: { id: string } }) {
-  const post = allPosts.find((p) => String(p.id) === Promise.id)
-  if (!post) return notFound()
+// 🔥 Next.js 15 호환 타입 정의
+interface Props {
+  params: Promise<{
+    id: string;
+  }>;
+}
+
+// 🔥 async 함수로 변경하고 params를 await으로 처리
+export default async function AnnouncementDetail({ params }: Props) {
+  // 🔥 params를 await으로 처리
+  const { id } = await params;
+  
+  const post = allPosts.find((p) => String(p.id) === id);
+  if (!post) return notFound();
 
   return (
     <div className="bg-white dark:bg-black text-black dark:text-white min-h-screen px-6 pt-32 pb-20 transition-colors duration-300">
@@ -59,4 +70,21 @@ export default function AnnouncementDetail({ Promise }: { Promise: { id: string 
       </div>
     </div>
   )
+}
+
+// 🔥 메타데이터 생성 함수 (선택사항)
+export async function generateMetadata({ params }: Props) {
+  const { id } = await params;
+  const post = allPosts.find((p) => String(p.id) === id);
+  
+  if (!post) {
+    return {
+      title: '공지사항을 찾을 수 없습니다',
+    };
+  }
+
+  return {
+    title: `${post.title} - Aurum`,
+    description: post.excerpt,
+  };
 }
