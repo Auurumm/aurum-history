@@ -19,10 +19,10 @@ export default function LifeFeature({
 }: LifeFeatureProps) {
   return (
     <section
-      className={`min-h-screen flex flex-col md:flex-row items-center justify-center px-6 md:px-16 py-16 ${bgColor}`}
+      className={`min-h-screen flex flex-col md:flex-row items-center justify-between gap-2 px-6 md:px-16 py-16 ${bgColor}`}
     >
       {/* 텍스트 영역 */}
-      <div className="md:flex-[2] w-full md:w-auto mb-10 md:mb-0">
+      <div className="md:w-2/3 w-full mb-10 md:mb-0">
         <div className="max-w-2xl mx-auto text-left">
           <h2 className="text-3xl font-bold mb-4">{title}</h2>
           <p className="text-base text-gray-700 dark:text-gray-300 leading-relaxed">{description}</p>
@@ -44,7 +44,7 @@ export default function LifeFeature({
       </div>
 
       {/* 이미지 영역 */}
-      <div className="md:flex-[1] w-full md:w-auto flex justify-center">
+      <div className="md:w-1/3 w-full flex justify-center">
         <Image
           src={image}
           alt={title}

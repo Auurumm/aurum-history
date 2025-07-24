@@ -24,7 +24,7 @@ export default function LifePage() {
         </section>
 
         {/* Product Features */}
-        <section className="snap-start h-screen">
+        <section id="product-feature-1" className="snap-start h-screen">
           <LifeFeature
             color="red"
             title="돈키호테"
@@ -33,6 +33,7 @@ export default function LifePage() {
             tags={["모험적", "탐험", "새로움", "어드벤쳐"]}
           />
         </section>
+
 
         <section className="snap-start h-screen">
           <LifeFeature
