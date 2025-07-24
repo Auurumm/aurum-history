@@ -1,35 +1,46 @@
-// contexts/user-context.tsx
 "use client";
 
 import { createContext, useContext, useEffect, useState } from "react";
+import { onAuthStateChanged, User } from "firebase/auth";
 import { auth, db } from "@/lib/firebase";
-import { User, onAuthStateChanged } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
 
-type AuthUser = {
+type UserData = {
   firebaseUser: User;
-  role: "pending" | "approved" | "admin";
+  name: string;
+  phone: string;
+  role: string;
 };
 
-const UserContext = createContext<AuthUser | null>(null);
+const UserContext = createContext<UserData | null>(null);
 
-export function UserProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<AuthUser | null>(null);
+export const useUser = () => useContext(UserContext);
+
+export const UserProvider = ({ children }: { children: React.ReactNode }) => {
+  const [user, setUser] = useState<UserData | null>(null);
 
   useEffect(() => {
-    return onAuthStateChanged(auth, async (firebaseUser) => {
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
-        const ref = doc(db, "users", firebaseUser.uid);
-        const snap = await getDoc(ref);
-        const role = snap.exists() ? snap.data().role : "pending";
-        setUser({ firebaseUser, role });
+        const userDoc = await getDoc(doc(db, "users", firebaseUser.uid));
+        if (userDoc.exists()) {
+          const data = userDoc.data();
+          setUser({
+            firebaseUser,
+            name: data.name,
+            phone: data.phone,
+            role: data.role || "pending",
+          });
+        } else {
+          setUser(null);
+        }
       } else {
         setUser(null);
       }
     });
+
+    return () => unsubscribe();
   }, []);
 
   return <UserContext.Provider value={user}>{children}</UserContext.Provider>;
-}
-
-export const useUser = () => useContext(UserContext);
+};
