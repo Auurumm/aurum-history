@@ -1,7 +1,10 @@
+// next.config.js
+const path = require("path");
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   experimental: {
-    optimizePackageImports: ['@headlessui/react', 'lucide-react']
+    optimizePackageImports: ['@headlessui/react', 'lucide-react'],
   },
   eslint: {
     ignoreDuringBuilds: true,
@@ -19,6 +22,11 @@ const nextConfig = {
     ],
     unoptimized: true,
   },
-}
+  webpack: (config) => {
+    // ✅ @ → 프로젝트 루트 alias 설정
+    config.resolve.alias['@'] = path.resolve(__dirname);
+    return config;
+  },
+};
 
-export default nextConfig
+module.exports = nextConfig;

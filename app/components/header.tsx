@@ -71,7 +71,7 @@ export default function Header() {
           category: "",
           items: [
             { name: t("announcements"), href: getLocalizedPath("/announcements") },
-            { name: t("footprints"), href: getLocalizedPath("/footprints") },
+            { name: t("traces"), href: getLocalizedPath("/traces") },
             { name: t("wonders"), href: getLocalizedPath("/wonders") },
           ],
         },
@@ -183,7 +183,6 @@ export default function Header() {
 
             {/* Right Side */}
             <div className="flex items-center space-x-4">
-              {/* Search input + toggle button */}
               {isSearchOpen && (
                 <form onSubmit={handleSearchSubmit}>
                   <input
@@ -197,18 +196,6 @@ export default function Header() {
                 </form>
               )}
 
-              {/* 
-              <Button
-                variant="ghost"
-                size="sm"
-                className="hidden sm:flex transition-colors text-gray-800 hover:text-black dark:text-gray-200 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800"
-                aria-label={t("search")}
-                onClick={() => setIsSearchOpen((prev) => !prev)}
-              >
-                <Search className="h-4 w-4" />
-              </Button>
-              */}
-
               <LanguageSwitcher />
 
               <Button
@@ -221,7 +208,17 @@ export default function Header() {
                 {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
               </Button>
 
-              {/* Mobile menu */}
+              {/* ✅ 로그인/회원가입 버튼 */}
+              <Link href="/auth">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="text-sm font-medium px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800"
+                >
+                  {t("login") || "로그인"}
+                </Button>
+              </Link>
+
               <Button
                 variant="ghost"
                 size="sm"

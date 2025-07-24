@@ -20,7 +20,7 @@ export const translations = {
     members: "MEMBERS",
     recruitment: "인재영입",
     announcements: "알립니다",
-    footprints: "흔적들",
+    traces: "흔적들",
     wonders: "문의사항",
 
     // 공통
