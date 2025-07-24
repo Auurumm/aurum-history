@@ -4,7 +4,10 @@ import { Card, CardContent } from "@/components/ui/card"
 
 export default function BrandStory() {
   return (
-    <section className="py-20 px-4 sm:px-6 lg:px-8 bg-white dark:bg-black transition-colors duration-300">
+    <section
+      id="brand-story"
+      className="pt-40 pb-20 px-4 sm:px-6 lg:px-8 bg-white dark:bg-black transition-colors duration-300"
+    >
       <div className="max-w-7xl mx-auto">
         {/* 제목 영역 */}
         <div className="text-center mb-16">

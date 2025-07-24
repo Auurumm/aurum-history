@@ -41,7 +41,7 @@ export default function BrandHero() {
         {/* 스크롤 인디케이터 */}
         <button
           onClick={() => {
-            const el = document.getElementById("brand-identity")
+            const el = document.getElementById("brand-story")
             if (el) {
               el.scrollIntoView({ behavior: "smooth" })
             }
