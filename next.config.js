@@ -11,22 +11,22 @@ const nextConfig = {
     ],
   },
   
-  // 🔥 실험적 기능 (필요한 경우만)
+  // 🔥 실험적 기능
   experimental: {
     optimizePackageImports: ['lucide-react'],
   },
 
-  // 🔥 환경변수 검증
-  env: {
-    CUSTOM_KEY: process.env.CUSTOM_KEY,
-  },
-
-  // 🔥 빌드 최적화
-  swcMinify: true,
+  // 🔥 swcMinify 제거 (Next.js 15에서는 기본 활성화)
+  // swcMinify: true, // 이 줄 제거!
   
-  // 🔥 정적 내보내기 설정 (필요한 경우)
-  // output: 'export',
-  // trailingSlash: true,
+  // 🔥 빌드 최적화
+  typescript: {
+    ignoreBuildErrors: false,
+  },
+  
+  eslint: {
+    ignoreDuringBuilds: false,
+  },
 }
 
 module.exports = nextConfig

@@ -93,7 +93,8 @@ const config: Config = {
   },
   plugins: [
     require("tailwindcss-animate"),
-    require('@tailwindcss/line-clamp'), // 🔥 line-clamp 플러그인 추가
+    // 🔥 @tailwindcss/line-clamp 제거 (Next.js 15에서는 기본 포함)
+    // require('@tailwindcss/line-clamp'), // 이 줄 제거!
   ],
 };
 export default config;

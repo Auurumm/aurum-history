@@ -23,8 +23,8 @@ const allPosts = [
   },
 ]
 
-export default function AnnouncementDetail({ params }: { params: { id: string } }) {
-  const post = allPosts.find((p) => String(p.id) === params.id)
+export default function AnnouncementDetail({ Promise }: { Promise: { id: string } }) {
+  const post = allPosts.find((p) => String(p.id) === Promise.id)
   if (!post) return notFound()
 
   return (
