@@ -19,13 +19,14 @@ export default function MessagePage() {
   if (!mounted) return null
 
   return (
-    <div className="bg-black min-h-screen">
-      <div className="snap-y snap-mandatory h-screen overflow-y-scroll">
-        <section className="snap-start h-screen">
+    <div className="flex flex-col min-h-screen bg-black">
+      {/* 콘텐츠를 채우는 본문 영역 */}
+      <div className="flex-grow">
+        <section className="min-h-screen">
           <MessageHero onScrollToNext={scrollToMission} />
         </section>
 
-        <section ref={missionRef} className="snap-start min-h-screen">
+        <section ref={missionRef} className="min-h-screen">
           <MissionSection />
         </section>
       </div>

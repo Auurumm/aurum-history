@@ -37,7 +37,7 @@ export default function GalleryHero() {
         <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white dark:text-white mb-6 leading-tight drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)]">
           이것은 우리의
           <br />
-          <span className="text-yellow-500 drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
+          <span className="text-yellow-500 drop-shadow-[0_1px_2px_rgba(0,0,0,0.25)]">
             갤러리입니다!
           </span>
         </h1>

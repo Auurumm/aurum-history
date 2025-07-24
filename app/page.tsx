@@ -17,20 +17,17 @@ export default function HomePage() {
   if (!mounted) return null
 
   return (
-    <div className="theme-bg min-h-screen">
-
-      <div className="theme-bg">
-
+    <div className="flex flex-col min-h-screen"> {/* 🟢 페이지 전체 구조 설정 */}
+      <main className="flex-grow"> {/* 🟢 layout.tsx의 <main>과 맞물림 */}
         <section className="relative min-h-screen overflow-hidden bg-black">
           <HeroSection />
         </section>
 
-        {/* 새로운 콘텐츠 구조 */}
         <CoreValues />
         <CultureCarousel />
         <JoinBanner />
-      </div>
+      </main>
+      {/* Footer는 layout.tsx에 이미 들어있기 때문에 여기선 필요 없음 */}
     </div>
   )
 }
-

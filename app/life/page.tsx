@@ -1,6 +1,5 @@
 "use client"
 
-
 import { useEffect, useState } from "react"
 import LifeHero from "./components/life-hero"
 import LifeFeature from "./components/life-feature"
@@ -16,15 +15,15 @@ export default function LifePage() {
   if (!mounted) return null
 
   return (
-    <div className="bg-white dark:bg-black text-black dark:text-white min-h-screen transition-colors duration-300">
-      <div className="snap-y snap-mandatory h-screen overflow-y-scroll">
+    <div className="flex flex-col min-h-screen bg-white dark:bg-black text-black dark:text-white transition-colors duration-300">
+      <div className="flex-grow snap-y snap-mandatory">
         {/* Hero Section */}
-        <section className="snap-start h-screen">
+        <section className="snap-start min-h-screen">
           <LifeHero />
         </section>
 
         {/* Product Features */}
-        <section id="product-feature-1" className="snap-start h-screen">
+        <section id="product-feature-1" className="snap-start min-h-screen">
           <LifeFeature
             color="red"
             title="돈키호테"
@@ -34,8 +33,7 @@ export default function LifePage() {
           />
         </section>
 
-
-        <section className="snap-start h-screen">
+        <section className="snap-start min-h-screen">
           <LifeFeature
             color="green"
             title="알렉산드리아"
@@ -45,7 +43,7 @@ export default function LifePage() {
           />
         </section>
 
-        <section className="snap-start h-screen">
+        <section className="snap-start min-h-screen">
           <LifeFeature
             color="blue"
             title="사트라프"
@@ -55,8 +53,8 @@ export default function LifePage() {
           />
         </section>
 
-          {/* Contact Section */}
-        <section className="snap-start h-screen">
+        {/* Contact Section */}
+        <section className="snap-start min-h-screen">
           <LifeContact />
         </section>
       </div>

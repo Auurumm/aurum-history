@@ -17,7 +17,7 @@ export default function MembersPage() {
   return (
     <div className="bg-black min-h-screen">
 
-      <div className="snap-y snap-mandatory h-screen overflow-y-scroll">
+      <div className="snap-y snap-mandatory flex-grow">
         <section className="overflow-y-auto">
           <MembersHero />
         </section>

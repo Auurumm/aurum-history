@@ -34,7 +34,10 @@ export default function DepartmentSection() {
   const [activeCard, setActiveCard] = useState<number | null>(null)
 
   return (
-    <section id="department-section" className="min-h-screen bg-white dark:bg-black text-black dark:text-white py-20">
+    <section
+      id="department-section"
+      className="min-h-screen bg-white dark:bg-black text-black dark:text-white pt-32 pb-4"
+    >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-16">
           <h2 className="text-4xl lg:text-5xl font-bold mb-6">

@@ -41,7 +41,7 @@ export default function Footer() {
 
       {/* ✅ 데스크탑/태블릿 전용 푸터 */}
       <footer className="hidden sm:block bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-white transition-colors duration-300">
-        <div className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-14 py-20">
+        <div className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-14 py-10">
           <div className="flex flex-wrap justify-start gap-y-16 gap-x-12">
             {/* Company Info */}
             <div className="w-full sm:w-1/2 lg:w-auto space-y-5">

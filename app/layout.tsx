@@ -27,13 +27,15 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="ko" className="scroll-smooth">
       <body className={`${inter.className} bg-white dark:bg-black text-black dark:text-white transition-colors duration-300 min-h-screen flex flex-col`}>
         <Providers>
-          <CustomCursor />       {/* ✅ 마우스 커서 효과 */}
-          <ScrollToTop />        {/* ✅ 스크롤 상단 이동 */}
+          <CustomCursor />
+          <ScrollToTop />
           <Header />
 
-          {/* ✅ main이 flex-grow로 중간 공간을 밀어줌 */}
-          <main className="flex-grow">
-            {children}
+          {/* 페이지 전체를 차지하면서 푸터는 항상 마지막에 자연스럽게 위치하도록 구성 */}
+          <main className="flex-grow flex flex-col">
+            <div className="flex-grow">
+              {children}
+            </div>
           </main>
 
           <Footer />

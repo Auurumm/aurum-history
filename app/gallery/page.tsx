@@ -14,20 +14,18 @@ export default function GalleryPage() {
   if (!mounted) return null
 
   return (
-    <div className="bg-black min-h-screen">
-
-      <div className="snap-y snap-mandatory h-screen overflow-y-scroll">
-        <section className="overflow-y-auto">
+    <div className="flex flex-col min-h-screen bg-black">
+      <div className="flex-grow snap-y snap-mandatory">
+        {/* Hero - snap scroll */}
+        <section className="min-h-screen snap-start">
           <GalleryHero />
         </section>
 
-        {/* 👇 스냅 대상에서 제외, 자유 스크롤 허용 */}
-        <div className="overflow-y-auto">
+        {/* Grid - 자유 스크롤 영역 */}
+        <section className="bg-white dark:bg-black text-black dark:text-white py-20">
           <GalleryGrid />
-        </div>
-
-        <section className="overflow-y-auto">
         </section>
+
       </div>
     </div>
   )

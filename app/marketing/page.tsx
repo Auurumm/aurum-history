@@ -2,9 +2,6 @@
 
 import { useEffect, useState } from "react"
 import MarketingHero from "./components/marketing-hero"
-// import MarketingAbout from "./components/marketing-about"
-// import MarketingServices from "./components/marketing-services"
-// import MarketingTeam from "./components/marketing-team"
 import MarketingContact from "./components/marketing-contact"
 import ProductFeature from "./components/marketing-feature"
 
@@ -18,16 +15,15 @@ export default function MarketingPage() {
   if (!mounted) return null
 
   return (
-    <div className="bg-white dark:bg-black min-h-screen transition-colors duration-300">
-
-      <div className="snap-y snap-mandatory h-screen overflow-y-scroll">
+    <div className="flex flex-col min-h-screen bg-white dark:bg-black transition-colors duration-300">
+      <div className="flex-grow">
         {/* Hero */}
-        <section className="snap-start h-screen">
+        <section className="min-h-screen">
           <MarketingHero />
         </section>
 
         {/* Product Features */}
-        <section className="snap-start h-screen">
+        <section className="min-h-screen">
           <ProductFeature
             color="red"
             title="HEXar [헥사르, 115]"
@@ -36,7 +32,7 @@ export default function MarketingPage() {
           />
         </section>
 
-        <section className="snap-start h-screen">
+        <section className="min-h-screen">
           <ProductFeature
             color="green"
             title="Leaf [리프, 032]"
@@ -45,7 +41,7 @@ export default function MarketingPage() {
           />
         </section>
 
-        <section className="snap-start h-screen">
+        <section className="min-h-screen">
           <ProductFeature
             color="blue"
             title="Ainess [아이네스, 030]"
@@ -55,10 +51,9 @@ export default function MarketingPage() {
         </section>
 
         {/* Contact */}
-        <section className="snap-start min-h-screen">
+        <section className="min-h-screen">
           <MarketingContact />
         </section>
-
       </div>
     </div>
   )
