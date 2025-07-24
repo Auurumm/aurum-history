@@ -5,6 +5,7 @@ import { auth, db } from "@/lib/firebase";
 import { collection, query, orderBy, onSnapshot, doc, getDoc } from "firebase/firestore";
 import { onAuthStateChanged } from "firebase/auth";
 import { PenSquare, Plus } from "lucide-react";
+import Header from "../components/header"; // 🔥 헤더 추가
 import HeroSection from "./components/HeroSection";
 import PostCard from "./components/PostCard";
 import NewPostForm from "./components/NewPostForm";
@@ -103,8 +104,10 @@ export default function TracesPage() {
   }
 
   return (
-    <main className="bg-white dark:bg-black min-h-screen transition-colors">
-      <HeroSection />
+    <>
+      <Header /> {/* 🔥 헤더 추가 */}
+      <main className="bg-white dark:bg-black min-h-screen transition-colors">
+        <HeroSection />
 
       <section
         id="scroll-target"
@@ -187,6 +190,7 @@ export default function TracesPage() {
         onClose={() => setIsNewPostOpen(false)}
         onPostCreated={handlePostCreated}
       />
-    </main>
+      </main>
+    </>
   );
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { auth, db, storage } from "@/lib/firebase";
 import {
@@ -12,6 +12,7 @@ import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { Mail, Lock, User, Phone, AtSign, Camera, Upload } from "lucide-react";
 
 export default function AuthPage() {
+  const [isClient, setIsClient] = useState(false);
   const [email, setEmail] = useState("");
   const [pw, setPw] = useState("");
   const [pwConfirm, setPwConfirm] = useState("");
@@ -28,17 +29,26 @@ export default function AuthPage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
 
-  // 프로필 이미지 선택
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
+  if (!isClient) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-white text-black dark:bg-black dark:text-white">
+        <div className="animate-spin rounded-full h-12 w-12 border-2 border-yellow-400 border-t-transparent"></div>
+      </div>
+    );
+  }
+
   const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      // 파일 크기 체크 (5MB 제한)
       if (file.size > 5 * 1024 * 1024) {
         setError("프로필 사진은 5MB 이하만 업로드 가능합니다.");
         return;
       }
 
-      // 이미지 파일 체크
       if (!file.type.startsWith('image/')) {
         setError("이미지 파일만 업로드 가능합니다.");
         return;
@@ -46,7 +56,6 @@ export default function AuthPage() {
 
       setProfileImage(file);
       
-      // 미리보기 생성
       const reader = new FileReader();
       reader.onload = (e) => {
         setProfilePreview(e.target?.result as string);
@@ -55,7 +64,6 @@ export default function AuthPage() {
     }
   };
 
-  // 프로필 이미지 업로드
   const uploadProfileImage = async (userId: string): Promise<string | null> => {
     if (!profileImage) return null;
 
@@ -125,19 +133,17 @@ export default function AuthPage() {
       } else {
         const cred = await createUserWithEmailAndPassword(auth, email, pw);
         
-        // 프로필 이미지 업로드 (있다면)
         let profileImageURL = null;
         if (profileImage) {
           profileImageURL = await uploadProfileImage(cred.user.uid);
         }
         
-        // 사용자 정보 저장
         await setDoc(doc(db, "users", cred.user.uid), {
           email,
           name,
           nickname,
           phone,
-          profileImage: profileImageURL, // 🔥 프로필 이미지 URL
+          profileImage: profileImageURL,
           role: "pending",
           createdAt: serverTimestamp(),
         });
@@ -191,7 +197,6 @@ export default function AuthPage() {
             </div>
           )}
 
-          {/* 🔥 프로필 이미지 업로드 (회원가입 시만) */}
           {!isLogin && (
             <div className="text-center">
               <div className="mb-4">

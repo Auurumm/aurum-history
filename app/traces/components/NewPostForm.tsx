@@ -50,13 +50,13 @@ export default function NewPostForm({ isOpen, onClose, onPostCreated }: NewPostF
         content: content.trim(),
         category,
         authorId: auth.currentUser.uid,
-        authorName: userData.nickname || userData.name, // 🔥 닉네임 우선, 실명 fallback
-        authorRealName: userData.name, // 실명은 별도 저장 (관리자용)
+        authorName: userData.nickname || userData.name,
+        authorRealName: userData.name,
         authorEmail: userData.email,
+        authorProfileImage: userData.profileImage || null, // 🔥 프로필 이미지 추가
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
-        likes: 0,
-        comments: [],
+        likes: [], // 🔥 좋아요한 사용자 UID 배열
       });
 
       // 3. 성공 처리

@@ -1,13 +1,25 @@
 "use client"
 
-import { useState, useRef } from "react"
+import { useState, useRef, useEffect } from "react"
 import { useRouter } from "next/navigation"
-import { Search, Moon, Sun, Menu, X, ChevronDown } from "lucide-react"
+import { Search, Moon, Sun, Menu, X, ChevronDown, User, LogOut, UserCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useTheme } from "../contexts/theme-context"
 import Link from "next/link"
 import { useLanguage } from "@/app/contexts/language-context"
 import LanguageSwitcher from "./language-switcher"
+import { auth, db } from "@/lib/firebase"
+import { onAuthStateChanged, signOut } from "firebase/auth"
+import { doc, getDoc } from "firebase/firestore"
+
+interface UserData {
+  uid: string;
+  name: string;
+  nickname: string;
+  email: string;
+  profileImage?: string;
+  role: string;
+}
 
 export default function Header() {
   const { theme, toggleTheme } = useTheme()
@@ -15,9 +27,42 @@ export default function Header() {
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null)
   const [isSearchOpen, setIsSearchOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState("")
+  const [user, setUser] = useState<UserData | null>(null)
+  const [userMenuOpen, setUserMenuOpen] = useState(false)
+  const [loading, setLoading] = useState(true)
   const timeoutRef = useRef<NodeJS.Timeout | null>(null)
   const router = useRouter()
   const { t, locale } = useLanguage()
+
+  // 🔥 사용자 인증 상태 확인
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+      if (firebaseUser) {
+        try {
+          const userDoc = await getDoc(doc(db, "users", firebaseUser.uid));
+          const userData = userDoc.data();
+          
+          if (userDoc.exists() && userData) {
+            setUser({
+              uid: firebaseUser.uid,
+              name: userData.name,
+              nickname: userData.nickname,
+              email: userData.email,
+              profileImage: userData.profileImage,
+              role: userData.role,
+            });
+          }
+        } catch (error) {
+          console.error("사용자 정보 가져오기 오류:", error);
+        }
+      } else {
+        setUser(null);
+      }
+      setLoading(false);
+    });
+
+    return () => unsubscribe();
+  }, []);
 
   const getLocalizedPath = (path: string) => {
     return locale === "en" ? `/en${path}` : path
@@ -109,6 +154,17 @@ export default function Header() {
       setIsSearchOpen(false)
     }
   }
+
+  // 🔥 로그아웃 처리
+  const handleLogout = async () => {
+    try {
+      await signOut(auth);
+      setUserMenuOpen(false);
+      router.push("/auth/login");
+    } catch (error) {
+      console.error("로그아웃 오류:", error);
+    }
+  };
 
   return (
     <>
@@ -208,16 +264,92 @@ export default function Header() {
                 {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
               </Button>
 
-              {/* ✅ 로그인/회원가입 버튼 */}
-              <Link href="/auth">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="text-sm font-medium px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800"
-                >
-                  {t("login") || "로그인"}
-                </Button>
-              </Link>
+              {/* 🔥 사용자 메뉴 또는 로그인 버튼 */}
+              {loading ? (
+                <div className="w-8 h-8 bg-gray-200 dark:bg-gray-700 rounded-full animate-pulse"></div>
+              ) : user ? (
+                <div className="relative">
+                  <button
+                    onClick={() => setUserMenuOpen(!userMenuOpen)}
+                    className="flex items-center gap-2 p-1 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                  >
+                    {/* 프로필 이미지 */}
+                    <div className="w-8 h-8 rounded-full overflow-hidden border-2 border-yellow-400">
+                      {user.profileImage ? (
+                        <img 
+                          src={user.profileImage} 
+                          alt={`${user.nickname} 프로필`}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-full h-full bg-yellow-400 flex items-center justify-center text-black font-bold text-sm">
+                          {user.nickname[0].toUpperCase()}
+                        </div>
+                      )}
+                    </div>
+                    <div className="hidden md:block text-left">
+                      <div className="text-sm font-medium text-gray-900 dark:text-white">
+                        {user.nickname}
+                      </div>
+                      <div className="text-xs text-gray-500 dark:text-gray-400">
+                        {user.role === "approved" ? "승인됨" : "승인 대기"}
+                      </div>
+                    </div>
+                  </button>
+
+                  {/* 드롭다운 메뉴 */}
+                  {userMenuOpen && (
+                    <>
+                      <div 
+                        className="fixed inset-0 z-10" 
+                        onClick={() => setUserMenuOpen(false)}
+                      ></div>
+                      <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-md shadow-lg border border-gray-200 dark:border-gray-700 z-20">
+                        <div className="py-1">
+                          {/* 모바일에서 사용자 정보 표시 */}
+                          <div className="md:hidden px-4 py-2 border-b border-gray-200 dark:border-gray-700">
+                            <div className="font-medium text-gray-900 dark:text-white">
+                              {user.nickname}
+                            </div>
+                            <div className="text-sm text-gray-500 dark:text-gray-400">
+                              {user.role === "approved" ? "승인됨" : "승인 대기"}
+                            </div>
+                          </div>
+                          
+                          <Link
+                            href="/mypage"
+                            onClick={() => setUserMenuOpen(false)}
+                            className="flex items-center gap-3 w-full px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                          >
+                            <UserCircle className="h-4 w-4" />
+                            마이페이지
+                          </Link>
+                          
+                          <hr className="border-gray-200 dark:border-gray-600" />
+                          
+                          <button
+                            onClick={handleLogout}
+                            className="flex items-center gap-3 w-full px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-700"
+                          >
+                            <LogOut className="h-4 w-4" />
+                            로그아웃
+                          </button>
+                        </div>
+                      </div>
+                    </>
+                  )}
+                </div>
+              ) : (
+                <Link href="/auth/login">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="text-sm font-medium px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800"
+                  >
+                    {t("login") || "로그인"}
+                  </Button>
+                </Link>
+              )}
 
               <Button
                 variant="ghost"
@@ -229,6 +361,59 @@ export default function Header() {
               </Button>
             </div>
           </div>
+
+          {/* 🔥 모바일 메뉴에 사용자 메뉴 추가 */}
+          {isMobileMenuOpen && (
+            <div className="md:hidden border-t border-gray-200 dark:border-gray-700 py-4">
+              {user && (
+                <>
+                  <div className="flex items-center gap-3 px-4 py-2 border-b border-gray-200 dark:border-gray-700 mb-4">
+                    <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-yellow-400">
+                      {user.profileImage ? (
+                        <img 
+                          src={user.profileImage} 
+                          alt={`${user.nickname} 프로필`}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-full h-full bg-yellow-400 flex items-center justify-center text-black font-bold">
+                          {user.nickname[0].toUpperCase()}
+                        </div>
+                      )}
+                    </div>
+                    <div>
+                      <div className="font-medium text-gray-900 dark:text-white">
+                        {user.nickname}
+                      </div>
+                      <div className="text-sm text-gray-500 dark:text-gray-400">
+                        {user.role === "approved" ? "승인됨" : "승인 대기"}
+                      </div>
+                    </div>
+                  </div>
+
+                  <Link
+                    href="/mypage"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
+                  >
+                    <UserCircle className="h-4 w-4" />
+                    마이페이지
+                  </Link>
+
+                  <button
+                    onClick={() => {
+                      handleLogout();
+                      setIsMobileMenuOpen(false);
+                    }}
+                    className="flex items-center gap-3 w-full px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-800"
+                  >
+                    <LogOut className="h-4 w-4" />
+                    로그아웃
+                  </button>
+                </>
+              )}
+            </div>
+          )}
         </div>
       </header>
     </>
