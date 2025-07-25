@@ -46,12 +46,12 @@ export default function WondersHeroSection() {
           </div>
         </div>
         
-        <button
+        {/* <button
           onClick={handleScroll}
           className="mt-6 px-8 py-4 bg-yellow-400 text-black hover:bg-yellow-500 hover:text-black rounded-full transition-all duration-300 font-semibold shadow-lg hover:shadow-xl transform hover:scale-105"
         >
           궁금해요 게시판 보기 ↓
-        </button>
+        </button> */}
       </div>
     </section>
   );

@@ -26,11 +26,11 @@ export default function HeroSection() {
         <p className="text-lg text-gray-300 max-w-2xl mx-auto drop-shadow-sm">
           
         </p>
-        <button
+        {/* <button
            className="mt-10 px-6 py-3 bg-yellow-400 text-white hover:bg-yellow-500 hover:text-black rounded-full transition-colors"
         >
           지금 피드 보기 ↓
-        </button>
+        </button> */}
       </div>
     </section>
   );
