@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { db } from "@/lib/firebase";
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
-import { X, Send, AlertCircle, User, Building, Mail, Phone } from "lucide-react";
+import { X, Send, AlertCircle, User, Building, Mail, Phone, Lock, Eye, EyeOff } from "lucide-react";
 
 interface NewWonderFormProps {
   isOpen: boolean;
@@ -20,8 +20,10 @@ export default function NewWonderForm({ isOpen, onClose, onWonderCreated }: NewW
     authorEmail: "",
     authorPhone: "",
     company: "",
-    isPublic: true, // 공개/비공개 여부
+    isPublic: true,
+    password: "",
   });
+  const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
 
@@ -39,6 +41,14 @@ export default function NewWonderForm({ isOpen, onClose, onWonderCreated }: NewW
       ...prev,
       [field]: value
     }));
+    
+    // 공개로 변경 시 비밀번호 초기화
+    if (field === "isPublic" && value === true) {
+      setFormData(prev => ({
+        ...prev,
+        password: ""
+      }));
+    }
   };
 
   const validateForm = () => {
@@ -64,20 +74,43 @@ export default function NewWonderForm({ isOpen, onClose, onWonderCreated }: NewW
       setError("올바른 이메일 형식을 입력해주세요.");
       return false;
     }
+    // 비공개 문의 시 비밀번호 필수
+    if (!formData.isPublic && !formData.password.trim()) {
+      setError("비공개 문의의 경우 비밀번호를 설정해주세요.");
+      return false;
+    }
+    // 비밀번호 길이 검증
+    if (!formData.isPublic && formData.password.length < 4) {
+      setError("비밀번호는 최소 4자 이상이어야 합니다.");
+      return false;
+    }
     return true;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!validateForm()) return;
+    console.log("🚀 폼 제출 시작");
+    console.log("📝 폼 데이터:", formData);
+    
+    if (!validateForm()) {
+      console.log("❌ 폼 검증 실패");
+      return;
+    }
 
     setIsSubmitting(true);
     setError("");
 
     try {
-      // Firestore에 새 문의 저장
-      await addDoc(collection(db, "wonders"), {
+      // Firebase 연결 확인
+      console.log("🔥 Firebase db 객체:", db);
+      
+      if (!db) {
+        throw new Error("Firebase 초기화되지 않음");
+      }
+
+      // 저장할 데이터 준비
+      const wonderData: any = {
         title: formData.title.trim(),
         content: formData.content.trim(),
         category: formData.category,
@@ -86,10 +119,27 @@ export default function NewWonderForm({ isOpen, onClose, onWonderCreated }: NewW
         authorPhone: formData.authorPhone.trim() || null,
         company: formData.company.trim() || null,
         isPublic: formData.isPublic,
-        status: "pending", // 초기 상태는 답변 대기
+        status: "pending",
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
-      });
+      };
+
+      // 비공개 문의의 경우 비밀번호 추가
+      if (!formData.isPublic) {
+        wonderData.password = formData.password.trim();
+      }
+
+      console.log("💾 저장할 데이터:", wonderData);
+
+      // Firestore 컬렉션 참조 생성
+      const wondersCollection = collection(db, "wonders");
+      console.log("📁 컬렉션 참조:", wondersCollection);
+
+      // 문서 추가
+      console.log("⏳ Firestore에 문서 추가 중...");
+      const docRef = await addDoc(wondersCollection, wonderData);
+      
+      console.log("✅ 문서 추가 성공! ID:", docRef.id);
 
       // 성공 처리
       setFormData({
@@ -101,21 +151,53 @@ export default function NewWonderForm({ isOpen, onClose, onWonderCreated }: NewW
         authorPhone: "",
         company: "",
         isPublic: true,
+        password: "",
       });
+      
+      console.log("🎉 폼 초기화 완료");
+      
+      // 콜백 실행
       onWonderCreated();
       onClose();
       
       // 성공 알림
-      alert("문의가 성공적으로 등록되었습니다. 빠른 시일 내에 답변드리겠습니다.");
+      const message = formData.isPublic 
+        ? "문의가 성공적으로 등록되었습니다. 빠른 시일 내에 답변드리겠습니다."
+        : "비공개 문의가 성공적으로 등록되었습니다. 설정하신 비밀번호로 문의 내용을 확인하실 수 있습니다.";
+      
+      alert(message);
+      console.log("📧 성공 알림 표시 완료");
 
     } catch (err: any) {
-      console.error("문의 등록 오류:", err);
-      setError("문의 등록 중 오류가 발생했습니다. 다시 시도해주세요.");
+      console.error("💥 문의 등록 오류:", err);
+      console.error("🔍 오류 상세:", {
+        name: err.name,
+        message: err.message,
+        code: err.code,
+        stack: err.stack
+      });
+      
+      // 사용자에게 더 자세한 오류 정보 제공
+      let errorMessage = "문의 등록 중 오류가 발생했습니다.";
+      
+      if (err.code === 'permission-denied') {
+        errorMessage += " (권한 오류: Firestore 보안 규칙을 확인해주세요)";
+      } else if (err.code === 'unavailable') {
+        errorMessage += " (네트워크 오류: 인터넷 연결을 확인해주세요)";
+      } else if (err.code === 'unauthenticated') {
+        errorMessage += " (인증 오류: Firebase 설정을 확인해주세요)";
+      } else if (err.message) {
+        errorMessage += ` (${err.message})`;
+      }
+      
+      setError(errorMessage);
     } finally {
       setIsSubmitting(false);
+      console.log("🏁 제출 프로세스 완료");
     }
   };
 
+  // 폼이 열려있지 않으면 렌더링하지 않음
   if (!isOpen) return null;
 
   return (
@@ -137,11 +219,20 @@ export default function NewWonderForm({ isOpen, onClose, onWonderCreated }: NewW
 
         {/* 폼 */}
         <form onSubmit={handleSubmit} className="p-6 space-y-6">
+          {/* Firebase 연결 상태 디버그 정보 (개발 환경에서만 표시) */}
+          {process.env.NODE_ENV === 'development' && (
+            <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3 text-sm">
+              <p className="text-blue-700 dark:text-blue-300">
+                🔧 디버그 정보: Firebase DB 연결 상태 - {db ? "✅ 연결됨" : "❌ 연결 안됨"}
+              </p>
+            </div>
+          )}
+
           {/* 에러 메시지 */}
           {error && (
-            <div className="flex items-center gap-2 text-red-600 text-sm bg-red-50 dark:bg-red-900/20 p-3 rounded-md">
-              <AlertCircle className="h-4 w-4 flex-shrink-0" />
-              {error}
+            <div className="flex items-start gap-2 text-red-600 text-sm bg-red-50 dark:bg-red-900/20 p-3 rounded-md">
+              <AlertCircle className="h-4 w-4 flex-shrink-0 mt-0.5" />
+              <div className="whitespace-pre-wrap">{error}</div>
             </div>
           )}
 
@@ -159,6 +250,7 @@ export default function NewWonderForm({ isOpen, onClose, onWonderCreated }: NewW
                 placeholder="이름을 입력하세요"
                 className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-yellow-400 focus:border-transparent"
                 disabled={isSubmitting}
+                required
               />
             </div>
 
@@ -174,6 +266,7 @@ export default function NewWonderForm({ isOpen, onClose, onWonderCreated }: NewW
                 placeholder="이메일을 입력하세요"
                 className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-yellow-400 focus:border-transparent"
                 disabled={isSubmitting}
+                required
               />
             </div>
 
@@ -219,6 +312,7 @@ export default function NewWonderForm({ isOpen, onClose, onWonderCreated }: NewW
                 onChange={(e) => handleInputChange("category", e.target.value)}
                 className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-yellow-400 focus:border-transparent"
                 disabled={isSubmitting}
+                required
               >
                 {categories.map((cat) => (
                   <option key={cat} value={cat}>
@@ -239,6 +333,7 @@ export default function NewWonderForm({ isOpen, onClose, onWonderCreated }: NewW
                 placeholder="문의 제목을 입력하세요"
                 className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-yellow-400 focus:border-transparent"
                 disabled={isSubmitting}
+                required
               />
             </div>
 
@@ -253,6 +348,8 @@ export default function NewWonderForm({ isOpen, onClose, onWonderCreated }: NewW
                 rows={8}
                 className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-yellow-400 focus:border-transparent resize-none"
                 disabled={isSubmitting}
+                required
+                maxLength={2000}
               />
               <div className="text-right text-sm text-gray-500 mt-1">
                 {formData.content.length} / 2000
@@ -260,18 +357,89 @@ export default function NewWonderForm({ isOpen, onClose, onWonderCreated }: NewW
             </div>
 
             {/* 공개 설정 */}
-            <div className="flex items-center gap-3 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
-              <input
-                type="checkbox"
-                id="isPublic"
-                checked={formData.isPublic}
-                onChange={(e) => handleInputChange("isPublic", e.target.checked)}
-                className="w-4 h-4 text-yellow-400 bg-gray-100 border-gray-300 rounded focus:ring-yellow-400 dark:focus:ring-yellow-400 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
-                disabled={isSubmitting}
-              />
-              <label htmlFor="isPublic" className="text-sm text-gray-700 dark:text-gray-300">
-                이 문의를 다른 사용자도 볼 수 있도록 공개합니다. (개인정보는 표시되지 않습니다)
-              </label>
+            <div className="space-y-4">
+              <div className="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+                  문의 공개 설정
+                </h3>
+                
+                <div className="space-y-3">
+                  <label className="flex items-start gap-3 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="visibility"
+                      checked={formData.isPublic}
+                      onChange={() => handleInputChange("isPublic", true)}
+                      className="mt-1 w-4 h-4 text-yellow-400 bg-gray-100 border-gray-300 focus:ring-yellow-400 dark:focus:ring-yellow-400 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
+                      disabled={isSubmitting}
+                    />
+                    <div>
+                      <div className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                        공개 문의
+                      </div>
+                      <div className="text-xs text-gray-500 dark:text-gray-400">
+                        다른 사용자도 문의 내용을 볼 수 있습니다. (개인정보는 표시되지 않습니다)
+                      </div>
+                    </div>
+                  </label>
+
+                  <label className="flex items-start gap-3 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="visibility"
+                      checked={!formData.isPublic}
+                      onChange={() => handleInputChange("isPublic", false)}
+                      className="mt-1 w-4 h-4 text-yellow-400 bg-gray-100 border-gray-300 focus:ring-yellow-400 dark:focus:ring-yellow-400 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
+                      disabled={isSubmitting}
+                    />
+                    <div>
+                      <div className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                        비공개 문의
+                      </div>
+                      <div className="text-xs text-gray-500 dark:text-gray-400">
+                        비밀번호를 설정하여 본인만 확인할 수 있습니다
+                      </div>
+                    </div>
+                  </label>
+                </div>
+              </div>
+
+              {/* 비공개 문의 시 비밀번호 입력 */}
+              {!formData.isPublic && (
+                <div className="p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+                  <label className="block text-sm font-medium text-blue-700 dark:text-blue-300 mb-2">
+                    <Lock className="inline h-4 w-4 mr-1" />
+                    비공개 문의 비밀번호 *
+                  </label>
+                  <div className="relative">
+                    <input
+                      type={showPassword ? "text" : "password"}
+                      value={formData.password}
+                      onChange={(e) => handleInputChange("password", e.target.value)}
+                      placeholder="비밀번호를 입력하세요 (최소 4자)"
+                      className="w-full p-3 pr-12 border border-blue-300 dark:border-blue-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-blue-400 focus:border-transparent"
+                      disabled={isSubmitting}
+                      minLength={4}
+                      required={!formData.isPublic}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3 top-1/2 transform -translate-y-1/2 p-1 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                      disabled={isSubmitting}
+                    >
+                      {showPassword ? (
+                        <EyeOff className="h-4 w-4" />
+                      ) : (
+                        <Eye className="h-4 w-4" />
+                      )}
+                    </button>
+                  </div>
+                  <p className="text-xs text-blue-600 dark:text-blue-400 mt-2">
+                    💡 이 비밀번호로 나중에 문의 내용과 답변을 확인하실 수 있습니다.
+                  </p>
+                </div>
+              )}
             </div>
           </div>
 
@@ -287,11 +455,14 @@ export default function NewWonderForm({ isOpen, onClose, onWonderCreated }: NewW
             </button>
             <button
               type="submit"
-              disabled={isSubmitting || !formData.title.trim() || !formData.content.trim()}
+              disabled={isSubmitting || !formData.title.trim() || !formData.content.trim() || !formData.authorName.trim() || !formData.authorEmail.trim()}
               className="flex-1 py-3 px-4 bg-yellow-400 hover:bg-yellow-500 disabled:bg-gray-300 disabled:cursor-not-allowed text-black font-semibold rounded-md transition-colors flex items-center justify-center gap-2"
             >
               {isSubmitting ? (
-                <div className="animate-spin rounded-full h-4 w-4 border-2 border-black border-t-transparent" />
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-2 border-black border-t-transparent" />
+                  등록 중...
+                </>
               ) : (
                 <>
                   <Send className="h-4 w-4" />

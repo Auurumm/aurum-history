@@ -13,7 +13,7 @@ export default function WondersHeroSection() {
   return (
     <section className="relative py-72 bg-white text-black dark:bg-black dark:text-white overflow-hidden flex flex-col justify-center items-center text-center">
       <Image
-        src="/images/members3.png"
+        src="/images/recruit-hero.png"
         alt="Customer Support"
         fill
         className="object-cover opacity-80"
@@ -26,23 +26,23 @@ export default function WondersHeroSection() {
           궁금해요
         </h1>
         <p className="text-xl text-gray-100 max-w-2xl mx-auto drop-shadow-sm mb-8 leading-relaxed">
-          궁금한 점이나 문의사항이 있으시면 언제든지 연락해주세요.<br />
-          전문 상담원이 신속하고 정확하게 답변드리겠습니다.
+          저희에 대해 궁금한 점이나 문의사항이 있으시면 언제든지 연락해주세요.<br />
+          오럼의 전문 상담원이 신속하고 정확하게 답변드리겠습니다.
         </p>
         
         {/* 연락처 정보 */}
         <div className="flex flex-col md:flex-row gap-6 justify-center items-center mb-8">
           <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4 text-white">
             <h3 className="font-semibold mb-1">📞 전화 문의</h3>
-            <p className="text-sm opacity-90">02-1234-5678</p>
+            <p className="text-sm opacity-90">02-417-7009</p>
           </div>
           <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4 text-white">
             <h3 className="font-semibold mb-1">📧 이메일 문의</h3>
-            <p className="text-sm opacity-90">contact@aurum.com</p>
+            <p className="text-sm opacity-90">account@aurum.com</p>
           </div>
           <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4 text-white">
             <h3 className="font-semibold mb-1">🕘 운영 시간</h3>
-            <p className="text-sm opacity-90">평일 09:00 - 18:00</p>
+            <p className="text-sm opacity-90">평일 10:00 - 17:00</p>
           </div>
         </div>
         

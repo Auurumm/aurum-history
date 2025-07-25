@@ -72,7 +72,7 @@ const galleryItems: GalleryItem[] = [
   {
     id: 6,
     image: "/images/gallery/image.png",
-    title: "브레인스토밍 세션",
+    title: "수석 개발자의 브레인스토밍 세션",
     caption: "새로운 프로젝트를 위한 아이디어 회의, 모두의 창의성이 빛나는 순간",
     category: "워크숍",
     // likes: 24,
@@ -103,7 +103,7 @@ const galleryItems: GalleryItem[] = [
     id: 9,
     image: "/images/gallery/aurum7.png",
     title: "집중은 대표님처럼",
-    caption: "성공적인 프로젝트 마무리를 축하하며, 함께 기뻐하는 우리 팀",
+    caption: "다들 잘 보셨죠? 집중이란 이런 거예요.",
     category: "이벤트",
     // likes: 24,
     // views: 156,

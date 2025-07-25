@@ -97,7 +97,7 @@ export default function Footer() {
               <ul className="space-y-3 text-base text-gray-600 dark:text-gray-400">
                 <li><Link href={getLocalizedPath("/gallery")}>오럼 갤러리</Link></li>
                 <li><Link href={getLocalizedPath("/members")}>MEMBERS</Link></li>
-                <li><Link href="#">인재 영입</Link></li>
+                <li><Link href={getLocalizedPath("/careers")}>인재 영입</Link></li>
               </ul>
             </div>
 
