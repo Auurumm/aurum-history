@@ -89,7 +89,7 @@ export default function JoinUsPage() {
                 </h3>
                 <Link
                     href="/career/core-values"
-                    className="px-6 py-2 border border-black dark:border-white rounded-full hover:bg-black hover:text-white dark:hover:bg-white dark:hover:text-black transition"
+                    className="inline-block px-8 py-3 border border-yellow-400 bg-yellow-400 text-white rounded-full hover:bg-yellow-500 hover:text-black transition"
                 >
                     자세히 보기
                 </Link>
@@ -103,7 +103,7 @@ export default function JoinUsPage() {
                 </h3>
                 <Link
                     href="/career/team-culture"
-                    className="px-6 py-2 border border-black dark:border-white rounded-full hover:bg-black hover:text-white dark:hover:bg-white dark:hover:text-black transition"
+                    className="inline-block px-8 py-3 border border-yellow-400 bg-yellow-400 text-white rounded-full hover:bg-yellow-500 hover:text-black transition"
                 >
                     자세히 보기
                 </Link>

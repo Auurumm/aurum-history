@@ -8,7 +8,7 @@ export default function TeamCulturePage() {
       {/* 상단 콘텐츠 */}
       <main className="max-w-4xl mx-auto px-6 py-20 space-y-16">
         <section className="text-center">
-          <h1 className="text-3xl md:text-5xl font-bold mb-4">
+          <h1 id="#apply" className="text-3xl md:text-5xl font-bold mb-4">
             우리가 일하는 방식
           </h1>
           <p className="text-gray-400 text-lg">

@@ -42,7 +42,7 @@ export default function MarketingHero() {
                 {/* 스크롤 인디케이터 */}
         <button
           onClick={() => {
-            const el = document.getElementById("brand-identity")
+            const el = document.getElementById("hexar")
             if (el) {
               el.scrollIntoView({ behavior: "smooth" })
             }

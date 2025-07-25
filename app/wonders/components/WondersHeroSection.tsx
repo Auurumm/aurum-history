@@ -38,7 +38,7 @@ export default function WondersHeroSection() {
           </div>
           <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4 text-white">
             <h3 className="font-semibold mb-1">📧 이메일 문의</h3>
-            <p className="text-sm opacity-90">account@aurum.com</p>
+            <p className="text-sm opacity-90">account@aurum.nexus</p>
           </div>
           <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4 text-white">
             <h3 className="font-semibold mb-1">🕘 운영 시간</h3>

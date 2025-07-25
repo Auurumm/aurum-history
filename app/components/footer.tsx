@@ -105,9 +105,9 @@ export default function Footer() {
             <div className="w-full sm:w-1/2 lg:w-auto space-y-5">
               <h3 className="text-lg font-semibold">커뮤니티</h3>
               <ul className="space-y-3 text-base text-gray-600 dark:text-gray-400">
-                <li><Link href="#">알립니다</Link></li>
-                <li><Link href="#">언론보도</Link></li>
-                <li><Link href="#">보도자료</Link></li>
+                <li><Link href={getLocalizedPath("/announcements")}>알립니다</Link></li>
+                <li><Link href={getLocalizedPath("/trace")}>흔적들</Link></li>
+                <li><Link href={getLocalizedPath("/wonders")}>문의사항</Link></li>
               </ul>
             </div>
 

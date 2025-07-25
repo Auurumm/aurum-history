@@ -64,7 +64,7 @@ export default function MissionSection() {
 
           <div className="flex flex-col items-center mt-20">
             <div className="w-2 h-2 bg-white rounded-full"></div>
-            <div className="w-[1.5px] h-[1280px] bg-gradient-to-b from-white/70 to-black/70"></div>
+            <div className="w-[1.5px] h-[2560px] bg-gradient-to-b from-white/70 to-black/70"></div>
           </div>
         </div>
       </section>

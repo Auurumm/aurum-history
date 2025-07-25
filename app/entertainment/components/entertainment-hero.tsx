@@ -40,7 +40,7 @@ export default function EntertainmentHero() {
 
         <button
           onClick={() => {
-            const el = document.getElementById("brand-identity")
+            const el = document.getElementById("seasoning")
             if (el) {
               el.scrollIntoView({ behavior: "smooth" })
             }

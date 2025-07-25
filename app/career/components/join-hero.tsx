@@ -29,7 +29,7 @@ export default function JoinHero() {
             </motion.p>
 
 
-        <motion.div
+        {/* <motion.div
           className="mt-10"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -37,11 +37,13 @@ export default function JoinHero() {
         >
           <a
             href="#apply"
-            className="inline-block px-8 py-3 border border-black dark:border-white text-black dark:text-white rounded-full hover:bg-black hover:text-white dark:hover:bg-white dark:hover:text-black transition"
+            className="inline-block px-8 py-3 border border-yellow-400 bg-yellow-400 text-white rounded-full 
+                      hover:bg-yellow-500 hover:text-black transition"
           >
             함께하기
-          </a>
-        </motion.div>
+          </a> 
+
+        </motion.div>*/}
       </div>
     </section>
   )

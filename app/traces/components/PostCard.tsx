@@ -56,33 +56,50 @@ export default function PostCard({ post, onPostDeleted, onPostUpdated }: PostCar
   const [isEditing, setIsEditing] = useState(false);
   const [editContent, setEditContent] = useState(post.content);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isComposing, setIsComposing] = useState(false);
 
-  const isAuthor = currentUser && auth.currentUser && 
-    (post.authorId === auth.currentUser.uid || 
-     currentUser.uid === auth.currentUser.uid);
+  // 🔧 작성자 권한 체크 개선
+  const isAuthor = useCallback(() => {
+    console.log("🔍 권한 체크:", {
+      currentUser: currentUser?.uid,
+      authUser: auth.currentUser?.uid,
+      postAuthor: post.authorId,
+      isEqual: currentUser?.uid === post.authorId
+    });
+    
+    return currentUser && 
+           auth.currentUser && 
+           (post.authorId === auth.currentUser.uid);
+  }, [currentUser, post.authorId]);
 
   // 현재 사용자 정보 가져오기
   useEffect(() => {
-    if (auth.currentUser) {
-      const fetchUserData = async () => {
+    const fetchUserData = async () => {
+      if (auth.currentUser) {
         try {
-          const userDoc = await getDoc(doc(db, "users", auth.currentUser!.uid));
+          const userDoc = await getDoc(doc(db, "users", auth.currentUser.uid));
           const userData = userDoc.data();
           if (userData) {
-            setCurrentUser({
-              uid: auth.currentUser!.uid,
+            const user = {
+              uid: auth.currentUser.uid,
               name: userData.name,
               nickname: userData.nickname,
               role: userData.role,
-            });
+            };
+            setCurrentUser(user);
+            console.log("👤 사용자 정보 로드:", user);
           }
         } catch (error) {
           console.error("사용자 정보 가져오기 오류:", error);
         }
-      };
-      fetchUserData();
-    }
-  }, []);
+      } else {
+        setCurrentUser(null);
+        console.log("👤 로그인되지 않음");
+      }
+    };
+
+    fetchUserData();
+  }, [auth.currentUser?.uid]); // UID 변경 시에만 재실행
 
   // 좋아요 상태 확인
   useEffect(() => {
@@ -108,14 +125,26 @@ export default function PostCard({ post, onPostDeleted, onPostUpdated }: PostCar
     return () => unsubscribe();
   }, [post.id]);
 
-  // 🔧 댓글 입력 핸들러 - useCallback으로 최적화
-  const handleCommentChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    console.log("📝 댓글 입력 중:", value); // 디버깅용
-    setNewComment(value);
+  // 한글 입력 핸들러들
+  const handleCompositionStart = useCallback(() => {
+    setIsComposing(true);
   }, []);
 
-  // 좋아요 토글
+  const handleCompositionEnd = useCallback(() => {
+    setIsComposing(false);
+  }, []);
+
+  const handleCommentChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setNewComment(e.target.value);
+  }, []);
+
+  const handleKeyDown = useCallback((e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter' && !isComposing) {
+      e.preventDefault();
+      handleCommentSubmit(e as any);
+    }
+  }, [isComposing, newComment]);
+
   const handleLike = async () => {
     if (!auth.currentUser || !currentUser || currentUser.role !== "approved") {
       alert("승인된 사용자만 좋아요를 누를 수 있습니다.");
@@ -146,66 +175,96 @@ export default function PostCard({ post, onPostDeleted, onPostUpdated }: PostCar
     }
   };
 
-  // 댓글 작성
   const handleCommentSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!newComment.trim()) {
-      console.log("❌ 댓글 내용이 비어있음");
-      return;
-    }
+    if (isComposing || !newComment.trim()) return;
     
     if (!auth.currentUser || !currentUser || currentUser.role !== "approved") {
       alert("승인된 사용자만 댓글을 작성할 수 있습니다.");
       return;
     }
 
-    console.log("📤 댓글 작성 시작:", newComment);
     setIsSubmittingComment(true);
 
     try {
       const commentsRef = collection(db, "posts", post.id, "comments");
-      const commentData = {
+      await addDoc(commentsRef, {
         content: newComment.trim(),
         authorId: auth.currentUser.uid,
         authorName: currentUser.nickname || currentUser.name,
         createdAt: serverTimestamp(),
-      };
-      
-      console.log("💾 댓글 데이터:", commentData);
-      
-      await addDoc(commentsRef, commentData);
+      });
 
-      console.log("✅ 댓글 작성 성공");
-      setNewComment(""); // 입력 필드 초기화
+      setNewComment("");
     } catch (error) {
-      console.error("💥 댓글 작성 오류:", error);
+      console.error("댓글 작성 오류:", error);
       alert("댓글 작성 중 오류가 발생했습니다.");
     } finally {
       setIsSubmittingComment(false);
     }
   };
 
-  const handleEdit = async () => {
-    if (!auth.currentUser || !currentUser || !editContent.trim()) return;
+  // 🔧 수정 기능 개선
+  const handleEditClick = () => {
+    console.log("✏️ 수정 버튼 클릭");
+    setIsEditing(true);
+    setEditContent(post.content); // 현재 내용으로 초기화
+    setShowMenu(false);
+  };
+
+  const handleEditCancel = () => {
+    console.log("❌ 수정 취소");
+    setIsEditing(false);
+    setEditContent(post.content); // 원래 내용으로 되돌리기
+  };
+
+  const handleEditSave = async () => {
+    if (!auth.currentUser || !currentUser || !editContent.trim()) {
+      alert("내용을 입력해주세요.");
+      return;
+    }
+
+    if (!isAuthor()) {
+      alert("자신이 작성한 글만 수정할 수 있습니다.");
+      return;
+    }
+
+    console.log("💾 게시글 수정 시작:", {
+      postId: post.id,
+      newContent: editContent,
+      author: currentUser.uid
+    });
 
     try {
-      await updateDoc(doc(db, "posts", post.id), {
+      const postRef = doc(db, "posts", post.id);
+      await updateDoc(postRef, {
         content: editContent.trim(),
         updatedAt: serverTimestamp(),
       });
 
+      console.log("✅ 게시글 수정 완료");
       setIsEditing(false);
       setShowMenu(false);
+      
+      // 부모 컴포넌트에 수정 알림 (있는 경우)
       onPostUpdated?.();
+      
+      alert("게시글이 성공적으로 수정되었습니다.");
+
     } catch (error) {
-      console.error("게시글 수정 오류:", error);
+      console.error("💥 게시글 수정 오류:", error);
       alert("게시글 수정에 실패했습니다.");
     }
   };
 
   const handleDelete = async () => {
     if (!auth.currentUser || !currentUser) return;
+
+    if (!isAuthor()) {
+      alert("자신이 작성한 글만 삭제할 수 있습니다.");
+      return;
+    }
 
     const confirmed = confirm("정말로 이 게시글을 삭제하시겠습니까?");
     if (!confirmed) return;
@@ -215,6 +274,7 @@ export default function PostCard({ post, onPostDeleted, onPostUpdated }: PostCar
     try {
       await deleteDoc(doc(db, "posts", post.id));
       onPostDeleted?.();
+      alert("게시글이 삭제되었습니다.");
     } catch (error) {
       console.error("게시글 삭제 오류:", error);
       alert("게시글 삭제에 실패했습니다.");
@@ -223,6 +283,7 @@ export default function PostCard({ post, onPostDeleted, onPostUpdated }: PostCar
   };
 
   const canInteract = currentUser && currentUser.role === "approved";
+  const canEdit = isAuthor(); // 수정 권한 체크
 
   const handleCardClick = (e: React.MouseEvent) => {
     if ((e.target as HTMLElement).closest('button')) return;
@@ -261,11 +322,13 @@ export default function PostCard({ post, onPostDeleted, onPostUpdated }: PostCar
           <p className="text-sm text-gray-500 dark:text-gray-400">{post.date}</p>
         </div>
         
-        {isAuthor && (
+        {/* 🔧 수정/삭제 메뉴 - 권한 체크 개선 */}
+        {canEdit && (
           <div className="relative">
             <button
               onClick={(e) => {
                 e.stopPropagation();
+                console.log("🔧 메뉴 버튼 클릭");
                 setShowMenu(!showMenu);
               }}
               className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors"
@@ -283,8 +346,7 @@ export default function PostCard({ post, onPostDeleted, onPostUpdated }: PostCar
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
-                      setIsEditing(true);
-                      setShowMenu(false);
+                      handleEditClick();
                     }}
                     className="flex items-center gap-2 w-full px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
                   >
@@ -320,31 +382,36 @@ export default function PostCard({ post, onPostDeleted, onPostUpdated }: PostCar
         />
       )}
 
-      {/* 글 내용 */}
+      {/* 🔧 글 내용 - 수정 모드 개선 */}
       {isEditing ? (
-        <div className="mb-4">
+        <div className="mb-4" onClick={(e) => e.stopPropagation()}>
           <textarea
             value={editContent}
             onChange={(e) => setEditContent(e.target.value)}
-            className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white resize-none"
-            rows={4}
+            className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white resize-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent"
+            rows={6}
+            placeholder="수정할 내용을 입력하세요..."
+            maxLength={1000}
           />
-          <div className="flex gap-2 mt-2">
-            <button
-              onClick={handleEdit}
-              className="px-3 py-1 bg-yellow-400 hover:bg-yellow-500 text-black text-sm rounded-md"
-            >
-              저장
-            </button>
-            <button
-              onClick={() => {
-                setIsEditing(false);
-                setEditContent(post.content);
-              }}
-              className="px-3 py-1 bg-gray-300 hover:bg-gray-400 text-gray-700 text-sm rounded-md"
-            >
-              취소
-            </button>
+          <div className="flex justify-between items-center mt-2">
+            <span className="text-xs text-gray-500">
+              {editContent.length} / 1000
+            </span>
+            <div className="flex gap-2">
+              <button
+                onClick={handleEditCancel}
+                className="px-3 py-1 bg-gray-300 hover:bg-gray-400 text-gray-700 text-sm rounded-md transition-colors"
+              >
+                취소
+              </button>
+              <button
+                onClick={handleEditSave}
+                disabled={!editContent.trim() || editContent === post.content}
+                className="px-3 py-1 bg-yellow-400 hover:bg-yellow-500 disabled:bg-gray-300 disabled:cursor-not-allowed text-black text-sm rounded-md transition-colors"
+              >
+                저장
+              </button>
+            </div>
           </div>
         </div>
       ) : (
@@ -384,6 +451,15 @@ export default function PostCard({ post, onPostDeleted, onPostUpdated }: PostCar
           {comments.length}
         </button>
       </div>
+
+      {/* 🔧 디버깅 정보 (개발 환경에서만) */}
+      {process.env.NODE_ENV === 'development' && (
+        <div className="mt-2 p-2 bg-blue-50 dark:bg-blue-900/20 rounded text-xs">
+          <p>🔍 디버깅: 수정 권한 = {canEdit ? "✅" : "❌"}</p>
+          <p>현재 사용자: {currentUser?.uid || "없음"}</p>
+          <p>글 작성자: {post.authorId || "없음"}</p>
+        </div>
+      )}
     </div>
   );
 
@@ -489,7 +565,7 @@ export default function PostCard({ post, onPostDeleted, onPostUpdated }: PostCar
               )}
             </div>
 
-            {/* 🔧 개선된 댓글 작성 폼 */}
+            {/* 댓글 작성 폼 */}
             <div className="p-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
               {canInteract ? (
                 <form onSubmit={handleCommentSubmit} className="flex gap-2">
@@ -502,16 +578,19 @@ export default function PostCard({ post, onPostDeleted, onPostUpdated }: PostCar
                     <input
                       type="text"
                       value={newComment}
-                      onChange={handleCommentChange} // 🔧 useCallback으로 최적화된 핸들러 사용
+                      onChange={handleCommentChange}
+                      onCompositionStart={handleCompositionStart}
+                      onCompositionEnd={handleCompositionEnd}
+                      onKeyDown={handleKeyDown}
                       placeholder="댓글을 입력하세요..."
                       className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-yellow-400 focus:border-transparent text-sm"
                       disabled={isSubmittingComment}
-                      autoComplete="off" // 자동완성 비활성화
-                      maxLength={500} // 최대 길이 제한
+                      autoComplete="off"
+                      maxLength={500}
                     />
                     <button
                       type="submit"
-                      disabled={!newComment.trim() || isSubmittingComment}
+                      disabled={!newComment.trim() || isSubmittingComment || isComposing}
                       className="px-3 py-2 bg-yellow-400 hover:bg-yellow-500 disabled:bg-gray-300 disabled:cursor-not-allowed text-black rounded-md transition-colors flex items-center gap-1"
                     >
                       {isSubmittingComment ? (

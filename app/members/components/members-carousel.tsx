@@ -148,7 +148,7 @@ export default function MembersCarousel() {
   const visibleMembers = getVisibleMembers()
 
   return (
-    <section className="pt-2 pb-20 sm:px-6 lg:px-8 bg-white dark:bg-black relative overflow-hidden">
+    <section className="pt-2 pb-16 sm:px-6 lg:px-8 bg-white dark:bg-black relative overflow-hidden">
       {/* Background Pattern */}
       <div className="absolute inset-0 opacity-5">
         <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-yellow-400 rounded-full blur-3xl"></div>
@@ -289,7 +289,7 @@ export default function MembersCarousel() {
         </div>
 
         {/* Current Member Info */}
-        <div className="text-center mt-12">
+        <div className="text-center mt-16">
           <div className="inline-block px-6 py-3 bg-gray-900/50 rounded-full border border-gray-700">
             <span className="text-yellow-400 font-medium">
               {shuffledMembers[currentIndex].name} • {shuffledMembers[currentIndex].department} •{" "}

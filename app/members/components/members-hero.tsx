@@ -61,7 +61,7 @@ export default function MembersHero() {
         </div>
       </div>
 
-      {/* Scroll Indicator */}
+      {/* Scroll Indicator 
       <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 z-10">
         <button
           onClick={scrollToContent}
@@ -70,7 +70,7 @@ export default function MembersHero() {
           <span className="text-sm mb-2 opacity-90 font-medium">Scroll Down</span>
           <ChevronDown className="h-8 w-8 group-hover:scale-110 transition-transform" />
         </button>
-      </div>
+      </div>  */}
 
       {/* Gradient Overlay at Bottom */}
       <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-black/60 to-transparent z-5"></div>

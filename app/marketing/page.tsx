@@ -23,7 +23,7 @@ export default function MarketingPage() {
         </section>
 
         {/* Product Features */}
-        <section className="min-h-screen">
+        <section id="hexar" className="min-h-screen">
           <ProductFeature
             color="red"
             title="HEXar [헥사르, 115]"

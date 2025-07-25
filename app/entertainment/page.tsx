@@ -23,7 +23,7 @@ export default function EntertainmentPage() {
         </section>
 
         {/* ✅ Features */}
-        <section className="min-h-screen">
+        <section id="seasoning" className="min-h-screen">
           <EntertainmentFeature 
             color="red"
             title="시즈닝 [Seasoning]"
