@@ -5,7 +5,7 @@ import { auth, db } from "@/lib/firebase";
 import { collection, query, orderBy, onSnapshot, doc, getDoc } from "firebase/firestore";
 import { onAuthStateChanged } from "firebase/auth";
 import { PenSquare, Plus } from "lucide-react";
-import Header from "@/components/Header"; // 🔥 헤더 추가
+import Header from "../components/header"; // 🔥 헤더 추가
 import HeroSection from "./components/HeroSection";
 import PostCard from "./components/PostCard";
 import NewPostForm from "./components/NewPostForm";
@@ -14,10 +14,10 @@ interface Post {
   id: string;
   content: string;
   category: string;
-  authorId: string; // 🔥 required로 변경
+  authorId: string;
   authorName: string;
   authorEmail: string;
-  authorProfileImage?: string;
+  authorProfileImage?: string; // 🔥 작성자 프로필 이미지
   createdAt: any;
   likes: string[] | any[];
   likesCount: number;
@@ -145,7 +145,7 @@ export default function TracesPage() {
                 post={{
                   id: post.id,
                   username: post.authorName,
-                  userImage: post.authorProfileImage || "/images/default-avatar.png",
+                  userImage: post.authorProfileImage || "/images/default-avatar.png", // 🔥 실제 프로필 이미지
                   content: post.content,
                   category: post.category,
                   date: post.createdAt?.toDate ? 
@@ -154,14 +154,7 @@ export default function TracesPage() {
                   likes: Array.isArray(post.likes) ? post.likes : [],
                   likesCount: typeof post.likesCount === 'number' ? post.likesCount : 
                              (Array.isArray(post.likes) ? post.likes.length : 0),
-                  authorId: post.authorId, // 🔥 작성자 ID 전달
-                }}
-                onPostDeleted={() => {
-                  // 🔥 삭제 후 실시간 업데이트로 자동 반영됨
-                }}
-                onPostUpdated={() => {
-                  // 🔥 수정 후 실시간 업데이트로 자동 반영됨
-                }}
+                }} 
               />
             ))
           ) : (
