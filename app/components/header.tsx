@@ -160,7 +160,7 @@ export default function Header() {
     try {
       await signOut(auth);
       setUserMenuOpen(false);
-      router.push("/auth/login");
+      router.push("/auth"); // "/auth/login" → "/auth"로 변경
     } catch (error) {
       console.error("로그아웃 오류:", error);
     }
@@ -342,7 +342,7 @@ export default function Header() {
                   )}
                 </div>
               ) : (
-                <Link href="/auth/login">
+                <Link href="/auth"> {/* "/auth/login" → "/auth"로 변경 */}
                   <Button
                     variant="outline"
                     size="sm"
