@@ -13,9 +13,10 @@ import {
   orderBy, 
   onSnapshot,
   getDoc,
-  serverTimestamp 
+  serverTimestamp,
+  deleteDoc // 🔥 삭제 기능 추가
 } from "firebase/firestore";
-import { Heart, MessageCircle, Send, User, X, Maximize2 } from "lucide-react";
+import { Heart, MessageCircle, Send, User, X, Maximize2, Edit, Trash2, MoreHorizontal } from "lucide-react";
 
 interface Comment {
   id: string;
@@ -35,17 +36,31 @@ interface PostCardProps {
     date: string;
     likes?: string[];
     likesCount?: number;
+    authorId?: string; // 🔥 작성자 ID 추가
   };
+  onPostDeleted?: () => void; // 🔥 삭제 콜백 추가
+  onPostUpdated?: () => void; // 🔥 수정 콜백 추가
 }
 
-export default function PostCard({ post }: PostCardProps) {
+export default function PostCard({ post, onPostDeleted, onPostUpdated }: PostCardProps) {
   const [comments, setComments] = useState<Comment[]>([]);
   const [newComment, setNewComment] = useState("");
   const [isSubmittingComment, setIsSubmittingComment] = useState(false);
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [isLiked, setIsLiked] = useState(false);
   const [likesCount, setLikesCount] = useState(post.likesCount || 0);
-  const [isExpanded, setIsExpanded] = useState(false); // 🔥 모달 상태
+  const [isExpanded, setIsExpanded] = useState(false);
+  
+  // 🔥 수정/삭제 관련 상태
+  const [showMenu, setShowMenu] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editContent, setEditContent] = useState(post.content);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  // 🔥 작성자 권한 확인
+  const isAuthor = currentUser && auth.currentUser && 
+    (post.authorId === auth.currentUser.uid || 
+     currentUser.uid === auth.currentUser.uid);
 
   // 현재 사용자 정보 가져오기
   useEffect(() => {
@@ -151,6 +166,44 @@ export default function PostCard({ post }: PostCardProps) {
     }
   };
 
+  // 🔥 게시글 수정
+  const handleEdit = async () => {
+    if (!auth.currentUser || !currentUser || !editContent.trim()) return;
+
+    try {
+      await updateDoc(doc(db, "posts", post.id), {
+        content: editContent.trim(),
+        updatedAt: serverTimestamp(),
+      });
+
+      setIsEditing(false);
+      setShowMenu(false);
+      onPostUpdated?.(); // 부모 컴포넌트에 수정 알림
+    } catch (error) {
+      console.error("게시글 수정 오류:", error);
+      alert("게시글 수정에 실패했습니다.");
+    }
+  };
+
+  // 🔥 게시글 삭제
+  const handleDelete = async () => {
+    if (!auth.currentUser || !currentUser) return;
+
+    const confirmed = confirm("정말로 이 게시글을 삭제하시겠습니까?");
+    if (!confirmed) return;
+
+    setIsDeleting(true);
+
+    try {
+      await deleteDoc(doc(db, "posts", post.id));
+      onPostDeleted?.(); // 부모 컴포넌트에 삭제 알림
+    } catch (error) {
+      console.error("게시글 삭제 오류:", error);
+      alert("게시글 삭제에 실패했습니다.");
+      setIsDeleting(false);
+    }
+  };
+
   const canInteract = currentUser && currentUser.role === "approved";
 
   // 🔥 카드 클릭 시 모달 열기
@@ -192,18 +245,88 @@ export default function PostCard({ post }: PostCardProps) {
           </div>
           <p className="text-sm text-gray-500 dark:text-gray-400">{post.date}</p>
         </div>
+        
+        {/* 🔥 작성자 메뉴 (수정/삭제) */}
+        {isAuthor && (
+          <div className="relative">
+            <button
+              onClick={() => setShowMenu(!showMenu)}
+              className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors"
+            >
+              <MoreHorizontal className="h-4 w-4 text-gray-500" />
+            </button>
+            
+            {showMenu && (
+              <>
+                <div 
+                  className="fixed inset-0 z-10" 
+                  onClick={() => setShowMenu(false)}
+                ></div>
+                <div className="absolute right-0 mt-2 w-32 bg-white dark:bg-gray-800 rounded-md shadow-lg border border-gray-200 dark:border-gray-700 z-20">
+                  <button
+                    onClick={() => {
+                      setIsEditing(true);
+                      setShowMenu(false);
+                    }}
+                    className="flex items-center gap-2 w-full px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                  >
+                    <Edit className="h-3 w-3" />
+                    수정
+                  </button>
+                  <button
+                    onClick={handleDelete}
+                    disabled={isDeleting}
+                    className="flex items-center gap-2 w-full px-3 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-700"
+                  >
+                    <Trash2 className="h-3 w-3" />
+                    {isDeleting ? "삭제 중..." : "삭제"}
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        )}
+        
         <Maximize2 className="h-4 w-4 text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" />
       </div>
 
-      {/* 글 내용 (3줄까지만 표시) */}
-      <div className="text-gray-800 dark:text-gray-100 mb-4 whitespace-pre-wrap leading-relaxed overflow-hidden" 
-           style={{
-             display: '-webkit-box',
-             WebkitLineClamp: 3,
-             WebkitBoxOrient: 'vertical',
-           }}>
-        {post.content}
-      </div>
+      {/* 글 내용 (수정 모드 지원) */}
+      {isEditing ? (
+        <div className="mb-4">
+          <textarea
+            value={editContent}
+            onChange={(e) => setEditContent(e.target.value)}
+            className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white resize-none"
+            rows={4}
+          />
+          <div className="flex gap-2 mt-2">
+            <button
+              onClick={handleEdit}
+              className="px-3 py-1 bg-yellow-400 hover:bg-yellow-500 text-black text-sm rounded-md"
+            >
+              저장
+            </button>
+            <button
+              onClick={() => {
+                setIsEditing(false);
+                setEditContent(post.content);
+              }}
+              className="px-3 py-1 bg-gray-300 hover:bg-gray-400 text-gray-700 text-sm rounded-md"
+            >
+              취소
+            </button>
+          </div>
+        </div>
+      ) : (
+        <div className="text-gray-800 dark:text-gray-100 mb-4 whitespace-pre-wrap leading-relaxed overflow-hidden" 
+             style={{
+               display: '-webkit-box',
+               WebkitLineClamp: 3,
+               WebkitBoxOrient: 'vertical',
+             }}>
+          {post.content}
+        </div>
+      )}
 
       {/* 좋아요/댓글 버튼 */}
       <div className="flex items-center gap-4 text-sm pt-3 border-t border-gray-200 dark:border-gray-700">

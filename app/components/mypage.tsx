@@ -21,12 +21,23 @@ import {
   Edit3
 } from "lucide-react";
 
+// 🔥 안전한 헬퍼 함수들
+const safeString = (value: string | undefined | null): string => {
+  return value || "";
+};
+
+const safeFirstChar = (value: string | undefined | null): string => {
+  const str = safeString(value);
+  return str.length > 0 ? str[0].toUpperCase() : "?";
+};
+
+// 🔥 타입 안전한 인터페이스
 interface UserData {
   uid: string;
   email: string;
   name: string;
-  nickname: string;
-  phone: string;
+  nickname: string; // 🔥 required로 변경 (빈 문자열로 초기화)
+  phone: string; // 🔥 required로 변경 (빈 문자열로 초기화)
   profileImage?: string;
   role: string;
   createdAt: any;
@@ -38,16 +49,16 @@ export default function MyPage() {
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
   
-  // 편집 필드들
-  const [nickname, setNickname] = useState("");
-  const [phone, setPhone] = useState("");
-  const [newPassword, setNewPassword] = useState("");
-  const [passwordConfirm, setPasswordConfirm] = useState("");
+  // 편집 필드들 - 명시적 타입 지정
+  const [nickname, setNickname] = useState<string>("");
+  const [phone, setPhone] = useState<string>("");
+  const [newPassword, setNewPassword] = useState<string>("");
+  const [passwordConfirm, setPasswordConfirm] = useState<string>("");
   const [profileImage, setProfileImage] = useState<File | null>(null);
   const [profilePreview, setProfilePreview] = useState<string>("");
   
-  const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
+  const [error, setError] = useState<string>("");
+  const [success, setSuccess] = useState<string>("");
   
   const fileInputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
@@ -64,14 +75,16 @@ export default function MyPage() {
         const userDoc = await getDoc(doc(db, "users", auth.currentUser.uid));
         if (userDoc.exists()) {
           const data = userDoc.data();
+          
+          // 🔥 안전한 데이터 변환
           const user: UserData = {
             uid: auth.currentUser.uid,
-            email: data.email,
-            name: data.name,
-            nickname: data.nickname,
-            phone: data.phone,
+            email: safeString(data.email),
+            name: safeString(data.name),
+            nickname: safeString(data.nickname), // 🔥 항상 string으로 변환
+            phone: safeString(data.phone), // 🔥 항상 string으로 변환
             profileImage: data.profileImage,
-            role: data.role,
+            role: safeString(data.role),
             createdAt: data.createdAt,
           };
           
@@ -124,9 +137,19 @@ export default function MyPage() {
     setSaving(true);
 
     try {
+      // 🔥 단계별 진행 상황 표시
+      setSuccess("유효성 검사 중...");
+
       // 닉네임 유효성 검사
-      if (nickname.length < 2 || nickname.length > 10) {
+      if (!nickname || nickname.trim().length < 2 || nickname.trim().length > 10) {
         setError("닉네임은 2-10자 사이여야 합니다.");
+        setSaving(false);
+        return;
+      }
+
+      // 닉네임 특수문자 검사
+      if (!/^[a-zA-Z0-9가-힣_]+$/.test(nickname.trim())) {
+        setError("닉네임은 한글, 영문, 숫자, 언더바(_)만 사용 가능합니다.");
         setSaving(false);
         return;
       }
@@ -144,18 +167,28 @@ export default function MyPage() {
         return;
       }
 
-      // 프로필 이미지 업로드
+      // 🔥 프로필 이미지 업로드
       let profileImageURL = userData.profileImage;
       if (profileImage) {
-        const imageRef = ref(storage, `profiles/${userData.uid}/${Date.now()}_${profileImage.name}`);
-        const snapshot = await uploadBytes(imageRef, profileImage);
-        profileImageURL = await getDownloadURL(snapshot.ref);
+        setSuccess("프로필 이미지 업로드 중...");
+        try {
+          const imageRef = ref(storage, `profiles/${userData.uid}/${Date.now()}_${profileImage.name}`);
+          const snapshot = await uploadBytes(imageRef, profileImage);
+          profileImageURL = await getDownloadURL(snapshot.ref);
+        } catch (imageError) {
+          console.error("이미지 업로드 오류:", imageError);
+          setError("프로필 이미지 업로드에 실패했습니다. 다시 시도해주세요.");
+          setSaving(false);
+          return;
+        }
       }
 
-      // Firestore 업데이트
+      // 🔥 Firestore 업데이트
+      setSuccess("프로필 정보 저장 중...");
       const updateData: any = {
-        nickname,
-        phone,
+        nickname: nickname.trim(),
+        phone: phone.trim(),
+        updatedAt: new Date(), // 🔥 수정 시간 추가
       };
 
       if (profileImageURL) {
@@ -164,28 +197,57 @@ export default function MyPage() {
 
       await updateDoc(doc(db, "users", userData.uid), updateData);
 
-      // 비밀번호 변경
+      // 🔥 비밀번호 변경
       if (newPassword) {
-        await updatePassword(auth.currentUser, newPassword);
+        setSuccess("비밀번호 변경 중...");
+        try {
+          await updatePassword(auth.currentUser, newPassword);
+        } catch (passwordError: any) {
+          console.error("비밀번호 변경 오류:", passwordError);
+          // 비밀번호 변경 실패해도 다른 정보는 저장됨을 알림
+          setError("프로필 정보는 저장되었지만 비밀번호 변경에 실패했습니다: " + passwordError.message);
+          setSaving(false);
+          return;
+        }
       }
 
-      // 상태 업데이트
-      setUserData(prev => prev ? {
-        ...prev,
-        nickname,
-        phone,
+      // 🔥 로컬 상태 업데이트 (실시간 반영)
+      const updatedUserData = {
+        ...userData,
+        nickname: nickname.trim(),
+        phone: phone.trim(),
         profileImage: profileImageURL,
-      } : null);
+      };
+      
+      setUserData(updatedUserData);
 
-      setSuccess("프로필이 성공적으로 업데이트되었습니다!");
+      // 🔥 성공 메시지
+      setSuccess("✅ 프로필이 성공적으로 업데이트되었습니다!");
       setEditing(false);
       setNewPassword("");
       setPasswordConfirm("");
       setProfileImage(null);
 
+      // 🔥 3초 후 성공 메시지 자동 제거
+      setTimeout(() => {
+        setSuccess("");
+      }, 3000);
+
     } catch (error: any) {
       console.error("프로필 업데이트 오류:", error);
-      setError(error.message || "프로필 업데이트에 실패했습니다.");
+      
+      // 🔥 상세한 에러 메시지
+      let errorMessage = "프로필 업데이트에 실패했습니다.";
+      
+      if (error.code === 'auth/requires-recent-login') {
+        errorMessage = "보안을 위해 다시 로그인해주세요.";
+      } else if (error.code === 'permission-denied') {
+        errorMessage = "권한이 없습니다. 관리자에게 문의하세요.";
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
+      setError(errorMessage);
     } finally {
       setSaving(false);
     }
@@ -259,7 +321,7 @@ export default function MyPage() {
                     />
                   ) : (
                     <div className="w-full h-full bg-yellow-400 flex items-center justify-center text-black font-bold text-4xl">
-                      {userData.nickname[0].toUpperCase()}
+                      {safeFirstChar(userData.nickname || userData.name)}
                     </div>
                   )}
                 </div>
@@ -283,7 +345,7 @@ export default function MyPage() {
 
               {/* 기본 정보 */}
               <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-1">
-                {userData.nickname}
+                {userData.nickname || userData.name || "사용자"}
               </h2>
               <p className="text-gray-600 dark:text-gray-400 mb-2">{userData.name}</p>
               
@@ -397,7 +459,9 @@ export default function MyPage() {
                         placeholder="닉네임"
                       />
                     ) : (
-                      <span className="text-gray-900 dark:text-white">{userData.nickname}</span>
+                      <span className="text-gray-900 dark:text-white">
+                        {userData.nickname || "닉네임 없음"}
+                      </span>
                     )}
                   </div>
                 </div>
@@ -418,7 +482,9 @@ export default function MyPage() {
                         placeholder="휴대폰 번호"
                       />
                     ) : (
-                      <span className="text-gray-900 dark:text-white">{userData.phone}</span>
+                      <span className="text-gray-900 dark:text-white">
+                        {userData.phone || "정보 없음"}
+                      </span>
                     )}
                   </div>
                 </div>

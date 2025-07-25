@@ -15,7 +15,7 @@ import { doc, getDoc } from "firebase/firestore"
 interface UserData {
   uid: string;
   name: string;
-  nickname: string;
+  nickname?: string; // 🔥 optional로 변경
   email: string;
   profileImage?: string;
   role: string;
@@ -278,18 +278,20 @@ export default function Header() {
                       {user.profileImage ? (
                         <img 
                           src={user.profileImage} 
-                          alt={`${user.nickname} 프로필`}
+                          alt={`${user.nickname || user.name} 프로필`}
                           className="w-full h-full object-cover"
                         />
                       ) : (
                         <div className="w-full h-full bg-yellow-400 flex items-center justify-center text-black font-bold text-sm">
-                          {user.nickname[0].toUpperCase()}
+                          {/* 🔥 안전한 닉네임/이름 처리 */}
+                          {(user.nickname || user.name || "?")[0].toUpperCase()}
                         </div>
                       )}
                     </div>
                     <div className="hidden md:block text-left">
                       <div className="text-sm font-medium text-gray-900 dark:text-white">
-                        {user.nickname}
+                        {/* 🔥 안전한 닉네임 표시 */}
+                        {user.nickname || user.name || "사용자"}
                       </div>
                       <div className="text-xs text-gray-500 dark:text-gray-400">
                         {user.role === "approved" ? "승인됨" : "승인 대기"}
@@ -377,13 +379,15 @@ export default function Header() {
                         />
                       ) : (
                         <div className="w-full h-full bg-yellow-400 flex items-center justify-center text-black font-bold">
-                          {user.nickname[0].toUpperCase()}
+                          {/* 🔥 안전한 닉네임/이름 처리 */}
+                          {(user.nickname || user.name || "?")[0].toUpperCase()}
                         </div>
                       )}
                     </div>
                     <div>
                       <div className="font-medium text-gray-900 dark:text-white">
-                        {user.nickname}
+                        {/* 🔥 안전한 닉네임 표시 */}
+                        {user.nickname || user.name || "사용자"}
                       </div>
                       <div className="text-sm text-gray-500 dark:text-gray-400">
                         {user.role === "approved" ? "승인됨" : "승인 대기"}
