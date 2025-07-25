@@ -18,6 +18,7 @@ interface Post {
   authorName: string;
   authorEmail: string;
   authorProfileImage?: string; // 🔥 작성자 프로필 이미지
+  imageUrl?: string; // 🔥 게시글 이미지 URL 추가
   createdAt: any;
   likes: string[] | any[];
   likesCount: number;
@@ -154,6 +155,8 @@ export default function TracesPage() {
                   likes: Array.isArray(post.likes) ? post.likes : [],
                   likesCount: typeof post.likesCount === 'number' ? post.likesCount : 
                              (Array.isArray(post.likes) ? post.likes.length : 0),
+                  authorId: post.authorId, // 🔥 작성자 ID 추가
+                  imageUrl: post.imageUrl, // 🔥 게시글 이미지 URL 추가 (이 부분이 빠져있었음!)
                 }} 
               />
             ))

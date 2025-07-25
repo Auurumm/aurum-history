@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { auth, db } from "@/lib/firebase";
 import { 
   doc, 
@@ -14,7 +14,7 @@ import {
   onSnapshot,
   getDoc,
   serverTimestamp,
-  deleteDoc // 🔥 삭제 기능 추가
+  deleteDoc
 } from "firebase/firestore";
 import { Heart, MessageCircle, Send, User, X, Maximize2, Edit, Trash2, MoreHorizontal } from "lucide-react";
 
@@ -30,16 +30,17 @@ interface PostCardProps {
   post: {
     id: string;
     username: string;
-    userImage?: string; // 🔥 프로필 이미지 URL
+    userImage?: string;
     content: string;
     category?: string;
     date: string;
     likes?: string[];
     likesCount?: number;
-    authorId?: string; // 🔥 작성자 ID 추가
+    authorId?: string;
+    imageUrl?: string;
   };
-  onPostDeleted?: () => void; // 🔥 삭제 콜백 추가
-  onPostUpdated?: () => void; // 🔥 수정 콜백 추가
+  onPostDeleted?: () => void;
+  onPostUpdated?: () => void;
 }
 
 export default function PostCard({ post, onPostDeleted, onPostUpdated }: PostCardProps) {
@@ -51,13 +52,11 @@ export default function PostCard({ post, onPostDeleted, onPostUpdated }: PostCar
   const [likesCount, setLikesCount] = useState(post.likesCount || 0);
   const [isExpanded, setIsExpanded] = useState(false);
   
-  // 🔥 수정/삭제 관련 상태
   const [showMenu, setShowMenu] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editContent, setEditContent] = useState(post.content);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  // 🔥 작성자 권한 확인
   const isAuthor = currentUser && auth.currentUser && 
     (post.authorId === auth.currentUser.uid || 
      currentUser.uid === auth.currentUser.uid);
@@ -66,15 +65,19 @@ export default function PostCard({ post, onPostDeleted, onPostUpdated }: PostCar
   useEffect(() => {
     if (auth.currentUser) {
       const fetchUserData = async () => {
-        const userDoc = await getDoc(doc(db, "users", auth.currentUser!.uid));
-        const userData = userDoc.data();
-        if (userData) {
-          setCurrentUser({
-            uid: auth.currentUser!.uid,
-            name: userData.name,
-            nickname: userData.nickname,
-            role: userData.role,
-          });
+        try {
+          const userDoc = await getDoc(doc(db, "users", auth.currentUser!.uid));
+          const userData = userDoc.data();
+          if (userData) {
+            setCurrentUser({
+              uid: auth.currentUser!.uid,
+              name: userData.name,
+              nickname: userData.nickname,
+              role: userData.role,
+            });
+          }
+        } catch (error) {
+          console.error("사용자 정보 가져오기 오류:", error);
         }
       };
       fetchUserData();
@@ -104,6 +107,13 @@ export default function PostCard({ post, onPostDeleted, onPostUpdated }: PostCar
 
     return () => unsubscribe();
   }, [post.id]);
+
+  // 🔧 댓글 입력 핸들러 - useCallback으로 최적화
+  const handleCommentChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    console.log("📝 댓글 입력 중:", value); // 디버깅용
+    setNewComment(value);
+  }, []);
 
   // 좋아요 토글
   const handleLike = async () => {
@@ -140,33 +150,42 @@ export default function PostCard({ post, onPostDeleted, onPostUpdated }: PostCar
   const handleCommentSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!newComment.trim()) return;
+    if (!newComment.trim()) {
+      console.log("❌ 댓글 내용이 비어있음");
+      return;
+    }
+    
     if (!auth.currentUser || !currentUser || currentUser.role !== "approved") {
       alert("승인된 사용자만 댓글을 작성할 수 있습니다.");
       return;
     }
 
+    console.log("📤 댓글 작성 시작:", newComment);
     setIsSubmittingComment(true);
 
     try {
       const commentsRef = collection(db, "posts", post.id, "comments");
-      await addDoc(commentsRef, {
+      const commentData = {
         content: newComment.trim(),
         authorId: auth.currentUser.uid,
         authorName: currentUser.nickname || currentUser.name,
         createdAt: serverTimestamp(),
-      });
+      };
+      
+      console.log("💾 댓글 데이터:", commentData);
+      
+      await addDoc(commentsRef, commentData);
 
-      setNewComment("");
+      console.log("✅ 댓글 작성 성공");
+      setNewComment(""); // 입력 필드 초기화
     } catch (error) {
-      console.error("댓글 작성 오류:", error);
+      console.error("💥 댓글 작성 오류:", error);
       alert("댓글 작성 중 오류가 발생했습니다.");
     } finally {
       setIsSubmittingComment(false);
     }
   };
 
-  // 🔥 게시글 수정
   const handleEdit = async () => {
     if (!auth.currentUser || !currentUser || !editContent.trim()) return;
 
@@ -178,14 +197,13 @@ export default function PostCard({ post, onPostDeleted, onPostUpdated }: PostCar
 
       setIsEditing(false);
       setShowMenu(false);
-      onPostUpdated?.(); // 부모 컴포넌트에 수정 알림
+      onPostUpdated?.();
     } catch (error) {
       console.error("게시글 수정 오류:", error);
       alert("게시글 수정에 실패했습니다.");
     }
   };
 
-  // 🔥 게시글 삭제
   const handleDelete = async () => {
     if (!auth.currentUser || !currentUser) return;
 
@@ -196,7 +214,7 @@ export default function PostCard({ post, onPostDeleted, onPostUpdated }: PostCar
 
     try {
       await deleteDoc(doc(db, "posts", post.id));
-      onPostDeleted?.(); // 부모 컴포넌트에 삭제 알림
+      onPostDeleted?.();
     } catch (error) {
       console.error("게시글 삭제 오류:", error);
       alert("게시글 삭제에 실패했습니다.");
@@ -206,14 +224,11 @@ export default function PostCard({ post, onPostDeleted, onPostUpdated }: PostCar
 
   const canInteract = currentUser && currentUser.role === "approved";
 
-  // 🔥 카드 클릭 시 모달 열기
   const handleCardClick = (e: React.MouseEvent) => {
-    // 버튼 클릭은 모달 열지 않음
     if ((e.target as HTMLElement).closest('button')) return;
     setIsExpanded(true);
   };
 
-  // 🔥 컴팩트 카드 컴포넌트 (기본 상태)
   const CompactCard = () => (
     <div 
       onClick={handleCardClick}
@@ -246,11 +261,13 @@ export default function PostCard({ post, onPostDeleted, onPostUpdated }: PostCar
           <p className="text-sm text-gray-500 dark:text-gray-400">{post.date}</p>
         </div>
         
-        {/* 🔥 작성자 메뉴 (수정/삭제) */}
         {isAuthor && (
           <div className="relative">
             <button
-              onClick={() => setShowMenu(!showMenu)}
+              onClick={(e) => {
+                e.stopPropagation();
+                setShowMenu(!showMenu);
+              }}
               className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors"
             >
               <MoreHorizontal className="h-4 w-4 text-gray-500" />
@@ -264,7 +281,8 @@ export default function PostCard({ post, onPostDeleted, onPostUpdated }: PostCar
                 ></div>
                 <div className="absolute right-0 mt-2 w-32 bg-white dark:bg-gray-800 rounded-md shadow-lg border border-gray-200 dark:border-gray-700 z-20">
                   <button
-                    onClick={() => {
+                    onClick={(e) => {
+                      e.stopPropagation();
                       setIsEditing(true);
                       setShowMenu(false);
                     }}
@@ -274,7 +292,10 @@ export default function PostCard({ post, onPostDeleted, onPostUpdated }: PostCar
                     수정
                   </button>
                   <button
-                    onClick={handleDelete}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDelete();
+                    }}
                     disabled={isDeleting}
                     className="flex items-center gap-2 w-full px-3 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-700"
                   >
@@ -290,7 +311,16 @@ export default function PostCard({ post, onPostDeleted, onPostUpdated }: PostCar
         <Maximize2 className="h-4 w-4 text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" />
       </div>
 
-      {/* 글 내용 (수정 모드 지원) */}
+      {/* 이미지 표시 */}
+      {post.imageUrl && (
+        <img
+          src={post.imageUrl}
+          alt="게시글 이미지"
+          className="w-full max-h-96 object-cover rounded-lg mb-4"
+        />
+      )}
+
+      {/* 글 내용 */}
       {isEditing ? (
         <div className="mb-4">
           <textarea
@@ -331,7 +361,10 @@ export default function PostCard({ post, onPostDeleted, onPostUpdated }: PostCar
       {/* 좋아요/댓글 버튼 */}
       <div className="flex items-center gap-4 text-sm pt-3 border-t border-gray-200 dark:border-gray-700">
         <button 
-          onClick={handleLike}
+          onClick={(e) => {
+            e.stopPropagation();
+            handleLike();
+          }}
           disabled={!canInteract}
           className={`flex items-center gap-1 transition-colors ${
             isLiked 
@@ -343,7 +376,10 @@ export default function PostCard({ post, onPostDeleted, onPostUpdated }: PostCar
           {likesCount}
         </button>
         
-        <button className="flex items-center gap-1 text-gray-500 dark:text-gray-400 hover:text-blue-500 dark:hover:text-blue-400 transition-colors">
+        <button 
+          onClick={(e) => e.stopPropagation()}
+          className="flex items-center gap-1 text-gray-500 dark:text-gray-400 hover:text-blue-500 dark:hover:text-blue-400 transition-colors"
+        >
           <MessageCircle className="h-4 w-4" />
           {comments.length}
         </button>
@@ -351,11 +387,9 @@ export default function PostCard({ post, onPostDeleted, onPostUpdated }: PostCar
     </div>
   );
 
-  // 🔥 확장 모달 컴포넌트
   const ExpandedModal = () => (
     <div className="fixed inset-0 bg-black/50 dark:bg-black/70 flex items-center justify-center z-50 p-4">
       <div className="bg-white dark:bg-gray-900 rounded-xl shadow-xl w-full max-w-4xl max-h-[90vh] overflow-hidden border border-gray-200 dark:border-gray-700">
-        {/* 모달 헤더 */}
         <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
           <h2 className="text-lg font-bold text-gray-900 dark:text-white">게시글 상세</h2>
           <button
@@ -367,9 +401,7 @@ export default function PostCard({ post, onPostDeleted, onPostUpdated }: PostCar
         </div>
 
         <div className="flex h-[calc(90vh-120px)]">
-          {/* 왼쪽: 게시글 내용 */}
           <div className="flex-1 p-6 overflow-y-auto">
-            {/* 작성자 정보 */}
             <div className="flex items-center gap-3 mb-6">
               <div className="w-12 h-12 bg-yellow-400 rounded-full flex items-center justify-center text-black font-bold">
                 {post.username ? post.username[0].toUpperCase() : "?"}
@@ -387,12 +419,18 @@ export default function PostCard({ post, onPostDeleted, onPostUpdated }: PostCar
               </div>
             </div>
 
-            {/* 글 내용 (전체 표시) */}
+            {post.imageUrl && (
+              <img
+                src={post.imageUrl}
+                alt="게시글 이미지"
+                className="w-full max-h-[400px] object-cover rounded-lg mb-6"
+              />
+            )}
+
             <div className="text-gray-800 dark:text-gray-100 mb-6 whitespace-pre-wrap leading-relaxed text-lg">
               {post.content}
             </div>
 
-            {/* 좋아요 버튼 */}
             <div className="flex items-center gap-4 pt-4 border-t border-gray-200 dark:border-gray-700">
               <button 
                 onClick={handleLike}
@@ -409,16 +447,14 @@ export default function PostCard({ post, onPostDeleted, onPostUpdated }: PostCar
             </div>
           </div>
 
-          {/* 오른쪽: 댓글 섹션 */}
+          {/* 댓글 섹션 */}
           <div className="w-96 border-l border-gray-200 dark:border-gray-700 flex flex-col">
-            {/* 댓글 헤더 */}
             <div className="p-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
               <h3 className="font-semibold text-gray-900 dark:text-white">
                 댓글 {comments.length}개
               </h3>
             </div>
 
-            {/* 댓글 목록 */}
             <div className="flex-1 overflow-y-auto p-4 space-y-4">
               {comments.length > 0 ? (
                 comments.map((comment) => (
@@ -453,7 +489,7 @@ export default function PostCard({ post, onPostDeleted, onPostUpdated }: PostCar
               )}
             </div>
 
-            {/* 댓글 작성 폼 */}
+            {/* 🔧 개선된 댓글 작성 폼 */}
             <div className="p-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
               {canInteract ? (
                 <form onSubmit={handleCommentSubmit} className="flex gap-2">
@@ -466,10 +502,12 @@ export default function PostCard({ post, onPostDeleted, onPostUpdated }: PostCar
                     <input
                       type="text"
                       value={newComment}
-                      onChange={(e) => setNewComment(e.target.value)}
+                      onChange={handleCommentChange} // 🔧 useCallback으로 최적화된 핸들러 사용
                       placeholder="댓글을 입력하세요..."
                       className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-yellow-400 focus:border-transparent text-sm"
                       disabled={isSubmittingComment}
+                      autoComplete="off" // 자동완성 비활성화
+                      maxLength={500} // 최대 길이 제한
                     />
                     <button
                       type="submit"

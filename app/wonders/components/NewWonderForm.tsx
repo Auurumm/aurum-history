@@ -1,14 +1,21 @@
 "use client";
 
-import { useState } from "react";
-import { db } from "@/lib/firebase";
+import { useState, useRef } from "react";
+import { db, storage } from "@/lib/firebase";
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
-import { X, Send, AlertCircle, User, Building, Mail, Phone, Lock, Eye, EyeOff } from "lucide-react";
+import { ref, uploadBytes, getDownloadURL, deleteObject } from "firebase/storage";
+import { X, Send, AlertCircle, User, Building, Mail, Phone, Lock, Eye, EyeOff, Upload, Image as ImageIcon, Trash2 } from "lucide-react";
 
 interface NewWonderFormProps {
   isOpen: boolean;
   onClose: () => void;
   onWonderCreated: () => void;
+}
+
+interface UploadedImage {
+  file: File;
+  url: string;
+  id: string;
 }
 
 export default function NewWonderForm({ isOpen, onClose, onWonderCreated }: NewWonderFormProps) {
@@ -23,9 +30,12 @@ export default function NewWonderForm({ isOpen, onClose, onWonderCreated }: NewW
     isPublic: true,
     password: "",
   });
+  const [uploadedImages, setUploadedImages] = useState<UploadedImage[]>([]);
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const categories = [
     "일반문의",
@@ -42,12 +52,84 @@ export default function NewWonderForm({ isOpen, onClose, onWonderCreated }: NewW
       [field]: value
     }));
     
-    // 공개로 변경 시 비밀번호 초기화
     if (field === "isPublic" && value === true) {
       setFormData(prev => ({
         ...prev,
         password: ""
       }));
+    }
+  };
+
+  // 이미지 업로드 처리
+  const handleImageUpload = async (files: FileList) => {
+    if (!files || files.length === 0) return;
+
+    // 최대 5개 이미지 제한
+    if (uploadedImages.length + files.length > 5) {
+      setError("이미지는 최대 5개까지 업로드할 수 있습니다.");
+      return;
+    }
+
+    setIsUploadingImage(true);
+    setError("");
+
+    try {
+      const uploadPromises = Array.from(files).map(async (file) => {
+        // 파일 크기 검증 (5MB 제한)
+        if (file.size > 5 * 1024 * 1024) {
+          throw new Error(`${file.name}은(는) 5MB를 초과합니다.`);
+        }
+
+        // 파일 타입 검증
+        if (!file.type.startsWith('image/')) {
+          throw new Error(`${file.name}은(는) 이미지 파일이 아닙니다.`);
+        }
+
+        // 고유한 파일명 생성
+        const timestamp = Date.now();
+        const randomId = Math.random().toString(36).substring(2, 15);
+        const fileExtension = file.name.split('.').pop();
+        const fileName = `wonder-images/${timestamp}-${randomId}.${fileExtension}`;
+
+        // Firebase Storage에 업로드
+        const storageRef = ref(storage, fileName);
+        const snapshot = await uploadBytes(storageRef, file);
+        const downloadURL = await getDownloadURL(snapshot.ref);
+
+        return {
+          file,
+          url: downloadURL,
+          id: fileName,
+        };
+      });
+
+      const newImages = await Promise.all(uploadPromises);
+      setUploadedImages(prev => [...prev, ...newImages]);
+
+    } catch (error: any) {
+      console.error("이미지 업로드 오류:", error);
+      setError(error.message || "이미지 업로드 중 오류가 발생했습니다.");
+    } finally {
+      setIsUploadingImage(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+    }
+  };
+
+  // 이미지 삭제
+  const handleImageDelete = async (imageId: string) => {
+    try {
+      // Firebase Storage에서 삭제
+      const storageRef = ref(storage, imageId);
+      await deleteObject(storageRef);
+
+      // 상태에서 제거
+      setUploadedImages(prev => prev.filter(img => img.id !== imageId));
+    } catch (error) {
+      console.error("이미지 삭제 오류:", error);
+      // Storage에서 삭제 실패해도 UI에서는 제거
+      setUploadedImages(prev => prev.filter(img => img.id !== imageId));
     }
   };
 
@@ -68,18 +150,15 @@ export default function NewWonderForm({ isOpen, onClose, onWonderCreated }: NewW
       setError("이메일을 입력해주세요.");
       return false;
     }
-    // 이메일 형식 검증
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(formData.authorEmail)) {
       setError("올바른 이메일 형식을 입력해주세요.");
       return false;
     }
-    // 비공개 문의 시 비밀번호 필수
     if (!formData.isPublic && !formData.password.trim()) {
       setError("비공개 문의의 경우 비밀번호를 설정해주세요.");
       return false;
     }
-    // 비밀번호 길이 검증
     if (!formData.isPublic && formData.password.length < 4) {
       setError("비밀번호는 최소 4자 이상이어야 합니다.");
       return false;
@@ -90,26 +169,16 @@ export default function NewWonderForm({ isOpen, onClose, onWonderCreated }: NewW
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    console.log("🚀 폼 제출 시작");
-    console.log("📝 폼 데이터:", formData);
-    
-    if (!validateForm()) {
-      console.log("❌ 폼 검증 실패");
-      return;
-    }
+    if (!validateForm()) return;
 
     setIsSubmitting(true);
     setError("");
 
     try {
-      // Firebase 연결 확인
-      console.log("🔥 Firebase db 객체:", db);
-      
       if (!db) {
         throw new Error("Firebase 초기화되지 않음");
       }
 
-      // 저장할 데이터 준비
       const wonderData: any = {
         title: formData.title.trim(),
         content: formData.content.trim(),
@@ -122,21 +191,18 @@ export default function NewWonderForm({ isOpen, onClose, onWonderCreated }: NewW
         status: "pending",
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
+        images: uploadedImages.map(img => ({
+          url: img.url,
+          fileName: img.file.name,
+          storageId: img.id,
+        })), // 업로드된 이미지 정보 저장
       };
 
-      // 비공개 문의의 경우 비밀번호 추가
       if (!formData.isPublic) {
         wonderData.password = formData.password.trim();
       }
 
-      console.log("💾 저장할 데이터:", wonderData);
-
-      // Firestore 컬렉션 참조 생성
       const wondersCollection = collection(db, "wonders");
-      console.log("📁 컬렉션 참조:", wondersCollection);
-
-      // 문서 추가
-      console.log("⏳ Firestore에 문서 추가 중...");
       const docRef = await addDoc(wondersCollection, wonderData);
       
       console.log("✅ 문서 추가 성공! ID:", docRef.id);
@@ -153,31 +219,20 @@ export default function NewWonderForm({ isOpen, onClose, onWonderCreated }: NewW
         isPublic: true,
         password: "",
       });
+      setUploadedImages([]);
       
-      console.log("🎉 폼 초기화 완료");
-      
-      // 콜백 실행
       onWonderCreated();
       onClose();
       
-      // 성공 알림
       const message = formData.isPublic 
         ? "문의가 성공적으로 등록되었습니다. 빠른 시일 내에 답변드리겠습니다."
         : "비공개 문의가 성공적으로 등록되었습니다. 설정하신 비밀번호로 문의 내용을 확인하실 수 있습니다.";
       
       alert(message);
-      console.log("📧 성공 알림 표시 완료");
 
     } catch (err: any) {
       console.error("💥 문의 등록 오류:", err);
-      console.error("🔍 오류 상세:", {
-        name: err.name,
-        message: err.message,
-        code: err.code,
-        stack: err.stack
-      });
       
-      // 사용자에게 더 자세한 오류 정보 제공
       let errorMessage = "문의 등록 중 오류가 발생했습니다.";
       
       if (err.code === 'permission-denied') {
@@ -193,11 +248,30 @@ export default function NewWonderForm({ isOpen, onClose, onWonderCreated }: NewW
       setError(errorMessage);
     } finally {
       setIsSubmitting(false);
-      console.log("🏁 제출 프로세스 완료");
     }
   };
 
-  // 폼이 열려있지 않으면 렌더링하지 않음
+  // 폼 닫기 시 업로드된 이미지 정리
+  const handleClose = async () => {
+    // 업로드된 이미지가 있다면 삭제 확인
+    if (uploadedImages.length > 0) {
+      const confirmed = confirm("업로드된 이미지가 있습니다. 정말로 취소하시겠습니까?");
+      if (!confirmed) return;
+
+      // 업로드된 이미지들을 Storage에서 삭제
+      try {
+        await Promise.all(
+          uploadedImages.map(img => deleteObject(ref(storage, img.id)))
+        );
+      } catch (error) {
+        console.error("이미지 정리 오류:", error);
+      }
+    }
+
+    setUploadedImages([]);
+    onClose();
+  };
+
   if (!isOpen) return null;
 
   return (
@@ -209,7 +283,7 @@ export default function NewWonderForm({ isOpen, onClose, onWonderCreated }: NewW
             궁금한 점 문의하기
           </h2>
           <button
-            onClick={onClose}
+            onClick={handleClose}
             className="p-2 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-full transition-colors"
             disabled={isSubmitting}
           >
@@ -219,15 +293,6 @@ export default function NewWonderForm({ isOpen, onClose, onWonderCreated }: NewW
 
         {/* 폼 */}
         <form onSubmit={handleSubmit} className="p-6 space-y-6">
-          {/* Firebase 연결 상태 디버그 정보 (개발 환경에서만 표시) */}
-          {process.env.NODE_ENV === 'development' && (
-            <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3 text-sm">
-              <p className="text-blue-700 dark:text-blue-300">
-                🔧 디버그 정보: Firebase DB 연결 상태 - {db ? "✅ 연결됨" : "❌ 연결 안됨"}
-              </p>
-            </div>
-          )}
-
           {/* 에러 메시지 */}
           {error && (
             <div className="flex items-start gap-2 text-red-600 text-sm bg-red-50 dark:bg-red-900/20 p-3 rounded-md">
@@ -356,6 +421,78 @@ export default function NewWonderForm({ isOpen, onClose, onWonderCreated }: NewW
               </div>
             </div>
 
+            {/* 이미지 업로드 섹션 */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                <ImageIcon className="inline h-4 w-4 mr-1" />
+                첨부 이미지 (선택사항)
+              </label>
+              
+              {/* 이미지 업로드 버튼 */}
+              <div className="mb-4">
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  multiple
+                  accept="image/*"
+                  onChange={(e) => e.target.files && handleImageUpload(e.target.files)}
+                  className="hidden"
+                  disabled={isSubmitting || isUploadingImage || uploadedImages.length >= 5}
+                />
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={isSubmitting || isUploadingImage || uploadedImages.length >= 5}
+                  className="flex items-center gap-2 px-4 py-3 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg hover:border-yellow-400 dark:hover:border-yellow-400 transition-colors disabled:opacity-50 disabled:cursor-not-allowed w-full justify-center"
+                >
+                  {isUploadingImage ? (
+                    <>
+                      <div className="animate-spin rounded-full h-5 w-5 border-2 border-yellow-400 border-t-transparent" />
+                      이미지 업로드 중...
+                    </>
+                  ) : (
+                    <>
+                      <Upload className="h-5 w-5 text-gray-500 dark:text-gray-400" />
+                      <span className="text-gray-600 dark:text-gray-400">
+                        이미지 선택 (최대 5개, 각각 5MB 이하)
+                      </span>
+                    </>
+                  )}
+                </button>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                  지원 형식: JPG, PNG, GIF, WebP | 현재 업로드: {uploadedImages.length}/5개
+                </p>
+              </div>
+
+              {/* 업로드된 이미지 미리보기 */}
+              {uploadedImages.length > 0 && (
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                  {uploadedImages.map((image, index) => (
+                    <div key={image.id} className="relative group">
+                      <img
+                        src={image.url}
+                        alt={`업로드된 이미지 ${index + 1}`}
+                        className="w-full h-24 object-cover rounded-lg border border-gray-200 dark:border-gray-600"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => handleImageDelete(image.id)}
+                        className="absolute top-1 right-1 p-1 bg-red-500 hover:bg-red-600 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                        disabled={isSubmitting}
+                      >
+                        <Trash2 className="h-3 w-3" />
+                      </button>
+                      <div className="absolute bottom-1 left-1 bg-black/50 text-white text-xs px-2 py-1 rounded">
+                        {image.file.name.length > 15 
+                          ? `${image.file.name.substring(0, 15)}...` 
+                          : image.file.name}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
             {/* 공개 설정 */}
             <div className="space-y-4">
               <div className="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
@@ -447,7 +584,7 @@ export default function NewWonderForm({ isOpen, onClose, onWonderCreated }: NewW
           <div className="flex gap-3 pt-4">
             <button
               type="button"
-              onClick={onClose}
+              onClick={handleClose}
               className="flex-1 py-3 px-4 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-md hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
               disabled={isSubmitting}
             >
@@ -455,7 +592,7 @@ export default function NewWonderForm({ isOpen, onClose, onWonderCreated }: NewW
             </button>
             <button
               type="submit"
-              disabled={isSubmitting || !formData.title.trim() || !formData.content.trim() || !formData.authorName.trim() || !formData.authorEmail.trim()}
+              disabled={isSubmitting || isUploadingImage || !formData.title.trim() || !formData.content.trim() || !formData.authorName.trim() || !formData.authorEmail.trim()}
               className="flex-1 py-3 px-4 bg-yellow-400 hover:bg-yellow-500 disabled:bg-gray-300 disabled:cursor-not-allowed text-black font-semibold rounded-md transition-colors flex items-center justify-center gap-2"
             >
               {isSubmitting ? (

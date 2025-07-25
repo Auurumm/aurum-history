@@ -1,7 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import { MessageSquare, Building, Clock, CheckCircle, X, Maximize2, User } from "lucide-react";
+import { MessageSquare, Building, Clock, CheckCircle, X, Maximize2, User, ChevronLeft, ChevronRight } from "lucide-react";
+
+interface WonderImage {
+  url: string;
+  fileName: string;
+  storageId: string;
+}
 
 interface WonderCardProps {
   wonder: {
@@ -15,11 +21,14 @@ interface WonderCardProps {
     date: string;
     adminReply?: string;
     adminReplyAt?: string | null;
+    images?: WonderImage[]; // 이미지 배열 추가
   };
 }
 
 export default function WonderCard({ wonder }: WonderCardProps) {
   const [isExpanded, setIsExpanded] = useState(false);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [isImageModalOpen, setIsImageModalOpen] = useState(false);
 
   // 상태별 스타일 및 텍스트
   const getStatusInfo = (status: string) => {
@@ -52,6 +61,142 @@ export default function WonderCard({ wonder }: WonderCardProps) {
     // 버튼 클릭은 모달 열지 않음
     if ((e.target as HTMLElement).closest('button')) return;
     setIsExpanded(true);
+  };
+
+  // 이미지 네비게이션
+  const nextImage = () => {
+    if (wonder.images && wonder.images.length > 1) {
+      setCurrentImageIndex((prev) => (prev + 1) % wonder.images!.length);
+    }
+  };
+
+  const prevImage = () => {
+    if (wonder.images && wonder.images.length > 1) {
+      setCurrentImageIndex((prev) => (prev - 1 + wonder.images!.length) % wonder.images!.length);
+    }
+  };
+
+  // 이미지 갤러리 컴포넌트
+  const ImageGallery = ({ images, compact = false }: { images: WonderImage[], compact?: boolean }) => {
+    if (!images || images.length === 0) return null;
+
+    if (compact) {
+      // 컴팩트 모드: 최대 3개 이미지만 보여주고 더 있으면 +N 표시
+      const displayImages = images.slice(0, 3);
+      const remainingCount = images.length - 3;
+
+      return (
+        <div className="flex gap-2 mb-4 flex-wrap">
+          {displayImages.map((image, index) => (
+            <div
+              key={index}
+              className="relative w-20 h-20 rounded-lg overflow-hidden border border-gray-200 dark:border-gray-600 cursor-pointer hover:opacity-80 transition-opacity"
+              onClick={() => {
+                setCurrentImageIndex(index);
+                setIsImageModalOpen(true);
+              }}
+            >
+              <img
+                src={image.url}
+                alt={image.fileName}
+                className="w-full h-full object-cover"
+              />
+            </div>
+          ))}
+          {remainingCount > 0 && (
+            <div 
+              className="w-20 h-20 rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-100 dark:bg-gray-800 flex items-center justify-center cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+              onClick={() => setIsExpanded(true)}
+            >
+              <span className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                +{remainingCount}
+              </span>
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    // 전체 모드: 모든 이미지를 그리드로 표시
+    return (
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-4">
+        {images.map((image, index) => (
+          <div
+            key={index}
+            className="relative aspect-square rounded-lg overflow-hidden border border-gray-200 dark:border-gray-600 cursor-pointer hover:opacity-80 transition-opacity group"
+            onClick={() => {
+              setCurrentImageIndex(index);
+              setIsImageModalOpen(true);
+            }}
+          >
+            <img
+              src={image.url}
+              alt={image.fileName}
+              className="w-full h-full object-cover"
+            />
+            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
+              <Maximize2 className="h-6 w-6 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+  };
+
+  // 이미지 모달 컴포넌트
+  const ImageModal = () => {
+    if (!isImageModalOpen || !wonder.images || wonder.images.length === 0) return null;
+
+    const currentImage = wonder.images[currentImageIndex];
+
+    return (
+      <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-[60] p-4">
+        <div className="relative max-w-4xl max-h-full">
+          {/* 닫기 버튼 */}
+          <button
+            onClick={() => setIsImageModalOpen(false)}
+            className="absolute top-4 right-4 z-10 p-2 bg-black/50 hover:bg-black/70 text-white rounded-full transition-colors"
+          >
+            <X className="h-6 w-6" />
+          </button>
+
+          {/* 이전/다음 버튼 */}
+          {wonder.images.length > 1 && (
+            <>
+              <button
+                onClick={prevImage}
+                className="absolute left-4 top-1/2 transform -translate-y-1/2 z-10 p-2 bg-black/50 hover:bg-black/70 text-white rounded-full transition-colors"
+              >
+                <ChevronLeft className="h-6 w-6" />
+              </button>
+              <button
+                onClick={nextImage}
+                className="absolute right-4 top-1/2 transform -translate-y-1/2 z-10 p-2 bg-black/50 hover:bg-black/70 text-white rounded-full transition-colors"
+              >
+                <ChevronRight className="h-6 w-6" />
+              </button>
+            </>
+          )}
+
+          {/* 이미지 */}
+          <img
+            src={currentImage.url}
+            alt={currentImage.fileName}
+            className="max-w-full max-h-full object-contain"
+          />
+
+          {/* 이미지 정보 */}
+          <div className="absolute bottom-4 left-4 bg-black/70 text-white px-3 py-2 rounded-lg">
+            <p className="text-sm">{currentImage.fileName}</p>
+            {wonder.images.length > 1 && (
+              <p className="text-xs text-gray-300 mt-1">
+                {currentImageIndex + 1} / {wonder.images.length}
+              </p>
+            )}
+          </div>
+        </div>
+      </div>
+    );
   };
 
   // 컴팩트 카드 컴포넌트
@@ -95,11 +240,19 @@ export default function WonderCard({ wonder }: WonderCardProps) {
             <span className="text-xs bg-blue-100 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400 px-2 py-1 rounded-full border border-blue-200 dark:border-blue-800">
               {wonder.category}
             </span>
+            {wonder.images && wonder.images.length > 0 && (
+              <span className="text-xs bg-purple-100 dark:bg-purple-900/20 text-purple-700 dark:text-purple-400 px-2 py-1 rounded-full border border-purple-200 dark:border-purple-800">
+                📷 {wonder.images.length}개
+              </span>
+            )}
           </div>
         </div>
 
         <Maximize2 className="h-4 w-4 text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" />
       </div>
+
+      {/* 이미지 갤러리 (컴팩트 모드) */}
+      {wonder.images && <ImageGallery images={wonder.images} compact />}
 
       {/* 문의 내용 미리보기 */}
       <div className="text-gray-700 dark:text-gray-300 mb-4 leading-relaxed">
@@ -141,7 +294,7 @@ export default function WonderCard({ wonder }: WonderCardProps) {
 
   // 확장 모달 컴포넌트
   const ExpandedModal = () => (
-    <div className="fixed inset-0 bg-black/50 dark:bg-black/70 flex items-center justify-center z-50 p-4">
+    <div className="fixed inset-0 bg-black/50 dark:bg-black/70 flex items-center justify-center z-[50] p-4">
       <div className="bg-white dark:bg-gray-900 rounded-xl shadow-xl w-full max-w-4xl max-h-[90vh] overflow-hidden border border-gray-200 dark:border-gray-700">
         {/* 모달 헤더 */}
         <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
@@ -196,9 +349,12 @@ export default function WonderCard({ wonder }: WonderCardProps) {
               <MessageSquare className="h-5 w-5" />
               문의 내용
             </h2>
-            <div className="text-gray-700 dark:text-gray-300 whitespace-pre-wrap leading-relaxed">
+            <div className="text-gray-700 dark:text-gray-300 whitespace-pre-wrap leading-relaxed mb-4">
               {wonder.content}
             </div>
+            
+            {/* 이미지 갤러리 (전체 모드) */}
+            {wonder.images && <ImageGallery images={wonder.images} />}
           </div>
 
           {/* 관리자 답변 */}
@@ -237,6 +393,7 @@ export default function WonderCard({ wonder }: WonderCardProps) {
     <>
       <CompactCard />
       {isExpanded && <ExpandedModal />}
+      <ImageModal />
     </>
   );
 }
