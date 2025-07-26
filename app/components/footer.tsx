@@ -22,113 +22,61 @@ export default function Footer() {
   return (
     <>
       {/* ✅ 모바일 전용 푸터 */}
-      <footer className="block sm:hidden bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-white px-4 py-10 transition-colors duration-300">
-        <div className="max-w-md mx-auto space-y-4 text-center">
-          <div className="flex justify-center items-center space-x-2">
+      <footer className="block sm:hidden bg-gray-50 dark:bg-gray-900 text-gray-800 dark:text-white px-4 py-16 transition-colors duration-300">
+        <div className="max-w-md mx-auto space-y-3 text-center">
+          <div className="flex justify-center items-center space-x-2 mb-4">
             <div className="w-6 h-6 rounded-full bg-black flex items-center justify-center">
               <span className="text-white font-bold text-xs">●</span>
             </div>
             <span className="text-lg font-semibold">Aurum</span>
           </div>
 
-          <div className="text-sm space-y-2 text-gray-600 dark:text-gray-400">
-            <p>서울특별시 송파구 위례성대로12길 36, 4층</p>
-            <p>+82-2-417-7009</p>
-            <p>account@aurum.nexus</p>
+          <div className="text-base space-y-2 text-gray-500 dark:text-gray-400">
+            <p>Aurum Inc</p>
+            <p>사업자 등록번호 : 538-86-01639 | CEO : 박동근 | 주소 : 서울시 송파구 위례성대로12길 36, 금원빌딩 4층 전체 </p>
           </div>
         </div>
       </footer>
 
       {/* ✅ 데스크탑/태블릿 전용 푸터 */}
-      <footer className="hidden sm:block bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-white transition-colors duration-300">
-        <div className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-14 py-10">
-          <div className="flex flex-wrap justify-start gap-y-16 gap-x-12">
-            {/* Company Info */}
-            <div className="w-full sm:w-1/2 lg:w-auto space-y-5">
-              <div className="flex items-center space-x-2">
-                <div className="w-8 h-8 rounded-full bg-black flex items-center justify-center">
-                  <span className="text-white font-bold text-sm">●</span>
-                </div>
-                <span className="text-xl font-bold text-gray-900 dark:text-white">Aurum</span>
-              </div>
-              <p className="text-base leading-relaxed text-gray-600 dark:text-gray-400">
-                {t("footerDescription")}
-              </p>
-              <div className="flex space-x-4">
-                <a href="#" className="text-gray-500 dark:text-gray-400 hover:text-yellow-500 dark:hover:text-yellow-400">
-                  <Facebook className="w-5 h-5" />
-                </a>
-                <a href="#" className="text-gray-500 dark:text-gray-400 hover:text-yellow-500 dark:hover:text-yellow-400">
-                  <Twitter className="w-5 h-5" />
-                </a>
-                <a href="#" className="text-gray-500 dark:text-gray-400 hover:text-yellow-500 dark:hover:text-yellow-400">
-                  <Instagram className="w-5 h-5" />
-                </a>
-                <a href="#" className="text-gray-500 dark:text-gray-400 hover:text-yellow-500 dark:hover:text-yellow-400">
-                  <Linkedin className="w-5 h-5" />
-                </a>
-              </div>
-            </div>
-
-            {/* 회사소개 */}
-            <div className="w-full sm:w-1/2 lg:w-auto space-y-5">
-              <h3 className="text-lg font-semibold">회사소개</h3>
-              <ul className="space-y-3 text-base text-gray-600 dark:text-gray-400">
-                <li><Link href={getLocalizedPath("/company-info")}>어서 오럼</Link></li>
-                <li><Link href={getLocalizedPath("/message")}>오럼의 문화</Link></li>
-                <li><Link href={getLocalizedPath("/history")}>발자국</Link></li>
-              </ul>
-            </div>
-
-            {/* 서비스 */}
-            <div className="w-full sm:w-1/2 lg:w-auto space-y-5">
-              <h3 className="text-lg font-semibold">서비스</h3>
-              <ul className="space-y-3 text-base text-gray-600 dark:text-gray-400">
-                <li><Link href={getLocalizedPath("/brand")}>브랜드</Link></li>
-                <li><Link href={getLocalizedPath("/marketing")}>마케팅</Link></li>
-                <li><Link href={getLocalizedPath("/entertainment")}>엔터테인먼트</Link></li>
-                <li><Link href="#">라이프</Link></li>
-              </ul>
-            </div>
-
-            {/* 약속과 책임 */}
-            <div className="w-full sm:w-1/2 lg:w-auto space-y-5">
-              <h3 className="text-lg font-semibold">약속과 책임</h3>
-              <ul className="space-y-3 text-base text-gray-600 dark:text-gray-400">
-                <li><Link href={getLocalizedPath("/gallery")}>오럼 갤러리</Link></li>
-                <li><Link href={getLocalizedPath("/members")}>MEMBERS</Link></li>
-                <li><Link href={getLocalizedPath("/careers")}>인재 영입</Link></li>
-              </ul>
-            </div>
-
-            {/* 커뮤니티 */}
-            <div className="w-full sm:w-1/2 lg:w-auto space-y-5">
-              <h3 className="text-lg font-semibold">커뮤니티</h3>
-              <ul className="space-y-3 text-base text-gray-600 dark:text-gray-400">
-                <li><Link href={getLocalizedPath("/announcements")}>알립니다</Link></li>
-                <li><Link href={getLocalizedPath("/trace")}>흔적들</Link></li>
-                <li><Link href={getLocalizedPath("/wonders")}>문의사항</Link></li>
-              </ul>
-            </div>
-
-            {/* 연락처 */}
-            <div className="w-full sm:w-1/2 lg:w-auto space-y-5">
-              <h3 className="text-lg font-semibold">{t("contact")}</h3>
-              <ul className="space-y-3 text-base text-gray-600 dark:text-gray-400">
-                <li className="flex items-center space-x-2"><MapPin className="w-4 h-4 text-yellow-500" /><span>서울특별시 송파구 위례성대로12길 36, 4층</span></li>
-                <li className="flex items-center space-x-2"><Phone className="w-4 h-4 text-yellow-500" /><span>+82-2-417-7009</span></li>
-                <li className="flex items-center space-x-2"><Mail className="w-4 h-4 text-yellow-500" /><span>account@aurum.nexus</span></li>
-              </ul>
-            </div>
+      <footer className="hidden sm:block bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white transition-colors duration-300 border-t border-gray-200 dark:border-gray-700">
+        <div className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-14 py-20">
+          {/* 상단 네비게이션 링크들 */}
+          <div className="flex flex-wrap justify-center gap-x-8 gap-y-2 mb-16">
+            <Link href={getLocalizedPath("/home")} className="text-lg text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white">
+              오시는 길
+            </Link>
+            <Link href={getLocalizedPath("/artists")} className="text-lg text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white">
+              공지사항
+            </Link>
+            <Link href={getLocalizedPath("/business")} className="text-lg text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white">
+              개인정보처리방침
+            </Link>
+            <Link href={getLocalizedPath("/recruitment")} className="text-lg text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white">
+              제휴문의
+            </Link>
+            <Link href={getLocalizedPath("/contact")} className="text-lg text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white">
+              흔적들
+            </Link>
           </div>
 
-          {/* 바텀 라인 */}
-          <div className="border-t border-gray-300 dark:border-gray-700 mt-16 pt-10 text-sm text-gray-600 dark:text-gray-400 flex flex-col md:flex-row justify-between items-center">
-            <p>{t("footerCopyright")}</p>
-            <div className="flex space-x-6 mt-4 md:mt-0">
-              <a href="#">Privacy Policy</a>
-              <a href="#">Terms of Service</a>
-            </div>
+          {/* 회사 정보 */}
+          <div className="text-center space-y-4">
+            <h3 className="text-xl font-medium text-gray-900 dark:text-white">
+              Aurum Inc
+            </h3>
+            <p className="text-base text-gray-600 dark:text-gray-400">
+              사업자 등록번호 : 538-86-01639 | CEO : 박동근 | 주소 : 서울시 송파구 위례성대로12길 36, 금원빌딩 4층 전체  
+            </p>
+          </div>
+
+          {/* 사이트 선택 드롭다운 영역 (오른쪽 상단) */}
+          <div className="absolute top-4 right-6">
+            <select className="text-base bg-transparent border border-gray-300 dark:border-gray-600 rounded px-4 py-2 text-gray-600 dark:text-gray-400">
+              <option value="main">관련 사이트</option>
+              <option value="site1">사이트 1</option>
+              <option value="site2">사이트 2</option>
+            </select>
           </div>
         </div>
       </footer>
