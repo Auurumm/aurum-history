@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button"
 import { useTheme } from "../contexts/theme-context"
 import Link from "next/link"
 import { useLanguage } from "@/app/contexts/language-context"
-import LanguageSwitcher from "./language-switcher"
+// import LanguageSwitcher from "./language-switcher"
 import { auth, db } from "@/lib/firebase"
 import { onAuthStateChanged, signOut } from "firebase/auth"
 import { doc, getDoc } from "firebase/firestore"
@@ -252,7 +252,7 @@ export default function Header() {
                 </form>
               )}
 
-              <LanguageSwitcher />
+              {/* <LanguageSwitcher /> */}
 
               <Button
                 variant="ghost"
