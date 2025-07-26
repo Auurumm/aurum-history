@@ -1,8 +1,11 @@
 "use client"
 
 import { ChevronDown } from "lucide-react"
+import { useLanguage } from "../../contexts/language-context"
 
 export default function CompanyHero() {
+  const { t } = useLanguage()
+  
   const scrollToContact = () => {
     window.scrollTo({
       top: window.innerHeight,
@@ -28,13 +31,11 @@ export default function CompanyHero() {
       {/* Content */}
       <div className="relative z-10 text-center px-4 sm:px-6 lg:px-8 max-w-4xl mx-auto">
         <h1 className="text-5xl sm:text-6xl lg:text-8xl font-bold text-white mb-8 leading-tight">
-          회사 <span style={{ color: "#D4AF37" }}>INFO</span>
+          {t('companyInfoTitle')}
         </h1>
 
-        <p className="text-lg sm:text-xl text-gray-300 max-w-2xl mx-auto leading-relaxed">
-          오럼이 위치한 곳, 그리고 우리와 소통할 수 있는
-          <br />
-          모든 정보를 한눈에 확인하세요
+        <p className="text-lg sm:text-xl text-gray-300 max-w-2xl mx-auto leading-relaxed whitespace-pre-line">
+          {t('companyInfoDescription')}
         </p>
       </div>
 
@@ -44,7 +45,7 @@ export default function CompanyHero() {
           onClick={scrollToContact}
           className="flex flex-col items-center text-gray-400 hover:text-yellow-400 transition-colors group animate-bounce"
         >
-          <span className="text-sm mb-2 opacity-80">Scroll Down</span>
+          <span className="text-sm mb-2 opacity-80">{t('scrollDown')}</span>
           <ChevronDown className="h-6 w-6 group-hover:scale-110 transition-transform" />
         </button>
       </div>
