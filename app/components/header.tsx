@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button"
 import { useTheme } from "../contexts/theme-context"
 import Link from "next/link"
 import { useLanguage } from "@/app/contexts/language-context"
-import LanguageSwitcher from "./language-switcher"
+// import LanguageSwitcher from "./language-switcher"
 import { auth, db } from "@/lib/firebase"
 import { onAuthStateChanged, signOut } from "firebase/auth"
 import { doc, getDoc } from "firebase/firestore"
@@ -15,7 +15,7 @@ import { doc, getDoc } from "firebase/firestore"
 interface UserData {
   uid: string;
   name: string;
-  nickname?: string; // 🔥 optional로 변경
+  nickname?: string;
   email: string;
   profileImage?: string;
   role: string;
@@ -34,7 +34,7 @@ export default function Header() {
   const router = useRouter()
   const { t, locale } = useLanguage()
 
-  // 🔥 사용자 인증 상태 확인
+  // 사용자 인증 상태 확인
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
@@ -155,12 +155,12 @@ export default function Header() {
     }
   }
 
-  // 🔥 로그아웃 처리
+  // 로그아웃 처리
   const handleLogout = async () => {
     try {
       await signOut(auth);
       setUserMenuOpen(false);
-      router.push("/auth"); // "/auth/login" → "/auth"로 변경
+      router.push("/auth");
     } catch (error) {
       console.error("로그아웃 오류:", error);
     }
@@ -175,10 +175,23 @@ export default function Header() {
           width: 100vw !important;
           left: 0 !important;
           right: 0 !important;
+          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif !important;
+          -webkit-font-smoothing: antialiased;
+          -moz-osx-font-smoothing: grayscale;
+        }
+        header * {
+          font-family: inherit !important;
         }
       `}</style>
-      <header className="fixed top-0 left-0 right-0 z-50 w-full"
-              style={{ margin: 0, padding: 0, width: '100vw' }}>
+      <header 
+        className="fixed top-0 left-0 right-0 z-50 w-full font-sans"
+        style={{ 
+          margin: 0, 
+          padding: 0, 
+          width: '100vw',
+          fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen", "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif'
+        }}
+      >
         <div className="absolute inset-0 bg-white dark:bg-black"></div>
 
         <div className="w-full mx-auto px-4 sm:px-6 lg:px-8 lg:max-w-7xl relative z-10">
@@ -248,138 +261,129 @@ export default function Header() {
             </nav>
 
             {/* Right Side */}
-            <div className="flex items-center space-x-4">
-              {isSearchOpen && (
-                <form onSubmit={handleSearchSubmit}>
-                  <input
-                    type="text"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder={t("searchPlaceholder") || "검색어를 입력하세요"}
-                    className="px-3 py-1 text-sm border rounded-md dark:bg-gray-800 dark:text-white dark:border-gray-600 focus:outline-none"
-                    autoFocus
-                  />
-                </form>
-              )}
+            <div className="flex items-center space-x-2">
+              {/* Desktop only items */}
+              <div className="hidden md:flex items-center space-x-4">
+                {isSearchOpen && (
+                  <form onSubmit={handleSearchSubmit}>
+                    <input
+                      type="text"
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      placeholder={t("searchPlaceholder") || "검색어를 입력하세요"}
+                      className="px-3 py-1 text-sm border rounded-md dark:bg-gray-800 dark:text-white dark:border-gray-600 focus:outline-none"
+                      autoFocus
+                    />
+                  </form>
+                )}
 
-              <LanguageSwitcher />
+                {/* <LanguageSwitcher /> */}
 
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={toggleTheme}
-                className="transition-colors text-gray-800 hover:text-black dark:text-gray-200 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800"
-                aria-label={theme === "dark" ? t("lightMode") : t("darkMode")}
-              >
-                {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
-              </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={toggleTheme}
+                  className="transition-colors text-gray-800 hover:text-black dark:text-gray-200 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800"
+                  aria-label={theme === "dark" ? t("lightMode") : t("darkMode")}
+                >
+                  {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+                </Button>
 
-              {/* 🔥 사용자 메뉴 또는 로그인 버튼 */}
-              {loading ? (
-                <div className="w-8 h-8 bg-gray-200 dark:bg-gray-700 rounded-full animate-pulse"></div>
-              ) : user ? (
-                <div className="relative">
-                  <button
-                    onClick={() => setUserMenuOpen(!userMenuOpen)}
-                    className="flex items-center gap-2 p-1 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-                  >
-                    {/* 프로필 이미지 */}
-                    <div className="w-8 h-8 rounded-full overflow-hidden border-2 border-yellow-400">
-                      {user.profileImage ? (
-                        <img 
-                          src={user.profileImage} 
-                          alt={`${user.nickname || user.name} 프로필`}
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                        <div className="w-full h-full bg-yellow-400 flex items-center justify-center text-black font-bold text-sm">
-                          {/* 🔥 안전한 닉네임/이름 처리 */}
-                          {(user.nickname || user.name || "?")[0].toUpperCase()}
-                        </div>
-                      )}
-                    </div>
-                    <div className="hidden md:block text-left">
-                      <div className="text-sm font-medium text-gray-900 dark:text-white">
-                        {/* 🔥 안전한 닉네임 표시 */}
-                        {user.nickname || user.name || "사용자"}
-                      </div>
-                      <div className="text-xs text-gray-500 dark:text-gray-400">
-                        {user.role === "approved" ? "승인됨" : "승인 대기"}
-                      </div>
-                    </div>
-                  </button>
-
-                  {/* 드롭다운 메뉴 */}
-                  {userMenuOpen && (
-                    <>
-                      <div 
-                        className="fixed inset-0 z-10" 
-                        onClick={() => setUserMenuOpen(false)}
-                      ></div>
-                      <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-md shadow-lg border border-gray-200 dark:border-gray-700 z-20">
-                        <div className="py-1">
-                          {/* 모바일에서 사용자 정보 표시 */}
-                          <div className="md:hidden px-4 py-2 border-b border-gray-200 dark:border-gray-700">
-                            <div className="font-medium text-gray-900 dark:text-white">
-                              {user.nickname}
-                            </div>
-                            <div className="text-sm text-gray-500 dark:text-gray-400">
-                              {user.role === "approved" ? "승인됨" : "승인 대기"}
-                            </div>
+                {/* 사용자 메뉴 또는 로그인 버튼 */}
+                {loading ? (
+                  <div className="w-8 h-8 bg-gray-200 dark:bg-gray-700 rounded-full animate-pulse"></div>
+                ) : user ? (
+                  <div className="relative">
+                    <button
+                      onClick={() => setUserMenuOpen(!userMenuOpen)}
+                      className="flex items-center gap-2 p-1 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                    >
+                      {/* 프로필 이미지 */}
+                      <div className="w-8 h-8 rounded-full overflow-hidden border-2 border-yellow-400">
+                        {user.profileImage ? (
+                          <img 
+                            src={user.profileImage} 
+                            alt={`${user.nickname || user.name} 프로필`}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <div className="w-full h-full bg-yellow-400 flex items-center justify-center text-black font-bold text-sm">
+                            {(user.nickname || user.name || "?")[0].toUpperCase()}
                           </div>
-                          
-                          <Link
-                            href="/mypage"
-                            onClick={() => setUserMenuOpen(false)}
-                            className="flex items-center gap-3 w-full px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
-                          >
-                            <UserCircle className="h-4 w-4" />
-                            마이페이지
-                          </Link>
-                          
-                          <hr className="border-gray-200 dark:border-gray-600" />
-                          
-                          <button
-                            onClick={handleLogout}
-                            className="flex items-center gap-3 w-full px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-700"
-                          >
-                            <LogOut className="h-4 w-4" />
-                            로그아웃
-                          </button>
+                        )}
+                      </div>
+                      <div className="hidden md:block text-left">
+                        <div className="text-sm font-medium text-gray-900 dark:text-white">
+                          {user.nickname || user.name || "사용자"}
+                        </div>
+                        <div className="text-xs text-gray-500 dark:text-gray-400">
+                          {user.role === "approved" ? "승인됨" : "승인 대기"}
                         </div>
                       </div>
-                    </>
-                  )}
-                </div>
-              ) : (
-                <Link href="/auth"> {/* "/auth/login" → "/auth"로 변경 */}
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="text-sm font-medium px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800"
-                  >
-                    {t("login") || "로그인"}
-                  </Button>
-                </Link>
-              )}
+                    </button>
 
-              {/* 🔥 햄버거 메뉴 버튼 - 스타일 개선 */}
+                    {/* 드롭다운 메뉴 */}
+                    {userMenuOpen && (
+                      <>
+                        <div 
+                          className="fixed inset-0 z-10" 
+                          onClick={() => setUserMenuOpen(false)}
+                        ></div>
+                        <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-md shadow-lg border border-gray-200 dark:border-gray-700 z-20">
+                          <div className="py-1">
+                            <Link
+                              href="/mypage"
+                              onClick={() => setUserMenuOpen(false)}
+                              className="flex items-center gap-3 w-full px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                            >
+                              <UserCircle className="h-4 w-4" />
+                              마이페이지
+                            </Link>
+                            
+                            <hr className="border-gray-200 dark:border-gray-600" />
+                            
+                            <button
+                              onClick={handleLogout}
+                              className="flex items-center gap-3 w-full px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-700"
+                            >
+                              <LogOut className="h-4 w-4" />
+                              로그아웃
+                            </button>
+                          </div>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                ) : (
+                  <Link href="/auth">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="text-sm font-medium px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800"
+                    >
+                      {t("login") || "로그인"}
+                    </Button>
+                  </Link>
+                )}
+              </div>
+
+              {/* 모바일 햄버거 메뉴 */}
               <Button
                 variant="ghost"
                 size="sm"
-                className="md:hidden p-2 transition-colors text-gray-800 hover:text-black dark:text-gray-200 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 border-0 shadow-none"
+                className="md:hidden p-1 transition-colors text-gray-800 hover:text-black dark:text-gray-200 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 border-0 shadow-none"
                 onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
               >
-                {isMobileMenuOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
+                {isMobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
               </Button>
             </div>
           </div>
 
-          {/* 🔥 모바일 메뉴 - 완전히 재구성 */}
+          {/* 모바일 메뉴 */}
           {isMobileMenuOpen && (
             <div className="md:hidden absolute top-full left-0 right-0 w-full bg-white dark:bg-black border-t border-gray-200 dark:border-gray-700 shadow-lg">
               <div className="px-4 py-4 space-y-4 max-h-96 overflow-y-auto w-full">
-                {/* 🔥 사용자 정보 (로그인된 경우) */}
+                {/* 사용자 정보 (로그인된 경우) */}
                 {user && (
                   <div className="flex items-center gap-3 pb-4 border-b border-gray-200 dark:border-gray-700">
                     <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-yellow-400">
@@ -391,14 +395,12 @@ export default function Header() {
                         />
                       ) : (
                         <div className="w-full h-full bg-yellow-400 flex items-center justify-center text-black font-bold">
-                          {/* 🔥 안전한 닉네임/이름 처리 */}
                           {(user.nickname || user.name || "?")[0].toUpperCase()}
                         </div>
                       )}
                     </div>
                     <div>
                       <div className="font-medium text-gray-900 dark:text-white">
-                        {/* 🔥 안전한 닉네임 표시 */}
                         {user.nickname || user.name || "사용자"}
                       </div>
                       <div className="text-sm text-gray-500 dark:text-gray-400">
@@ -408,7 +410,7 @@ export default function Header() {
                   </div>
                 )}
 
-                {/* 🔥 메인 네비게이션 메뉴 */}
+                {/* 메인 네비게이션 메뉴 */}
                 <div className="space-y-3">
                   {menuItems.map((item) => (
                     <div key={item.title} className="space-y-2">
@@ -431,7 +433,7 @@ export default function Header() {
                   ))}
                 </div>
 
-                {/* 🔥 사용자 액션 (로그인된 경우) */}
+                {/* 사용자 액션 (로그인된 경우) */}
                 {user && (
                   <div className="pt-4 border-t border-gray-200 dark:border-gray-700 space-y-2">
                     <Link
@@ -456,7 +458,7 @@ export default function Header() {
                   </div>
                 )}
 
-                {/* 🔥 로그인 버튼 (로그인되지 않은 경우) */}
+                {/* 로그인 버튼 (로그인되지 않은 경우) */}
                 {!user && (
                   <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
                     <Link
