@@ -45,19 +45,19 @@ export default function Footer() {
 
           {/* 상단 네비게이션 링크들 */}
           <div className="flex flex-wrap justify-start gap-x-8 gap-y-2 mb-16">
-            <Link href={getLocalizedPath("/home")} className="text-lg text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white">
+            <Link href={getLocalizedPath("/company-info")} className="text-lg text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white">
               오시는 길
             </Link>
-            <Link href={getLocalizedPath("/artists")} className="text-lg text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white">
+            <Link href={getLocalizedPath("/announcements")} className="text-lg text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white">
               공지사항
             </Link>
-            <Link href={getLocalizedPath("/business")} className="text-lg text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white">
-              개인정보처리방침
+            <Link href={getLocalizedPath("/career")} className="text-lg text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white">
+              인재영입
             </Link>
-            <Link href={getLocalizedPath("/recruitment")} className="text-lg text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white">
+            <Link href={getLocalizedPath("/wonders")} className="text-lg text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white">
               제휴문의
             </Link>
-            <Link href={getLocalizedPath("/contact")} className="text-lg text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white">
+            <Link href={getLocalizedPath("/trace")} className="text-lg text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white">
               흔적들
             </Link>
           </div>
