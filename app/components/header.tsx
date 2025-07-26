@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button"
 import { useTheme } from "../contexts/theme-context"
 import Link from "next/link"
 import { useLanguage } from "@/app/contexts/language-context"
-// import LanguageSwitcher from "./language-switcher"
+import LanguageSwitcher from "./language-switcher"
 import { auth, db } from "@/lib/firebase"
 import { onAuthStateChanged, signOut } from "firebase/auth"
 import { doc, getDoc } from "firebase/firestore"
@@ -168,10 +168,20 @@ export default function Header() {
 
   return (
     <>
-      <header className="fixed top-0 left-0 right-0 z-50">
+      <style jsx>{`
+        header {
+          margin: 0 !important;
+          padding: 0 !important;
+          width: 100vw !important;
+          left: 0 !important;
+          right: 0 !important;
+        }
+      `}</style>
+      <header className="fixed top-0 left-0 right-0 z-50 w-full"
+              style={{ margin: 0, padding: 0, width: '100vw' }}>
         <div className="absolute inset-0 bg-white dark:bg-black"></div>
 
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+        <div className="w-full mx-auto px-4 sm:px-6 lg:px-8 lg:max-w-7xl relative z-10">
           <div className="flex items-center justify-between h-24">
             {/* Logo */}
             <div className="flex-shrink-0">
@@ -252,7 +262,7 @@ export default function Header() {
                 </form>
               )}
 
-              {/* <LanguageSwitcher /> */}
+              <LanguageSwitcher />
 
               <Button
                 variant="ghost"
@@ -367,8 +377,8 @@ export default function Header() {
 
           {/* 🔥 모바일 메뉴 - 완전히 재구성 */}
           {isMobileMenuOpen && (
-            <div className="md:hidden absolute top-full left-0 right-0 bg-white dark:bg-black border-t border-gray-200 dark:border-gray-700 shadow-lg">
-              <div className="px-4 py-4 space-y-4 max-h-96 overflow-y-auto">
+            <div className="md:hidden absolute top-full left-0 right-0 w-full bg-white dark:bg-black border-t border-gray-200 dark:border-gray-700 shadow-lg">
+              <div className="px-4 py-4 space-y-4 max-h-96 overflow-y-auto w-full">
                 {/* 🔥 사용자 정보 (로그인된 경우) */}
                 {user && (
                   <div className="flex items-center gap-3 pb-4 border-b border-gray-200 dark:border-gray-700">
