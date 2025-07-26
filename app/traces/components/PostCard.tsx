@@ -321,7 +321,7 @@ export default function PostCard({ post, onPostDeleted, onPostUpdated }: PostCar
     }
 
     return (
-      <div className={`relative ${className}`}>
+      <div className={`relative overflow-hidden ${className}`}>
         {imageLoading && (
           <div className="absolute inset-0 bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
             <div className="animate-spin rounded-full h-8 w-8 border-2 border-yellow-400 border-t-transparent"></div>
@@ -330,7 +330,7 @@ export default function PostCard({ post, onPostDeleted, onPostUpdated }: PostCar
         <img
           src={post.imageUrl}
           alt="게시글 이미지"
-          className={`w-full object-cover rounded-lg ${imageLoading ? 'opacity-0' : 'opacity-100'} transition-opacity`}
+          className={`w-full h-full object-cover rounded-lg ${imageLoading ? 'opacity-0' : 'opacity-100'} transition-opacity`}
           onLoad={handleImageLoad}
           onError={handleImageError}
         />
@@ -422,7 +422,7 @@ export default function PostCard({ post, onPostDeleted, onPostUpdated }: PostCar
       </div>
 
       {/* 🔥 이미지 표시 개선 */}
-      <ImageComponent className="max-h-96 mb-4" />
+      <ImageComponent className="w-full max-h-80 mb-4" />
 
       {/* 글 내용 - 수정 모드 개선 */}
       {isEditing ? (
@@ -494,23 +494,16 @@ export default function PostCard({ post, onPostDeleted, onPostUpdated }: PostCar
         </button>
       </div>
 
-      {/* 🔧 디버깅 정보 (개발 환경에서만) */}
-      {process.env.NODE_ENV === 'development' && (
-        <div className="mt-2 p-2 bg-blue-50 dark:bg-blue-900/20 rounded text-xs">
-          <p>🔍 디버깅: 수정 권한 = {canEdit ? "✅" : "❌"}</p>
-          <p>현재 사용자: {currentUser?.uid || "없음"}</p>
-          <p>글 작성자: {post.authorId || "없음"}</p>
-          {post.imageUrl && <p>이미지 URL: {post.imageUrl.substring(0, 50)}...</p>}
-        </div>
-      )}
+
     </div>
   );
 
   const ExpandedModal = () => (
-    <div className="fixed inset-0 bg-black/50 dark:bg-black/70 flex items-center justify-center z-50 p-4">
-      <div className="bg-white dark:bg-gray-900 rounded-xl shadow-xl w-full max-w-4xl max-h-[90vh] overflow-hidden border border-gray-200 dark:border-gray-700">
-        <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
-          <h2 className="text-lg font-bold text-gray-900 dark:text-white">게시글 상세</h2>
+    <div className="fixed inset-0 bg-black/50 dark:bg-black/70 flex items-center justify-center z-50 p-0 sm:p-4">
+      <div className="bg-white dark:bg-gray-900 w-full h-full sm:rounded-xl sm:shadow-xl sm:w-full sm:max-w-4xl sm:max-h-[90vh] overflow-hidden border-0 sm:border border-gray-200 dark:border-gray-700">
+        {/* 🔥 모바일/데스크탑 반응형 헤더 */}
+        <div className="flex items-center justify-between p-4 sm:p-6 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
+          <h2 className="text-base sm:text-lg font-bold text-gray-900 dark:text-white">게시글 상세</h2>
           <button
             onClick={() => setIsExpanded(false)}
             className="p-2 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-full transition-colors"
@@ -519,77 +512,87 @@ export default function PostCard({ post, onPostDeleted, onPostUpdated }: PostCar
           </button>
         </div>
 
-        <div className="flex h-[calc(90vh-120px)]">
-          <div className="flex-1 p-6 overflow-y-auto">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="w-12 h-12 bg-yellow-400 rounded-full flex items-center justify-center text-black font-bold">
+        {/* 🔥 모바일: 세로 레이아웃, 데스크탑: 가로 레이아웃 */}
+        <div className="flex flex-col lg:flex-row h-[calc(100vh-80px)] sm:h-[calc(90vh-120px)]">
+          {/* 메인 콘텐츠 영역 */}
+          <div className="flex-1 p-4 sm:p-6 overflow-y-auto">
+            {/* 작성자 정보 */}
+            <div className="flex items-center gap-3 mb-4 sm:mb-6">
+              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-yellow-400 rounded-full flex items-center justify-center text-black font-bold text-sm sm:text-base">
                 {post.username ? post.username[0].toUpperCase() : "?"}
               </div>
               <div>
                 <div className="flex items-center gap-2">
-                  <h3 className="font-semibold text-gray-900 dark:text-white text-lg">{post.username}</h3>
+                  <h3 className="font-semibold text-gray-900 dark:text-white text-base sm:text-lg">{post.username}</h3>
                   {post.category && (
-                    <span className="text-sm bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 px-3 py-1 rounded-full border border-gray-200 dark:border-gray-600">
+                    <span className="text-xs sm:text-sm bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 px-2 sm:px-3 py-1 rounded-full border border-gray-200 dark:border-gray-600">
                       {post.category}
                     </span>
                   )}
                 </div>
-                <p className="text-sm text-gray-500 dark:text-gray-400">{post.date}</p>
+                <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">{post.date}</p>
               </div>
             </div>
 
-            {/* 🔥 확대 모달에서도 이미지 개선 */}
-            <ImageComponent className="max-h-[400px] mb-6" />
+            {/* 이미지 */}
+            <ImageComponent className="max-h-64 sm:max-h-[400px] mb-4 sm:mb-6" />
 
-            <div className="text-gray-800 dark:text-gray-100 mb-6 whitespace-pre-wrap leading-relaxed text-lg">
+            {/* 본문 */}
+            <div className="text-gray-800 dark:text-gray-100 mb-4 sm:mb-6 whitespace-pre-wrap leading-relaxed text-sm sm:text-lg">
               {post.content}
             </div>
 
-            <div className="flex items-center gap-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+            {/* 좋아요 버튼 */}
+            <div className="flex items-center gap-4 pt-3 sm:pt-4 border-t border-gray-200 dark:border-gray-700">
               <button 
                 onClick={handleLike}
                 disabled={!canInteract}
-                className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
+                className={`flex items-center gap-2 px-3 sm:px-4 py-2 rounded-lg transition-colors text-sm ${
                   isLiked 
                     ? "bg-red-50 dark:bg-red-900/20 text-red-500 dark:text-red-400" 
                     : "bg-gray-50 dark:bg-gray-800 text-gray-500 dark:text-gray-400 hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-500 dark:hover:text-red-400"
                 } ${!canInteract ? "opacity-50 cursor-not-allowed" : ""}`}
               >
-                <Heart className={`h-5 w-5 ${isLiked ? "fill-current" : ""}`} />
+                <Heart className={`h-4 w-4 sm:h-5 sm:w-5 ${isLiked ? "fill-current" : ""}`} />
                 <span className="font-medium">{likesCount}</span>
               </button>
             </div>
           </div>
 
-          {/* 댓글 섹션 */}
-          <div className="w-96 border-l border-gray-200 dark:border-gray-700 flex flex-col">
-            <div className="p-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
-              <h3 className="font-semibold text-gray-900 dark:text-white">
+          {/* 🔥 댓글 섹션 - 모바일 반응형 */}
+          <div className="w-full lg:w-96 border-t lg:border-t-0 lg:border-l border-gray-200 dark:border-gray-700 flex flex-col max-h-96 lg:max-h-none">
+            <div className="p-3 sm:p-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
+              <h3 className="font-semibold text-gray-900 dark:text-white text-sm sm:text-base">
                 댓글 {comments.length}개
               </h3>
             </div>
 
-            <div className="flex-1 overflow-y-auto p-4 space-y-4">
+            <div className="flex-1 overflow-y-auto p-3 sm:p-4 space-y-3 sm:space-y-4">
               {comments.length > 0 ? (
                 comments.map((comment) => (
-                  <div key={comment.id} className="flex gap-3">
-                    <div className="w-8 h-8 bg-gray-300 dark:bg-gray-600 rounded-full flex items-center justify-center flex-shrink-0">
-                      <User className="h-4 w-4 text-gray-600 dark:text-gray-300" />
+                  <div key={comment.id} className="flex gap-2 sm:gap-3">
+                    <div className="w-6 h-6 sm:w-8 sm:h-8 bg-gray-300 dark:bg-gray-600 rounded-full flex items-center justify-center flex-shrink-0">
+                      <User className="h-3 w-3 sm:h-4 sm:w-4 text-gray-600 dark:text-gray-300" />
                     </div>
                     <div className="flex-1">
-                      <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-3">
+                      <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-2 sm:p-3">
                         <div className="flex items-center gap-2 mb-1">
-                          <span className="font-medium text-sm text-gray-900 dark:text-white">
+                          <span className="font-medium text-xs sm:text-sm text-gray-900 dark:text-white">
                             {comment.authorName}
                           </span>
                           <span className="text-xs text-gray-500 dark:text-gray-400">
                             {comment.createdAt?.toDate ? 
-                              comment.createdAt.toDate().toLocaleString('ko-KR') :
+                              comment.createdAt.toDate().toLocaleString('ko-KR', {
+                                month: 'short',
+                                day: 'numeric',
+                                hour: '2-digit',
+                                minute: '2-digit'
+                              }) :
                               '방금 전'
                             }
                           </span>
                         </div>
-                        <p className="text-sm text-gray-800 dark:text-gray-200">
+                        <p className="text-xs sm:text-sm text-gray-800 dark:text-gray-200">
                           {comment.content}
                         </p>
                       </div>
@@ -597,18 +600,18 @@ export default function PostCard({ post, onPostDeleted, onPostUpdated }: PostCar
                   </div>
                 ))
               ) : (
-                <p className="text-center text-gray-500 dark:text-gray-400 text-sm py-8">
+                <p className="text-center text-gray-500 dark:text-gray-400 text-xs sm:text-sm py-6 sm:py-8">
                   첫 번째 댓글을 작성해보세요!
                 </p>
               )}
             </div>
 
             {/* 댓글 작성 폼 */}
-            <div className="p-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
+            <div className="p-3 sm:p-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
               {canInteract ? (
                 <form onSubmit={handleCommentSubmit} className="flex gap-2">
-                  <div className="w-8 h-8 bg-yellow-400 rounded-full flex items-center justify-center flex-shrink-0">
-                    <span className="text-black font-bold text-sm">
+                  <div className="w-6 h-6 sm:w-8 sm:h-8 bg-yellow-400 rounded-full flex items-center justify-center flex-shrink-0">
+                    <span className="text-black font-bold text-xs sm:text-sm">
                       {currentUser?.nickname ? currentUser.nickname[0].toUpperCase() : "?"}
                     </span>
                   </div>
@@ -621,7 +624,7 @@ export default function PostCard({ post, onPostDeleted, onPostUpdated }: PostCar
                       onCompositionEnd={handleCompositionEnd}
                       onKeyDown={handleKeyDown}
                       placeholder="댓글을 입력하세요..."
-                      className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-yellow-400 focus:border-transparent text-sm"
+                      className="flex-1 px-2 sm:px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-yellow-400 focus:border-transparent text-xs sm:text-sm"
                       disabled={isSubmittingComment}
                       autoComplete="off"
                       maxLength={500}
@@ -629,18 +632,18 @@ export default function PostCard({ post, onPostDeleted, onPostUpdated }: PostCar
                     <button
                       type="submit"
                       disabled={!newComment.trim() || isSubmittingComment || isComposing}
-                      className="px-3 py-2 bg-yellow-400 hover:bg-yellow-500 disabled:bg-gray-300 disabled:cursor-not-allowed text-black rounded-md transition-colors flex items-center gap-1"
+                      className="px-2 sm:px-3 py-2 bg-yellow-400 hover:bg-yellow-500 disabled:bg-gray-300 disabled:cursor-not-allowed text-black rounded-md transition-colors flex items-center gap-1"
                     >
                       {isSubmittingComment ? (
-                        <div className="animate-spin rounded-full h-4 w-4 border-2 border-black border-t-transparent" />
+                        <div className="animate-spin rounded-full h-3 w-3 sm:h-4 sm:w-4 border-2 border-black border-t-transparent" />
                       ) : (
-                        <Send className="h-4 w-4" />
+                        <Send className="h-3 w-3 sm:h-4 sm:w-4" />
                       )}
                     </button>
                   </div>
                 </form>
               ) : (
-                <div className="text-center text-gray-500 dark:text-gray-400 text-sm py-2">
+                <div className="text-center text-gray-500 dark:text-gray-400 text-xs sm:text-sm py-2">
                   {currentUser ? "승인 후 댓글 작성 가능" : "로그인 후 댓글 작성 가능"}
                 </div>
               )}
