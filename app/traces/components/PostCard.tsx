@@ -16,7 +16,7 @@ import {
   serverTimestamp,
   deleteDoc
 } from "firebase/firestore";
-import { Heart, MessageCircle, Send, User, X, Maximize2, Edit, Trash2, MoreHorizontal } from "lucide-react";
+import { Heart, MessageCircle, Send, User, X, Maximize2, Edit, Trash2, MoreHorizontal, ImageOff } from "lucide-react";
 
 interface Comment {
   id: string;
@@ -57,6 +57,10 @@ export default function PostCard({ post, onPostDeleted, onPostUpdated }: PostCar
   const [editContent, setEditContent] = useState(post.content);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isComposing, setIsComposing] = useState(false);
+  
+  // 🔥 이미지 로딩 상태 추가
+  const [imageError, setImageError] = useState(false);
+  const [imageLoading, setImageLoading] = useState(true);
 
   // 🔧 작성자 권한 체크 개선
   const isAuthor = useCallback(() => {
@@ -99,7 +103,7 @@ export default function PostCard({ post, onPostDeleted, onPostUpdated }: PostCar
     };
 
     fetchUserData();
-  }, [auth.currentUser?.uid]); // UID 변경 시에만 재실행
+  }, [auth.currentUser?.uid]);
 
   // 좋아요 상태 확인
   useEffect(() => {
@@ -124,6 +128,19 @@ export default function PostCard({ post, onPostDeleted, onPostUpdated }: PostCar
 
     return () => unsubscribe();
   }, [post.id]);
+
+  // 🔥 이미지 에러 핸들러
+  const handleImageError = () => {
+    console.error("🖼️ 이미지 로딩 실패:", post.imageUrl);
+    setImageError(true);
+    setImageLoading(false);
+  };
+
+  const handleImageLoad = () => {
+    console.log("✅ 이미지 로딩 성공:", post.imageUrl);
+    setImageLoading(false);
+    setImageError(false);
+  };
 
   // 한글 입력 핸들러들
   const handleCompositionStart = useCallback(() => {
@@ -209,14 +226,14 @@ export default function PostCard({ post, onPostDeleted, onPostUpdated }: PostCar
   const handleEditClick = () => {
     console.log("✏️ 수정 버튼 클릭");
     setIsEditing(true);
-    setEditContent(post.content); // 현재 내용으로 초기화
+    setEditContent(post.content);
     setShowMenu(false);
   };
 
   const handleEditCancel = () => {
     console.log("❌ 수정 취소");
     setIsEditing(false);
-    setEditContent(post.content); // 원래 내용으로 되돌리기
+    setEditContent(post.content);
   };
 
   const handleEditSave = async () => {
@@ -247,9 +264,7 @@ export default function PostCard({ post, onPostDeleted, onPostUpdated }: PostCar
       setIsEditing(false);
       setShowMenu(false);
       
-      // 부모 컴포넌트에 수정 알림 (있는 경우)
       onPostUpdated?.();
-      
       alert("게시글이 성공적으로 수정되었습니다.");
 
     } catch (error) {
@@ -283,11 +298,44 @@ export default function PostCard({ post, onPostDeleted, onPostUpdated }: PostCar
   };
 
   const canInteract = currentUser && currentUser.role === "approved";
-  const canEdit = isAuthor(); // 수정 권한 체크
+  const canEdit = isAuthor();
 
   const handleCardClick = (e: React.MouseEvent) => {
     if ((e.target as HTMLElement).closest('button')) return;
     setIsExpanded(true);
+  };
+
+  // 🔥 이미지 렌더링 컴포넌트 개선
+  const ImageComponent = ({ className = "" }: { className?: string }) => {
+    if (!post.imageUrl) return null;
+
+    if (imageError) {
+      return (
+        <div className={`bg-gray-100 dark:bg-gray-800 flex items-center justify-center ${className}`}>
+          <div className="text-center text-gray-500 dark:text-gray-400 p-8">
+            <ImageOff className="h-8 w-8 mx-auto mb-2" />
+            <p className="text-sm">이미지를 불러올 수 없습니다</p>
+          </div>
+        </div>
+      );
+    }
+
+    return (
+      <div className={`relative ${className}`}>
+        {imageLoading && (
+          <div className="absolute inset-0 bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-2 border-yellow-400 border-t-transparent"></div>
+          </div>
+        )}
+        <img
+          src={post.imageUrl}
+          alt="게시글 이미지"
+          className={`w-full object-cover rounded-lg ${imageLoading ? 'opacity-0' : 'opacity-100'} transition-opacity`}
+          onLoad={handleImageLoad}
+          onError={handleImageError}
+        />
+      </div>
+    );
   };
 
   const CompactCard = () => (
@@ -322,7 +370,7 @@ export default function PostCard({ post, onPostDeleted, onPostUpdated }: PostCar
           <p className="text-sm text-gray-500 dark:text-gray-400">{post.date}</p>
         </div>
         
-        {/* 🔧 수정/삭제 메뉴 - 권한 체크 개선 */}
+        {/* 수정/삭제 메뉴 */}
         {canEdit && (
           <div className="relative">
             <button
@@ -373,16 +421,10 @@ export default function PostCard({ post, onPostDeleted, onPostUpdated }: PostCar
         <Maximize2 className="h-4 w-4 text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" />
       </div>
 
-      {/* 이미지 표시 */}
-      {post.imageUrl && (
-        <img
-          src={post.imageUrl}
-          alt="게시글 이미지"
-          className="w-full max-h-96 object-cover rounded-lg mb-4"
-        />
-      )}
+      {/* 🔥 이미지 표시 개선 */}
+      <ImageComponent className="max-h-96 mb-4" />
 
-      {/* 🔧 글 내용 - 수정 모드 개선 */}
+      {/* 글 내용 - 수정 모드 개선 */}
       {isEditing ? (
         <div className="mb-4" onClick={(e) => e.stopPropagation()}>
           <textarea
@@ -458,6 +500,7 @@ export default function PostCard({ post, onPostDeleted, onPostUpdated }: PostCar
           <p>🔍 디버깅: 수정 권한 = {canEdit ? "✅" : "❌"}</p>
           <p>현재 사용자: {currentUser?.uid || "없음"}</p>
           <p>글 작성자: {post.authorId || "없음"}</p>
+          {post.imageUrl && <p>이미지 URL: {post.imageUrl.substring(0, 50)}...</p>}
         </div>
       )}
     </div>
@@ -495,13 +538,8 @@ export default function PostCard({ post, onPostDeleted, onPostUpdated }: PostCar
               </div>
             </div>
 
-            {post.imageUrl && (
-              <img
-                src={post.imageUrl}
-                alt="게시글 이미지"
-                className="w-full max-h-[400px] object-cover rounded-lg mb-6"
-              />
-            )}
+            {/* 🔥 확대 모달에서도 이미지 개선 */}
+            <ImageComponent className="max-h-[400px] mb-6" />
 
             <div className="text-gray-800 dark:text-gray-100 mb-6 whitespace-pre-wrap leading-relaxed text-lg">
               {post.content}

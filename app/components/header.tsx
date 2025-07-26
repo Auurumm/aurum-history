@@ -353,10 +353,11 @@ export default function Header() {
                 </Link>
               )}
 
+              {/* 🔥 햄버거 메뉴 버튼 - 스타일 개선 */}
               <Button
                 variant="ghost"
                 size="sm"
-                className="md:hidden transition-colors text-gray-800 hover:text-black dark:text-gray-200 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800"
+                className="md:hidden p-2 transition-colors text-gray-800 hover:text-black dark:text-gray-200 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 border-0 shadow-none"
                 onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
               >
                 {isMobileMenuOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
@@ -364,17 +365,18 @@ export default function Header() {
             </div>
           </div>
 
-          {/* 🔥 모바일 메뉴에 사용자 메뉴 추가 */}
+          {/* 🔥 모바일 메뉴 - 완전히 재구성 */}
           {isMobileMenuOpen && (
-            <div className="md:hidden border-t border-gray-200 dark:border-gray-700 py-4">
-              {user && (
-                <>
-                  <div className="flex items-center gap-3 px-4 py-2 border-b border-gray-200 dark:border-gray-700 mb-4">
+            <div className="md:hidden absolute top-full left-0 right-0 bg-white dark:bg-black border-t border-gray-200 dark:border-gray-700 shadow-lg">
+              <div className="px-4 py-4 space-y-4 max-h-96 overflow-y-auto">
+                {/* 🔥 사용자 정보 (로그인된 경우) */}
+                {user && (
+                  <div className="flex items-center gap-3 pb-4 border-b border-gray-200 dark:border-gray-700">
                     <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-yellow-400">
                       {user.profileImage ? (
                         <img 
                           src={user.profileImage} 
-                          alt={`${user.nickname} 프로필`}
+                          alt={`${user.nickname || user.name} 프로필`}
                           className="w-full h-full object-cover"
                         />
                       ) : (
@@ -394,28 +396,69 @@ export default function Header() {
                       </div>
                     </div>
                   </div>
+                )}
 
-                  <Link
-                    href="/mypage"
-                    onClick={() => setIsMobileMenuOpen(false)}
-                    className="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
-                  >
-                    <UserCircle className="h-4 w-4" />
-                    마이페이지
-                  </Link>
+                {/* 🔥 메인 네비게이션 메뉴 */}
+                <div className="space-y-3">
+                  {menuItems.map((item) => (
+                    <div key={item.title} className="space-y-2">
+                      <div className="font-medium text-gray-900 dark:text-white px-2 py-1">
+                        {item.title}
+                      </div>
+                      <div className="pl-4 space-y-1">
+                        {item.columns[0].items.map((subItem, index) => (
+                          <Link
+                            key={index}
+                            href={subItem.href}
+                            onClick={() => setIsMobileMenuOpen(false)}
+                            className="block px-2 py-2 text-sm text-gray-600 dark:text-gray-400 hover:text-yellow-600 dark:hover:text-yellow-400 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-md transition-colors"
+                          >
+                            {subItem.name}
+                          </Link>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
 
-                  <button
-                    onClick={() => {
-                      handleLogout();
-                      setIsMobileMenuOpen(false);
-                    }}
-                    className="flex items-center gap-3 w-full px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-800"
-                  >
-                    <LogOut className="h-4 w-4" />
-                    로그아웃
-                  </button>
-                </>
-              )}
+                {/* 🔥 사용자 액션 (로그인된 경우) */}
+                {user && (
+                  <div className="pt-4 border-t border-gray-200 dark:border-gray-700 space-y-2">
+                    <Link
+                      href="/mypage"
+                      onClick={() => setIsMobileMenuOpen(false)}
+                      className="flex items-center gap-3 px-2 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md transition-colors"
+                    >
+                      <UserCircle className="h-4 w-4" />
+                      마이페이지
+                    </Link>
+                    
+                    <button
+                      onClick={() => {
+                        handleLogout();
+                        setIsMobileMenuOpen(false);
+                      }}
+                      className="flex items-center gap-3 w-full px-2 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md transition-colors"
+                    >
+                      <LogOut className="h-4 w-4" />
+                      로그아웃
+                    </button>
+                  </div>
+                )}
+
+                {/* 🔥 로그인 버튼 (로그인되지 않은 경우) */}
+                {!user && (
+                  <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
+                    <Link
+                      href="/auth"
+                      onClick={() => setIsMobileMenuOpen(false)}
+                      className="block w-full text-center px-4 py-2 bg-yellow-400 text-black font-medium rounded-md hover:bg-yellow-500 transition-colors"
+                    >
+                      {t("login") || "로그인"}
+                    </Link>
+                  </div>
+                )}
+              </div>
             </div>
           )}
         </div>

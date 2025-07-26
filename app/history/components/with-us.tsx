@@ -17,10 +17,7 @@ export default function WithUs() {
 
         <div className="text-base sm:text-lg leading-relaxed space-y-4 text-gray-700 dark:text-gray-300">
           <p>
-            중소벤처기업부 · 한국콘텐츠진흥원(Kocca) · 서울시 창조경제혁신센터(용산) · 고려대학교 캠퍼스타운 · BGN 밝은눈안과 잠실
-          </p>
-          <p>
-            네이버 웹툰 · 한국소아암재단 · 고려대학연합 클럽 후원위원회 · K-ICT 창업멘토링센터 · 쿠팡플레이 · 아메바컬쳐
+            중소벤처기업부 · 한국콘텐츠진흥원(Kocca) · 서울시 창조경제혁신센터(용산) · 고려대학교 캠퍼스타운 · BGN 밝은눈안과 잠실 · 네이버 웹툰 · 한국소아암재단 · 고려대학연합 클럽 후원위원회 · K-ICT 창업멘토링센터 · 쿠팡플레이 · 아메바컬쳐
           </p>
         </div>
       </div>

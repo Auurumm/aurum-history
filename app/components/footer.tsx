@@ -24,13 +24,6 @@ export default function Footer() {
       {/* ✅ 모바일 전용 푸터 */}
       <footer className="block sm:hidden bg-gray-50 dark:bg-gray-900 text-gray-800 dark:text-white px-4 py-16 transition-colors duration-300">
         <div className="max-w-md mx-auto space-y-3 text-center">
-          <div className="flex justify-center items-center space-x-2 mb-4">
-            <div className="w-6 h-6 rounded-full bg-black flex items-center justify-center">
-              <span className="text-white font-bold text-xs">●</span>
-            </div>
-            <span className="text-lg font-semibold">Aurum</span>
-          </div>
-
           <div className="text-base space-y-2 text-gray-500 dark:text-gray-400">
             <p>Aurum Inc</p>
             <p>사업자 등록번호 : 538-86-01639 | CEO : 박동근 | 주소 : 서울시 송파구 위례성대로12길 36, 금원빌딩 4층 전체 </p>
