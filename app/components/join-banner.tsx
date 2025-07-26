@@ -19,24 +19,24 @@ export default function JoinBanner() {
   ]
 
   return (
-    <section
-      className="relative h-[500px] sm:h-[600px] md:h-[700px] py-20 bg-cover bg-center bg-no-repeat"
-      style={{ backgroundImage: "url('/images/children-field.png')" }}
-    >
-      <div className="absolute inset-0 bg-black/30" />
+  <section
+    className="relative h-[500px] sm:h-[600px] md:h-[700px] py-20 bg-cover bg-center bg-no-repeat"
+    style={{ backgroundImage: "url('/images/children-field.png')" }}
+  >
+    <div className="absolute inset-0 bg-black/30" />
 
-      <div className="relative z-10 flex flex-col items-center justify-center h-full px-4 text-center">
-        <div>
-          <p className="text-base text-white font-light leading-relaxed mb-8">
-            세상 모두가, 이전의 그 어떤 것보다
-            <br />
-            행복하고, 즐거운 라이프를 만들 수 있는 경험.
-          </p>
-          <h2 className="text-2xl sm:text-4xl font-bold text-white leading-tight">
-            오럼은, 멈추지 않겠습니다
-          </h2>
-        </div>
+    <div className="relative z-10 flex flex-col items-center justify-center h-full px-4 text-center">
+      <div>
+        <p className="text-lg sm:text-xl text-white font-light leading-loose mb-10">
+          세상 모두가, 이전의 그 어떤 것보다
+          <br />
+          행복하고, 즐거운 라이프를 만들 수 있는 경험.
+        </p>
+        <h2 className="text-3xl sm:text-5xl font-bold text-white leading-relaxed">
+          오럼은, 멈추지 않겠습니다
+        </h2>
       </div>
-    </section>
-  )
+    </div>
+  </section>
+)
 }

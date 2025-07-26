@@ -37,13 +37,16 @@ export default function HeroSection() {
       {/* Content */}
       <div className="relative z-20 text-center px-4 sm:px-6 lg:px-8 max-w-4xl mx-auto pb-24">
         <h2
-          className="text-3xl sm:text-4xl lg:text-5xl font-bold text-[#D4AF37] mb-10 leading-tight font-serif"
-          style={{ textShadow: "2px 2px 4px rgba(0, 0, 0, 0.5)" }}
+          className="text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-bold text-[#D4AF37] mb-10 leading-tight"
+          style={{ 
+            fontFamily: 'Noto Serif KR, Georgia, serif',
+            textShadow: "2px 2px 4px rgba(0, 0, 0, 0.5)" 
+          }}
         >
           흐르는 강물처럼
         </h2>
 
-        <p className="text-sm sm:text-base font-light text-gray-300 mb-8 max-w-2xl mx-auto leading-relaxed drop-shadow-md">
+        <p className="text-lg sm:text-xl lg:text-2xl font-light text-gray-300 mb-8 max-w-2xl mx-auto leading-relaxed drop-shadow-md">
           모두의 삶에 도움이 되는 기능들,
           <br />
           언제나 항상 있어야 하는 그러한 서비스를 만듭니다

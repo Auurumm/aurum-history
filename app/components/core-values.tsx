@@ -51,67 +51,67 @@ export default function CoreValues() {
   >
 
       {/* Dark Overlay */}
-      <div className="absolute inset-0 bg-black/50" />
+<div className="absolute inset-0 bg-black/50" />
 
-      <div className="relative z-10 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-        {/* Central Circular Image with Hover Effects */}
-        <div className="mb-8">
-          <div className="group w-[24rem] h-[24rem] max-w-[80vw] max-h-[80vw] mx-auto rounded-full overflow-hidden border-4 border-white/20 shadow-2xl relative cursor-pointer">
-            {/* Base Image */}
-            <img
-              src="/images/girl3.png"
-              alt="Brand Character"
-              className="absolute inset-0 w-full h-full object-cover transition-opacity duration-500 opacity-100 group-hover:opacity-0"
-            />
+<div className="relative z-10 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+  {/* Central Circular Image with Hover Effects */}
+  <div className="mb-8">
+    <div className="group w-[24rem] h-[24rem] max-w-[80vw] max-h-[80vw] mx-auto rounded-full overflow-hidden border-4 border-white/20 shadow-2xl relative cursor-pointer">
+      {/* Base Image */}
+      <img
+        src="/images/girl3.png"
+        alt="Brand Character"
+        className="absolute inset-0 w-full h-full object-cover transition-opacity duration-500 opacity-100 group-hover:opacity-0"
+      />
 
-            {/* Hover Image */}
-            <img
-              src="/images/girl2.png"
-              alt="Happy Character"
-              className="absolute inset-0 w-full h-full object-cover transition-opacity duration-500 opacity-0 group-hover:opacity-100"
-            />
+      {/* Hover Image */}
+      <img
+        src="/images/girl2.png"
+        alt="Happy Character"
+        className="absolute inset-0 w-full h-full object-cover transition-opacity duration-500 opacity-0 group-hover:opacity-100"
+      />
 
-            {/* Dark overlay */}
-            <div className="absolute inset-0 bg-black/40" />
+      {/* Dark overlay */}
+      <div className="absolute inset-0 bg-black/40" />
 
-            {/* Centered text with hover transition */}
-            <div className="absolute inset-0 flex items-center justify-center">
-              <p className="text-white text-1xl font-semibold text-center px-4 transition-opacity duration-500 opacity-100 group-hover:opacity-0 absolute">
-                모두를 행복하게 <br /> 할 수는 없지만
-              </p>
-              <p className="text-white text-1xl font-semibold text-center px-4 transition-opacity duration-500 opacity-0 group-hover:opacity-100 absolute">
-                조금은 더, <br /> 행복하게 만들 수 있습니다.
-              </p>
-            </div>
-          </div>
-        </div>
-
-      {/* Bottom Text Messages */}
-      <div className="space-y-12">
-        <div className="mt-4">
-          <p className="text-white text-base sm:text-lg leading-snug">세상 모두가</p>
-        </div>
-
-        <div className="-mt-4">
-          <p className="text-white text-[1.25rem] sm:text-[1.25rem] font-semibold leading-tight">
-            보다 더 따뜻하게,
-            <br />
-            보다 더 즐겁게
-          </p>
-        </div>
-
-        <div className="-mt-3">
-          <p className="text-white text-base sm:text-lg leading-snug">당신의 꿈에, 항상</p>
-        </div>
-
-        <div className="pt-2">
-          <p className="text-white text-3xl sm:text-4xl font-bold leading-tight">
-            오럼이 함께 하겠습니다
-          </p>
-        </div>
+      {/* Centered text with hover transition */}
+      <div className="absolute inset-0 flex items-center justify-center">
+        <p className="text-white text-2xl font-semibold text-center px-4 leading-relaxed transition-opacity duration-500 opacity-100 group-hover:opacity-0 absolute">
+          모두를 행복하게 <br /> 할 수는 없지만
+        </p>
+        <p className="text-white text-2xl font-semibold text-center px-4 leading-relaxed transition-opacity duration-500 opacity-0 group-hover:opacity-100 absolute">
+          조금은 더, <br /> 행복하게 만들 수 있습니다.
+        </p>
       </div>
-
     </div>
+  </div>
+
+  {/* Bottom Text Messages */}
+  <div className="space-y-12">
+    <div className="mt-4">
+      <p className="text-white text-lg sm:text-xl leading-relaxed">세상 모두가</p>
+    </div>
+
+    <div className="-mt-2">
+      <p className="text-white text-2xl sm:text-2xl font-semibold leading-relaxed">
+        보다 더 따뜻하게,
+        <br />
+        보다 더 즐겁게
+      </p>
+    </div>
+
+    <div className="-mt-1">
+      <p className="text-white text-lg sm:text-xl leading-relaxed">당신의 꿈에, 항상</p>
+    </div>
+
+    <div className="pt-4">
+      <p className="text-white text-4xl sm:text-5xl font-bold leading-relaxed">
+        오럼이 함께 하겠습니다
+      </p>
+    </div>
+  </div>
+</div>
+
   </section>
   )
 }
