@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button"
 import { useTheme } from "../contexts/theme-context"
 import Link from "next/link"
 import { useLanguage } from "@/app/contexts/language-context"
-// import LanguageSwitcher from "./language-switcher"
+import LanguageSwitcher from "./language-switcher"
 import { auth, db } from "@/lib/firebase"
 import { onAuthStateChanged, signOut } from "firebase/auth"
 import { doc, getDoc } from "firebase/firestore"
@@ -277,6 +277,7 @@ export default function Header() {
                   </form>
                 )}
 
+                {/* 언어 스위처 - 임시 비공개 */}
                 {/* <LanguageSwitcher /> */}
 
                 <Button
@@ -469,10 +470,10 @@ export default function Header() {
                     {theme === "dark" ? (t("lightMode") || "라이트 모드") : (t("darkMode") || "다크 모드")}
                   </button>
 
-                  {/* 언어 변경 */}
-                  <div className="px-2 py-2">
+                  {/* 언어 변경 - 임시 비공개 */}
+                  {/* <div className="px-2 py-2">
                     <LanguageSwitcher />
-                  </div>
+                  </div> */}
                 </div>
 
                 {/* 로그인 버튼 (로그인되지 않은 경우) */}
