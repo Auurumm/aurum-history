@@ -7,7 +7,7 @@ const departments = [
   {
     id: 1,
     title: "매니징사업부",
-    description: "모든 부서의 원활한 운영을 지원하고, 회사 전체의 효율성을 높이는 핵심 역할을 담당합니다. 인사, 총무, 재무, 법무 등 다양한 분야의 전문가들이 함께 일하며, 오럼의 지속적인 성장을 뒷받침하는 든든한 기반이 되고 있습니다.",
+    description: "인사, 총무, 재무, 법무 등 다양한 분야의 전문가들이 함께 일하며, 오럼의 지속적인 성장을 뒷받침하는 든든한 기반이 되고 있습니다.",
     image: "/images/dept-metaverse.png",
   },
   {
@@ -104,7 +104,7 @@ export default function DepartmentSection() {
                   종합지원실
                 </h3>
                 <p className="text-lg text-gray-300 group-hover:text-white transition-colors duration-300 leading-relaxed mb-6">
-                  모든 부서의 기획과 실행을 함께 고민하며, 원활한 운영과 실질적인 지원이 이뤄지도록 <br /> 조율합니다. 팀이 각자의 일에 집중할 수 있도록 조용히, 그러나 든든하게 곁을 지킵니다.
+                  모든 부서의 기획과 실행을 함께 고민하며, 원활한 운영과 실질적인 지원이 이뤄지도록 조율합니다. 팀이 각자의 일에 집중할 수 있도록 조용히, 그러나 든든하게 곁을 지킵니다.
                 </p>
                 {/*<div className="flex flex-wrap gap-3">
                   {["인사관리", "재무관리", "법무지원", "총무업무"].map((item, index) => (

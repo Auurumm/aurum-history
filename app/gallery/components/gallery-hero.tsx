@@ -3,6 +3,25 @@
 import { Sparkles } from "lucide-react"
 
 export default function GalleryHero() {
+  const scrollToNextSection = () => {
+    const nextSection = document.querySelector('#gallery-content') || 
+                       document.querySelector('section:nth-of-type(2)') ||
+                       document.querySelector('[data-section="gallery"]');
+    
+    if (nextSection) {
+      nextSection.scrollIntoView({ 
+        behavior: 'smooth',
+        block: 'start' 
+      });
+    } else {
+      // 다음 섹션을 찾을 수 없는 경우 한 화면 아래로 스크롤
+      window.scrollBy({
+        top: window.innerHeight,
+        behavior: 'smooth'
+      });
+    }
+  };
+
   return (
     <section className="relative h-screen flex items-center justify-center px-4 sm:px-6 lg:px-8 bg-white dark:bg-black overflow-hidden">
       {/* Background Pattern */}
@@ -14,7 +33,6 @@ export default function GalleryHero() {
             backgroundImage: "url('/images/gallery-hero.png')",
           }}
         />
-
 
         {/* Floating Dots */}
         <div className="absolute top-10 left-10 w-2 h-2 bg-yellow-400 rounded-full animate-pulse" />
@@ -48,14 +66,15 @@ export default function GalleryHero() {
           우리의 하루를 엿보세요
         </p>
 
-        <div className="inline-block px-6 py-3 bg-yellow-400 dark:bg-yellow-500 rounded-full">
-        <span className="text-black dark:text-black font-medium">
-          ✨ 우리의 일상을 담았습니다
-        </span>
+        <button 
+          onClick={scrollToNextSection}
+          className="inline-block px-6 py-3 bg-yellow-400 dark:bg-yellow-500 rounded-full hover:bg-yellow-500 dark:hover:bg-yellow-600 transition-colors duration-300 cursor-pointer"
+        >
+          <span className="text-black dark:text-black font-medium">
+            ✨ 우리의 일상을 담았습니다
+          </span>
+        </button>
       </div>
-
-      </div>
-
     </section>
   )
 }
