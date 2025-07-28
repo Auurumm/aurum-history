@@ -70,24 +70,28 @@ export default function CultureCarousel() {
   const IconComponent = currentItem.icon
 
   return (
-    <section className="bg-white py-48 text-center">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Top message */}
-        <p className="text-4xl font-extrabold text-gray-800 mb-12 leading-snug">공부해서 남 주냐?</p>
+  <section className="bg-white py-48 text-center">
+    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+      {/* Top message */}
+      <p className="text-4xl font-extrabold text-gray-800 mb-12 leading-snug">공부해서 남 주냐?</p>
 
-        {/* Central image */}
-        <div className="my-12">
-          <img src="/images/golden-apple.png" alt="황금 사과" className="max-w-[400px] mx-auto object-contain" />
-        </div>
-
-        {/* Bottom messages */}
-        <div className="space-y-4">
-          <p className="text-4xl font-bold text-gray-800">네.</p>
-          <p className="text-4xl text-gray-700">
-            오럼은, <span className="text-yellow-500 font-bold">남 주려고</span> 공부했습니다.
-          </p>
-        </div>
+      {/* Central image */}
+      <div className="my-12">
+        <img
+          src="/images/golden-apple.png"
+          alt="황금 사과"
+          className="max-w-[400px] mx-auto object-contain -translate-x-[5%]"
+        />
       </div>
-    </section>
-  )
+
+      {/* Bottom messages */}
+      <div className="space-y-4">
+        <p className="text-4xl font-bold text-gray-800">네.</p>
+        <p className="text-4xl text-gray-700">
+          오럼은, <span className="text-yellow-500 font-bold">남 주려고</span> 공부했습니다.
+        </p>
+      </div>
+    </div>
+  </section>
+)
 }

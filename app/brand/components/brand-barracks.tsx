@@ -34,7 +34,7 @@ export default function BrandBarracks() {
         <p className="text-base sm:text-xl leading-loose text-gray-800 dark:text-gray-300">
           신입 인재 채용 플랫폼 <strong>"배럭스"</strong> 는, <br />
           우리 회사의 문화와 직무에 가장 잘 커스터마이징된 인재를 찾아 실제 업무 프로젝트를 진행, 그 성과를 바탕으로 채용 여부를 결정하는 인재 발굴 서비스입니다.
-          <br />회사 젊은 미래를 <strong>배럭스</strong>에서 탄탄하게 키워보세요!
+          회사 젊은 미래를 <strong>배럭스</strong>에서 탄탄하게 키워보세요!
         </p>
       </div>
     </section>
