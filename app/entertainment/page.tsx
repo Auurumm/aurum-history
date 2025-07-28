@@ -15,15 +15,15 @@ export default function EntertainmentPage() {
   if (!mounted) return null
 
   return (
-    <div className="flex flex-col min-h-screen bg-black">
+    <div className="flex flex-col min-h-screen">
       <div className="flex-grow">
         {/* ✅ Hero */}
         <section className="min-h-screen">
           <EntertainmentHero />
         </section>
 
-        {/* ✅ Features */}
-        <section id="seasoning" className="min-h-screen">
+        {/* ✅ Features - 구분선 제거 */}
+        <section id="seasoning" className="bg-white dark:bg-black">
           <EntertainmentFeature 
             color="red"
             title="시즈닝 [Seasoning]"
@@ -32,7 +32,7 @@ export default function EntertainmentPage() {
           />
         </section>
 
-        <section className="min-h-screen">
+        <section className="bg-white dark:bg-black">
           <EntertainmentFeature 
             color="green"
             title="달콤 [dalkomm]"
@@ -41,7 +41,7 @@ export default function EntertainmentPage() {
           />
         </section>
 
-        <section className="min-h-screen">
+        <section className="bg-white dark:bg-black">
           <EntertainmentFeature 
             color="blue"
             title="다즐링 [dhazzling]"

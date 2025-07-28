@@ -13,24 +13,24 @@ export default function ProductFeature({ title, description, image, color }: Pro
   }
 
   return (
-    <div className="h-screen bg-white dark:bg-black transition-colors duration-300 px-4 py-20 flex items-center justify-center">
-      <div className="max-w-5xl w-full flex flex-col md:flex-row items-center justify-between gap-12">
+    <div className="w-full bg-white dark:bg-black transition-colors duration-300 px-4 py-40 flex items-center justify-center">
+      <div className="max-w-6xl w-full mx-auto flex flex-col md:flex-row items-center justify-between gap-14">
         {/* 텍스트 영역 */}
-        <div className="flex-1 text-left space-y-4 max-w-md md:pl-6">
-          <h2 className={`text-3xl md:text-4xl font-bold ${colorMap[color]}`}>
+        <div className="flex-1 text-left space-y-5 max-w-lg md:pl-6">
+          <h2 className={`text-4xl md:text-5xl font-bold ${colorMap[color]} leading-tight`}>
             {title}
           </h2>
-          <p className="text-base md:text-lg leading-relaxed text-gray-700 dark:text-gray-300 whitespace-pre-line">
+          <p className="text-lg md:text-xl leading-relaxed text-gray-700 dark:text-gray-300 whitespace-pre-line">
             {description}
           </p>
         </div>
 
         {/* 이미지 영역 */}
-        <div className="flex-1 flex justify-center items-center min-h-[200px] bg-transparent">
+        <div className="flex-1 flex justify-center items-center min-h-[250px] bg-transparent">
           <img
             src={image}
             alt={title}
-            className="w-auto h-60 max-h-72 object-contain"
+            className="w-auto h-72 max-h-80 object-contain"
           />
         </div>
       </div>

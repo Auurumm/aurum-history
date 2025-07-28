@@ -6,20 +6,20 @@ import { useLanguage } from "../../contexts/language-context"
 
 export default function MapSection() {
   const { t } = useLanguage()
-  
+
   return (
     <section className="py-20 px-4 sm:px-6 lg:px-8 bg-white dark:bg-gray-900">
       <div className="max-w-7xl mx-auto">
-        <div className="text-center mb-16">
-          <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-white mb-6">
+        <div className="text-center mb-20">
+          <h2 className="text-4xl sm:text-5xl font-bold text-gray-900 dark:text-white mb-8 leading-tight">
             {t('directionsTitle')}
           </h2>
-          <p className="text-lg text-gray-700 dark:text-gray-300 max-w-2xl mx-auto">
+          <p className="text-xl text-gray-700 dark:text-gray-300 max-w-2xl mx-auto leading-loose">
             {t('directionsDescription')}
           </p>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
           {/* Map */}
           <div className="lg:col-span-2">
             <Card className="bg-gray-100 dark:bg-gray-800 border-gray-200 dark:border-gray-700 overflow-hidden">
@@ -38,7 +38,9 @@ export default function MapSection() {
                   <div className="absolute top-4 right-4 bg-black/80 backdrop-blur-sm rounded-lg p-3">
                     <div className="flex items-center space-x-2">
                       <MapPin className="h-5 w-5 text-yellow-400" />
-                      <span className="text-white font-medium">{t('aurumLocation')}</span>
+                      <span className="text-white text-base font-medium leading-relaxed">
+                        {t('aurumLocation')}
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -47,18 +49,22 @@ export default function MapSection() {
           </div>
 
           {/* Info Cards */}
-          <div className="space-y-6">
+          <div className="space-y-8">
             {/* 주차 안내 */}
             <Card className="bg-gray-100 dark:bg-gray-800 border-gray-200 dark:border-gray-700">
               <CardContent className="p-6">
-                <div className="flex items-center space-x-3 mb-4">
+                <div className="flex items-center space-x-3 mb-5">
                   <ParkingCircle className="h-6 w-6 text-yellow-500 dark:text-yellow-400" />
-                  <h3 className="text-lg font-bold text-gray-900 dark:text-white">{t('parkingTitle')}</h3>
+                  <h3 className="text-xl font-bold text-gray-900 dark:text-white leading-tight">
+                    {t('parkingTitle')}
+                  </h3>
                 </div>
-                <div className="text-sm text-gray-700 dark:text-gray-300 space-y-2">
+                <div className="text-base text-gray-700 dark:text-gray-300 space-y-3 leading-relaxed">
                   <p>{t('parkingInfo')}</p>
                   <p>{t('parkingContact')}</p>
-                  <p className="text-yellow-600 dark:text-yellow-400 text-xs">{t('parkingFree')}</p>
+                  <p className="text-yellow-600 dark:text-yellow-400 text-sm leading-normal">
+                    {t('parkingFree')}
+                  </p>
                 </div>
               </CardContent>
             </Card>
@@ -66,11 +72,13 @@ export default function MapSection() {
             {/* 대중교통 */}
             <Card className="bg-gray-100 dark:bg-gray-800 border-gray-200 dark:border-gray-700">
               <CardContent className="p-6">
-                <div className="flex items-center space-x-3 mb-4">
+                <div className="flex items-center space-x-3 mb-5">
                   <Navigation className="h-6 w-6 text-yellow-500 dark:text-yellow-400" />
-                  <h3 className="text-lg font-bold text-gray-900 dark:text-white">{t('publicTransportTitle')}</h3>
+                  <h3 className="text-xl font-bold text-gray-900 dark:text-white leading-tight">
+                    {t('publicTransportTitle')}
+                  </h3>
                 </div>
-                <div className="space-y-3 text-sm text-gray-700 dark:text-gray-300">
+                <div className="space-y-4 text-base text-gray-700 dark:text-gray-300 leading-relaxed">
                   <div>
                     <span className="text-yellow-600 dark:text-yellow-400 font-medium">지하철</span>
                     <p>{t('subwayInfo')}</p>
@@ -78,20 +86,22 @@ export default function MapSection() {
                   <div>
                     <span className="text-yellow-600 dark:text-yellow-400 font-medium">버스</span>
                     <p>{t('busInfo')}</p>
-                    <p className="text-gray-500 dark:text-gray-400 text-xs">{t('busRoutes')}</p>
+                    <p className="text-gray-500 dark:text-gray-400 text-sm">{t('busRoutes')}</p>
                   </div>
                 </div>
               </CardContent>
             </Card>
 
-            {/* 이메일 연락처 */}
+            {/* 이메일 문의 */}
             <Card className="bg-gray-100 dark:bg-gray-800 border-gray-200 dark:border-gray-700">
               <CardContent className="p-6">
-                <div className="flex items-center space-x-3 mb-4">
+                <div className="flex items-center space-x-3 mb-5">
                   <Mail className="h-6 w-6 text-yellow-500 dark:text-yellow-400" />
-                  <h3 className="text-lg font-bold text-gray-900 dark:text-white">{t('이메일 문의') || '이메일 문의'}</h3>
+                  <h3 className="text-xl font-bold text-gray-900 dark:text-white leading-tight">
+                    {t('이메일 문의') || '이메일 문의'}
+                  </h3>
                 </div>
-                <div className="text-sm text-gray-700 dark:text-gray-300 space-y-2">
+                <div className="text-base text-gray-700 dark:text-gray-300 space-y-3 leading-relaxed">
                   <p>{t('궁금한 사항이 있으시면 언제든 연락해 주세요.') || '궁금한 사항이 있으시면 언제든 연락해 주세요.'}</p>
                   <a 
                     href="mailto:account@aurum.nexus"
@@ -99,7 +109,7 @@ export default function MapSection() {
                   >
                     account@aurum.nexus
                   </a>
-                  <p className="text-gray-500 dark:text-gray-400 text-xs">
+                  <p className="text-gray-500 dark:text-gray-400 text-sm">
                     {t('평일 10시 - 17시 (주말 및 공휴일 제외)') || '평일 10시 - 17시 (주말 및 공휴일 제외)'}
                   </p>
                 </div>

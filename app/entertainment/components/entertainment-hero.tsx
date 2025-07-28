@@ -19,21 +19,21 @@ export default function EntertainmentHero() {
       </div>
 
       {/* 텍스트 콘텐츠 */}
-      <div className="relative z-10 text-center px-6 sm:px-8 lg:px-12 max-w-3xl mx-auto space-y-2">
-        <p className="text-white text-lg">너무 재미있는,</p>
-        <p className="text-gray-300 text-base">페인 킬러가 아닌 비타민?</p>
-        <p className="text-gray-400 text-sm italic">아니아니..</p>
+      <div className="relative z-10 text-center px-6 sm:px-8 lg:px-12 max-w-4xl mx-auto space-y-4">
+        <p className="text-white text-xl sm:text-2xl leading-relaxed">너무 재미있는,</p>
+        <p className="text-gray-300 text-lg sm:text-xl leading-relaxed">페인 킬러가 아닌 비타민?</p>
+        <p className="text-gray-400 text-base sm:text-lg italic leading-relaxed">아니아니..</p>
 
-        <p className="text-xl font-bold text-amber-300 mt-4">우리는, 캔디와 초콜렛</p>
+        <p className="text-2xl sm:text-3xl font-bold text-amber-300 mt-6 leading-relaxed">우리는, 캔디와 초콜렛</p>
 
-        <p className="text-white text-base mt-4">계속 맛보고 싶은,</p>
-        <p className="text-white text-sm tracking-wide">우리의 엔터테인먼트</p>
+        <p className="text-white text-lg sm:text-xl mt-6 leading-relaxed">계속 맛보고 싶은,</p>
+        <p className="text-white text-base sm:text-lg tracking-wide leading-relaxed">우리의 엔터테인먼트</p>
 
-        <h1 className="text-3xl sm:text-4xl font-bold mt-6 text-white">
-          <span className="text-pink-300">“심지어 눈물도 즐거운”</span>
+        <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold mt-8 text-white leading-tight">
+          <span className="text-pink-300">"심지어 눈물도 즐거운"</span>
         </h1>
 
-        <p className="text-sm italic text-gray-500 mb-8">
+        <p className="text-base sm:text-lg italic text-gray-500 mb-10 leading-relaxed mt-6">
           Aurum,
           <br />– entertainment department representative, chief
         </p>
@@ -45,10 +45,10 @@ export default function EntertainmentHero() {
               el.scrollIntoView({ behavior: "smooth" })
             }
           }}
-          className="animate-bounce mt-4"
+          className="animate-bounce mt-6"
           aria-label="아래로 스크롤"
         >
-          <ArrowDown className="h-6 w-6 text-amber-200 mx-auto drop-shadow-lg" />
+          <ArrowDown className="h-8 w-8 text-amber-200 mx-auto drop-shadow-lg" />
         </button>
       </div>
 

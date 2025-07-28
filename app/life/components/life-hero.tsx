@@ -19,25 +19,24 @@ export default function LifeHero() {
       </div>
 
       {/* Content */}
-      <div className="relative z-10 text-center px-4 sm:px-6 lg:px-8 max-w-4xl mx-auto">
-        <p className="text-lg text-gray-400 mb-10 tracking-wide">나 어릴 때, <br /> 충북 옥천 우리 할아버지는 <br /> 스마트폰은 안쓰시는데, 에어컨은 쓰셔 </p>
-        <p className="text-lg text-gray-400 mb-10 tracking-wide">우리의 행동이 바뀌고, 문화가 바뀌는 것.  <br /> 그리고 삶이 바뀌는 것. 때로는 느리더라도, </p>
+      <div className="relative z-10 text-center px-4 sm:px-6 lg:px-8 max-w-5xl mx-auto space-y-6">
+        <p className="text-xl sm:text-2xl text-gray-400 mb-12 tracking-wide leading-relaxed">나 어릴 때, <br /> 충북 옥천 우리 할아버지는 <br /> 스마트폰은 안쓰시는데, 에어컨은 쓰셔 </p>
+        <p className="text-xl sm:text-2xl text-gray-400 mb-12 tracking-wide leading-relaxed">우리의 행동이 바뀌고, 문화가 바뀌는 것.  <br /> 그리고 삶이 바뀌는 것. 때로는 느리더라도, </p>
 
-        <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-6 leading-tight text-white">
-          “<span className="text-[#D4AF37]">더 나은 방식으로 바꾸게 하는 것.</span>”
+        <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold mb-8 leading-tight text-white">
+          "<span className="text-[#D4AF37]">더 나은 방식으로 바꾸게 하는 것.</span>"
         </h1>
 
-        <p className="text-lg sm:text-xl text-gray-300 mb-10 leading-relaxed">
+        <p className="text-xl sm:text-2xl text-gray-300 mb-12 leading-relaxed">
           그래, 그거 할 꺼야
         </p>
 
-        <p className="text-base italic text-gray-500 mb-8">
+        <p className="text-lg sm:text-xl italic text-gray-500 mb-10 leading-relaxed">
           Aurum,
           <br />– Life department representative, chief
         </p>
 
-
-                {/* 스크롤 인디케이터 */}
+        {/* 스크롤 인디케이터 */}
         <button
           onClick={() => {
             const el = document.getElementById("product-feature-1")
@@ -45,10 +44,10 @@ export default function LifeHero() {
               el.scrollIntoView({ behavior: "smooth" })
             }
           }}
-          className="animate-bounce mt-4"
+          className="animate-bounce mt-6"
           aria-label="아래로 스크롤"
         >
-          <ArrowDown className="h-6 w-6 text-amber-200 mx-auto drop-shadow-lg" />
+          <ArrowDown className="h-8 w-8 text-amber-200 mx-auto drop-shadow-lg" />
         </button>
       </div>
 

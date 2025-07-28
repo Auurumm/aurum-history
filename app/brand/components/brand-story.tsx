@@ -56,16 +56,18 @@ export default function BrandStory() {
           </div>
 
           {/* 비주얼 엘리먼트 */}
-          <div className="relative">
-            <div className="w-full h-96 bg-gradient-to-br from-yellow-100 to-orange-100 dark:from-yellow-600/20 dark:to-orange-600/20 rounded-lg flex items-center justify-center">
-              <div className="text-center">
-                <div className="text-6xl font-bold mb-4 text-yellow-700 dark:text-yellow-400">
-                  Aurum
-                </div>
-                <p className="text-gray-600 dark:text-gray-300 text-lg">라틴어: 금(Gold)</p>
-                <p className="text-gray-500 dark:text-gray-400 text-sm mt-2">순수함 • 가치 • 영원함</p>
-              </div>
-            </div>
+          <div className="relative w-full h-96 rounded-lg overflow-hidden">
+            {/* 이미지 백그라운드 */}
+            <img
+              src="/images/brand-au.png" // 실제 이미지 경로로 변경하세요
+              alt="Aurum Background"
+              className="absolute inset-0 w-full h-full object-cover"
+            />
+
+            {/* 어두운 오버레이 (선택사항: 텍스트 가독성 향상) */}
+            <div className="absolute inset-0 bg-black/20 dark:bg-black/40" />
+
+
 
             {/* 장식 요소 */}
             <div className="absolute -top-4 -right-4 w-8 h-8 border-2 border-yellow-400 rotate-45"></div>
