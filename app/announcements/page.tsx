@@ -77,7 +77,7 @@ export default function AnnouncementsPage() {
 
       <div id="scroll-target">
         {/* 카테고리 필터 */}
-        <div className="flex justify-center flex-wrap gap-4 py-10 border-b border-gray-200 dark:border-gray-700">
+        <div className="flex justify-center flex-wrap gap-4 py-12 border-b border-gray-200 dark:border-gray-700">
           {categories.map((cat) => (
             <button
               key={cat}
@@ -85,10 +85,10 @@ export default function AnnouncementsPage() {
                 setSelectedCategory(cat)
                 setVisibleCount(2)
               }}
-              className={`text-sm px-4 py-1 rounded transition ${
+              className={`text-lg px-6 py-3 rounded-full transition font-medium ${
                 selectedCategory === cat
-                  ? "bg-black text-white dark:bg-white dark:text-black font-semibold"
-                  : "text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white"
+                  ? "bg-yellow-400 text-black font-semibold shadow-md"
+                  : "text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800"
               }`}
             >
               {cat}
@@ -97,36 +97,36 @@ export default function AnnouncementsPage() {
         </div>
 
         {/* 게시물 카드 리스트 */}
-        <div className="max-w-6xl mx-auto px-4 grid grid-cols-1 md:grid-cols-2 gap-8 mt-12">
+        <div className="max-w-6xl mx-auto px-4 grid grid-cols-1 md:grid-cols-2 gap-10 mt-16">
           {visiblePosts.map((post) => (
             <Link href={`/announcements/${post.id}`} key={post.id} className="block">
-              <div className="bg-gray-100 dark:bg-zinc-900 border border-gray-200 dark:border-zinc-700 rounded shadow p-4 hover:shadow-lg transition">
+              <div className="bg-gray-100 dark:bg-zinc-900 border border-gray-200 dark:border-zinc-700 rounded-lg shadow-md p-6 hover:shadow-xl transition-all duration-300 hover:scale-105">
                 <Image
                   src={post.image}
                   alt={post.title}
                   width={600}
                   height={400}
-                  className="rounded mb-4 object-cover"
+                  className="rounded-lg mb-6 object-cover w-full h-64"
                 />
-                <div className="text-sm text-yellow-600 dark:text-yellow-400 mb-1">{post.category}</div>
-                <h3 className="text-lg font-bold mb-1">{post.title}</h3>
-                <p className="text-sm text-gray-700 dark:text-gray-400">{post.excerpt}</p>
-                <div className="text-xs text-gray-500 dark:text-gray-600 mt-2">{post.date}</div>
+                <div className="text-base text-yellow-600 dark:text-yellow-400 mb-3 font-medium">{post.category}</div>
+                <h3 className="text-2xl font-bold mb-3 leading-tight">{post.title}</h3>
+                <p className="text-lg text-gray-700 dark:text-gray-400 leading-relaxed">{post.excerpt}</p>
+                <div className="text-sm text-gray-500 dark:text-gray-600 mt-4">{post.date}</div>
               </div>
             </Link>
           ))}
         </div>
 
         {/* 더보기 or 종료 */}
-        <div className="text-center mt-16">
+        <div className="text-center mt-20">
           {isAllLoaded ? (
-            <p className="text-sm text-gray-500 dark:text-gray-400">
+            <p className="text-lg text-gray-500 dark:text-gray-400">
               로드할 내용이 없습니다.
             </p>
           ) : (
             <button
               onClick={() => setVisibleCount((prev) => prev + 2)}
-              className="text-sm text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white underline underline-offset-2 transition-colors"
+              className="text-lg text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white underline underline-offset-4 transition-colors font-medium px-4 py-2"
             >
               더보기 ↓
             </button>

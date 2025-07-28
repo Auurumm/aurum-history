@@ -6,7 +6,15 @@ export default function HeroSection() {
   const handleScroll = () => {
     const target = document.getElementById("scroll-target")
     if (target) {
-      target.scrollIntoView({ behavior: "smooth" })
+      // 헤더 높이를 고려하여 오프셋 추가
+      const headerOffset = 100; // 헤더 높이에 맞게 조정
+      const elementPosition = target.getBoundingClientRect().top + window.pageYOffset;
+      const offsetPosition = elementPosition - headerOffset;
+
+      window.scrollTo({
+        top: offsetPosition,
+        behavior: "smooth"
+      });
     }
   }
 
@@ -20,10 +28,12 @@ export default function HeroSection() {
         priority
       />
       <div className="relative z-10">
-        <h1 className="text-4xl sm:text-5xl font-bold text-white">안내드립니다</h1>
+        <h1 className="text-6xl sm:text-7xl lg:text-8xl font-bold text-white mb-8 drop-shadow-2xl">
+          안내드립니다
+        </h1>
         <button
           onClick={handleScroll}
-          className="mt-6 text-white text-2xl animate-bounce cursor-pointer focus:outline-none"
+          className="mt-8 text-white text-4xl animate-bounce cursor-pointer focus:outline-none hover:text-yellow-400 transition-colors duration-300"
           aria-label="아래로 스크롤"
         >
           ↓

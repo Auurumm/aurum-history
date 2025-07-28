@@ -42,7 +42,7 @@ export default function LifeContact() {
                     `회사명: ${company}\n담당자명: ${name}\n이메일: ${email}\n\n프로젝트 내용:\n${message}`
                   )
 
-                  window.location.href = `mailto:Life@aurum.nexus?subject=${subject}&body=${body}`
+                  window.location.href = `mailto:marketing@aurum.nexus?subject=${subject}&body=${body}`
                 }}
               >
                 <div>
@@ -100,7 +100,7 @@ export default function LifeContact() {
 
                 <p className="text-sm text-gray-500 dark:text-gray-400 text-center">
                   * 문의 버튼 클릭 시 메일 앱이 실행되지 않는다면,<br />
-                  <strong>Life@aurum.nexus</strong>로 직접 메일을 보내주세요.
+                  <strong>marketing@aurum.nexus</strong>로 직접 메일을 보내주세요.
                 </p>
               </div>
               </form>
@@ -120,7 +120,7 @@ export default function LifeContact() {
                     <Mail className="h-6 w-6 text-cyan-400 mr-4" />
                     <div>
                       <p className="text-gray-600 dark:text-gray-300">이메일</p>
-                      <p className="text-gray-900 dark:text-white font-medium">Life@aurum.nexus</p>
+                      <p className="text-gray-900 dark:text-white font-medium">marketing@aurum.nexus</p>
                     </div>
                   </div>
 

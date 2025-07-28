@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { auth, db } from "@/lib/firebase";
 import { 
   doc, 
@@ -16,6 +16,7 @@ import {
   serverTimestamp,
   deleteDoc
 } from "firebase/firestore";
+import { onAuthStateChanged } from "firebase/auth";
 import { Heart, MessageCircle, Send, User, X, Maximize2, Edit, Trash2, MoreHorizontal, ImageOff } from "lucide-react";
 
 interface Comment {
@@ -45,7 +46,6 @@ interface PostCardProps {
 
 export default function PostCard({ post, onPostDeleted, onPostUpdated }: PostCardProps) {
   const [comments, setComments] = useState<Comment[]>([]);
-  const [newComment, setNewComment] = useState("");
   const [isSubmittingComment, setIsSubmittingComment] = useState(false);
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [isLiked, setIsLiked] = useState(false);
@@ -56,11 +56,13 @@ export default function PostCard({ post, onPostDeleted, onPostUpdated }: PostCar
   const [isEditing, setIsEditing] = useState(false);
   const [editContent, setEditContent] = useState(post.content);
   const [isDeleting, setIsDeleting] = useState(false);
-  const [isComposing, setIsComposing] = useState(false);
   
   // 🔥 이미지 로딩 상태 추가
   const [imageError, setImageError] = useState(false);
   const [imageLoading, setImageLoading] = useState(true);
+
+  // 🔥 댓글 입력을 위한 ref 사용
+  const commentInputRef = useRef<HTMLInputElement>(null);
 
   // 🔧 작성자 권한 체크 개선
   const isAuthor = useCallback(() => {
@@ -76,16 +78,16 @@ export default function PostCard({ post, onPostDeleted, onPostUpdated }: PostCar
            (post.authorId === auth.currentUser.uid);
   }, [currentUser, post.authorId]);
 
-  // 현재 사용자 정보 가져오기
+  // 🔥 현재 사용자 정보 가져오기 - onAuthStateChanged 사용
   useEffect(() => {
-    const fetchUserData = async () => {
-      if (auth.currentUser) {
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+      if (firebaseUser) {
         try {
-          const userDoc = await getDoc(doc(db, "users", auth.currentUser.uid));
+          const userDoc = await getDoc(doc(db, "users", firebaseUser.uid));
           const userData = userDoc.data();
           if (userData) {
             const user = {
-              uid: auth.currentUser.uid,
+              uid: firebaseUser.uid,
               name: userData.name,
               nickname: userData.nickname,
               role: userData.role,
@@ -100,10 +102,10 @@ export default function PostCard({ post, onPostDeleted, onPostUpdated }: PostCar
         setCurrentUser(null);
         console.log("👤 로그인되지 않음");
       }
-    };
+    });
 
-    fetchUserData();
-  }, [auth.currentUser?.uid]);
+    return () => unsubscribe();
+  }, []);
 
   // 좋아요 상태 확인
   useEffect(() => {
@@ -124,6 +126,9 @@ export default function PostCard({ post, onPostDeleted, onPostUpdated }: PostCar
         ...doc.data(),
       })) as Comment[];
       setComments(commentsData);
+      console.log("💬 댓글 업데이트:", commentsData.length, "개");
+    }, (error) => {
+      console.error("댓글 가져오기 오류:", error);
     });
 
     return () => unsubscribe();
@@ -141,26 +146,6 @@ export default function PostCard({ post, onPostDeleted, onPostUpdated }: PostCar
     setImageLoading(false);
     setImageError(false);
   };
-
-  // 한글 입력 핸들러들
-  const handleCompositionStart = useCallback(() => {
-    setIsComposing(true);
-  }, []);
-
-  const handleCompositionEnd = useCallback(() => {
-    setIsComposing(false);
-  }, []);
-
-  const handleCommentChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    setNewComment(e.target.value);
-  }, []);
-
-  const handleKeyDown = useCallback((e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter' && !isComposing) {
-      e.preventDefault();
-      handleCommentSubmit(e as any);
-    }
-  }, [isComposing, newComment]);
 
   const handleLike = async () => {
     if (!auth.currentUser || !currentUser || currentUser.role !== "approved") {
@@ -192,33 +177,77 @@ export default function PostCard({ post, onPostDeleted, onPostUpdated }: PostCar
     }
   };
 
+  // 🔥 댓글 제출 핸들러 개선 - ref 사용
   const handleCommentSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (isComposing || !newComment.trim()) return;
+    const commentValue = commentInputRef.current?.value || "";
     
-    if (!auth.currentUser || !currentUser || currentUser.role !== "approved") {
+    console.log("💬 댓글 제출 시도:", {
+      comment: commentValue,
+      user: currentUser,
+      isSubmitting: isSubmittingComment
+    });
+    
+    if (!commentValue.trim()) {
+      console.log("❌ 빈 댓글");
+      return;
+    }
+    
+    if (!auth.currentUser || !currentUser) {
+      alert("로그인이 필요합니다.");
+      return;
+    }
+
+    if (currentUser.role !== "approved") {
       alert("승인된 사용자만 댓글을 작성할 수 있습니다.");
+      return;
+    }
+
+    if (isSubmittingComment) {
+      console.log("❌ 이미 제출 중");
       return;
     }
 
     setIsSubmittingComment(true);
 
     try {
+      console.log("💾 댓글 저장 중...");
+      
       const commentsRef = collection(db, "posts", post.id, "comments");
-      await addDoc(commentsRef, {
-        content: newComment.trim(),
+      const docRef = await addDoc(commentsRef, {
+        content: commentValue.trim(),
         authorId: auth.currentUser.uid,
         authorName: currentUser.nickname || currentUser.name,
         createdAt: serverTimestamp(),
       });
 
-      setNewComment("");
+      console.log("✅ 댓글 저장 성공:", docRef.id);
+      
+      // 🔥 입력창 비우기
+      if (commentInputRef.current) {
+        commentInputRef.current.value = "";
+      }
+      
     } catch (error) {
-      console.error("댓글 작성 오류:", error);
+      console.error("💥 댓글 작성 오류:", error);
       alert("댓글 작성 중 오류가 발생했습니다.");
     } finally {
       setIsSubmittingComment(false);
+    }
+  };
+
+  // 🔥 입력 핸들러 단순화
+  const handleCommentChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setNewComment(e.target.value);
+  };
+
+  // 🔥 키보드 이벤트 핸들러 개선
+  const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    // Enter 키 처리만 하고, 다른 키는 건드리지 않음
+    if (e.key === 'Enter' && !e.shiftKey && newComment.trim() && !isSubmittingComment) {
+      e.preventDefault();
+      handleCommentSubmit(e as any);
     }
   };
 
@@ -493,8 +522,6 @@ export default function PostCard({ post, onPostDeleted, onPostUpdated }: PostCar
           {comments.length}
         </button>
       </div>
-
-
     </div>
   );
 
@@ -606,7 +633,7 @@ export default function PostCard({ post, onPostDeleted, onPostUpdated }: PostCar
               )}
             </div>
 
-            {/* 댓글 작성 폼 */}
+            {/* 🔥 댓글 작성 폼 개선 */}
             <div className="p-3 sm:p-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
               {canInteract ? (
                 <form onSubmit={handleCommentSubmit} className="flex gap-2">
@@ -622,7 +649,6 @@ export default function PostCard({ post, onPostDeleted, onPostUpdated }: PostCar
                       onChange={handleCommentChange}
                       onCompositionStart={handleCompositionStart}
                       onCompositionEnd={handleCompositionEnd}
-                      onKeyDown={handleKeyDown}
                       placeholder="댓글을 입력하세요..."
                       className="flex-1 px-2 sm:px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-yellow-400 focus:border-transparent text-xs sm:text-sm"
                       disabled={isSubmittingComment}
@@ -631,7 +657,7 @@ export default function PostCard({ post, onPostDeleted, onPostUpdated }: PostCar
                     />
                     <button
                       type="submit"
-                      disabled={!newComment.trim() || isSubmittingComment || isComposing}
+                      disabled={!newComment.trim() || isSubmittingComment}
                       className="px-2 sm:px-3 py-2 bg-yellow-400 hover:bg-yellow-500 disabled:bg-gray-300 disabled:cursor-not-allowed text-black rounded-md transition-colors flex items-center gap-1"
                     >
                       {isSubmittingComment ? (
