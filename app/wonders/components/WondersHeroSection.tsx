@@ -22,13 +22,14 @@ export default function WondersHeroSection() {
       <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-black/20 to-black/50"></div>
       
       <div className="relative z-10 px-4 max-w-4xl mx-auto">
-        <h1 className="text-5xl font-extrabold mb-6 text-white drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)] leading-tight">
+        <h1 className="text-6xl font-extrabold mb-6 text-white drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)] leading-tight">
           궁금해요
         </h1>
-        <p className="text-xl text-gray-100 max-w-2xl mx-auto drop-shadow-sm mb-8 leading-relaxed">
-          저희에 대해 궁금한 점이나 문의사항이 있으시면 언제든지 연락해주세요.<br />
+        <p className="text-2xl text-gray-100 max-w-2xl mx-auto drop-shadow-sm mb-10 leading-relaxed">
+          저희에 대해 궁금한 점이나 문의사항이 있으시면 언제든지 연락해주세요. 
           오럼의 전문 상담원이 신속하고 정확하게 답변드리겠습니다.
         </p>
+
         
         {/* 연락처 정보 */}
         <div className="flex flex-col md:flex-row gap-6 justify-center items-center mb-8">

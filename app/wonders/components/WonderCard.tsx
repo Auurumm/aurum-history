@@ -208,7 +208,7 @@ export default function WonderCard({ wonder }: WonderCardProps) {
       {/* 문의 헤더 */}
       <div className="flex items-start gap-4 mb-4">
         <div className="w-12 h-12 rounded-full bg-gradient-to-br from-yellow-400 to-yellow-500 flex items-center justify-center text-black font-bold text-lg flex-shrink-0">
-          {wonder.authorName[0].toUpperCase()}
+          {wonder.authorName?.[0]?.toUpperCase() || "?"}
         </div>
         
         <div className="flex-1 min-w-0">
@@ -311,7 +311,7 @@ export default function WonderCard({ wonder }: WonderCardProps) {
           {/* 문의자 정보 */}
           <div className="flex items-center gap-4 mb-6 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
             <div className="w-16 h-16 rounded-full bg-gradient-to-br from-yellow-400 to-yellow-500 flex items-center justify-center text-black font-bold text-xl">
-              {wonder.authorName[0].toUpperCase()}
+              {wonder.authorName?.[0]?.toUpperCase() || "?"}
             </div>
             <div className="flex-1">
               <div className="flex items-center gap-3 mb-2">

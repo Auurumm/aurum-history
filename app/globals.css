@@ -1,3 +1,6 @@
+/* ✅ 폰트 로딩: 반드시 맨 위에 있어야 함 */
+@import url('https://fonts.googleapis.com/css2?family=East+Sea+Dokdo&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -58,7 +61,6 @@
     --chart-5: 340 75% 55%;
   }
 
-  /* Light mode styles */
   .light {
     --theme-bg: 255 255 255;
     --theme-text: 17 17 17;
@@ -68,7 +70,6 @@
     --theme-border: 229 231 235;
   }
 
-  /* Dark mode styles */
   .dark {
     --theme-bg: 0 0 0;
     --theme-text: 238 238 238;
@@ -88,7 +89,6 @@
   }
 }
 
-/* Theme-aware background and text colors */
 .theme-bg {
   background-color: rgb(var(--theme-bg));
 }
@@ -113,17 +113,14 @@
   border-color: rgb(var(--theme-border));
 }
 
-/* Custom scroll snap styles */
 .scroll-container {
   scroll-behavior: smooth;
 }
 
-/* Smooth scroll snap */
 html {
   scroll-behavior: smooth;
 }
 
-/* Custom scrollbar */
 ::-webkit-scrollbar {
   width: 6px;
 }
@@ -141,7 +138,6 @@ html {
   background: #ca8a04;
 }
 
-/* Hide cursor on interactive elements when custom cursor is active */
 @media (hover: hover) {
   button,
   a,

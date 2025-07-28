@@ -237,20 +237,6 @@ export default function PostCard({ post, onPostDeleted, onPostUpdated }: PostCar
     }
   };
 
-  // 🔥 입력 핸들러 단순화
-  const handleCommentChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setNewComment(e.target.value);
-  };
-
-  // 🔥 키보드 이벤트 핸들러 개선
-  const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    // Enter 키 처리만 하고, 다른 키는 건드리지 않음
-    if (e.key === 'Enter' && !e.shiftKey && newComment.trim() && !isSubmittingComment) {
-      e.preventDefault();
-      handleCommentSubmit(e as any);
-    }
-  };
-
   // 🔧 수정 기능 개선
   const handleEditClick = () => {
     console.log("✏️ 수정 버튼 클릭");
@@ -644,11 +630,8 @@ export default function PostCard({ post, onPostDeleted, onPostUpdated }: PostCar
                   </div>
                   <div className="flex-1 flex gap-2">
                     <input
+                      ref={commentInputRef}
                       type="text"
-                      value={newComment}
-                      onChange={handleCommentChange}
-                      onCompositionStart={handleCompositionStart}
-                      onCompositionEnd={handleCompositionEnd}
                       placeholder="댓글을 입력하세요..."
                       className="flex-1 px-2 sm:px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-yellow-400 focus:border-transparent text-xs sm:text-sm"
                       disabled={isSubmittingComment}
@@ -657,7 +640,7 @@ export default function PostCard({ post, onPostDeleted, onPostUpdated }: PostCar
                     />
                     <button
                       type="submit"
-                      disabled={!newComment.trim() || isSubmittingComment}
+                      disabled={isSubmittingComment}
                       className="px-2 sm:px-3 py-2 bg-yellow-400 hover:bg-yellow-500 disabled:bg-gray-300 disabled:cursor-not-allowed text-black rounded-md transition-colors flex items-center gap-1"
                     >
                       {isSubmittingComment ? (

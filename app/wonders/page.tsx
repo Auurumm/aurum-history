@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { db } from "@/lib/firebase";
-import { collection, query, orderBy, onSnapshot } from "firebase/firestore";
+import { collection, query, orderBy, onSnapshot, where } from "firebase/firestore";
 import { MessageSquare, Plus } from "lucide-react";
 import Header from "../components/header";
 import WondersHeroSection from "./components/WondersHeroSection";
@@ -18,54 +18,131 @@ interface Wonder {
   authorEmail: string;
   authorPhone?: string;
   company?: string;
-  isPublic: boolean; // 공개/비공개 여부
-  status: "pending" | "answered" | "closed"; // 답변 상태
+  isPublic: boolean;
+  status: "pending" | "answered" | "closed";
   createdAt: any;
   updatedAt?: any;
-  adminReply?: string; // 관리자 답변
+  adminReply?: string;
   adminReplyAt?: any;
+  images?: Array<{
+    url: string;
+    fileName: string;
+    storageId: string;
+  }>;
 }
 
 export default function WondersPage() {
   const [wonders, setWonders] = useState<Wonder[]>([]);
   const [isNewWonderOpen, setIsNewWonderOpen] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
   // 실시간 문의글 가져오기 (공개된 글만)
-  useEffect(() => {
-    const q = query(
-      collection(db, "wonders"),
-      orderBy("createdAt", "desc")
-    );
+  // page.tsx의 useEffect 부분을 다음과 같이 수정
 
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const wondersData = snapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      })) as Wonder[];
+useEffect(() => {
+  console.log("🔍 WondersPage 마운트됨");
+  
+  if (!db) {
+    console.error("❌ Firebase DB가 초기화되지 않았습니다");
+    setError("Firebase 연결 오류");
+    setLoading(false);
+    return;
+  }
+
+  console.log("📡 Firestore 리스너 설정 중...");
+
+  // 임시: orderBy 없이 where만 사용 (인덱스 불필요)
+  const q = query(
+    collection(db, "wonders"),
+    where("isPublic", "==", true)
+    // orderBy 제거 - 인덱스 생성 후 다시 추가
+  );
+
+  const unsubscribe = onSnapshot(
+    q, 
+    (snapshot) => {
+      console.log("📊 Firestore 데이터 수신:", snapshot.size, "개");
       
-      // 공개된 문의글만 필터링
-      const publicWonders = wondersData.filter(wonder => wonder.isPublic);
-      setWonders(publicWonders);
+      const wondersData = snapshot.docs.map((doc) => {
+        const data = doc.data();
+        console.log("📄 문서 데이터:", doc.id, data);
+        
+        return {
+          id: doc.id,
+          ...data,
+        };
+      }) as Wonder[];
+      
+      // JavaScript에서 정렬 (임시)
+      const sortedWonders = wondersData.sort((a, b) => {
+        const aTime = a.createdAt?.toDate?.() || new Date(0);
+        const bTime = b.createdAt?.toDate?.() || new Date(0);
+        return bTime.getTime() - aTime.getTime(); // 최신순
+      });
+      
+      console.log("✅ 처리된 문의 데이터:", sortedWonders);
+      setWonders(sortedWonders);
       setLoading(false);
-    }, (error) => {
-      console.error("문의글 가져오기 오류:", error);
+      setError("");
+    }, 
+    (error) => {
+      console.error("💥 문의글 가져오기 오류:", error);
+      let errorMessage = "문의글을 불러오는 중 오류가 발생했습니다.";
+      
+      if (error.code === 'permission-denied') {
+        errorMessage = "권한이 없습니다. Firestore 보안 규칙을 확인해주세요.";
+      } else if (error.code === 'unavailable') {
+        errorMessage = "서버에 연결할 수 없습니다. 인터넷 연결을 확인해주세요.";
+      }
+      
+      setError(errorMessage);
       setLoading(false);
-    });
+    }
+  );
 
-    return () => unsubscribe();
-  }, []);
+  return () => {
+    console.log("🧹 Firestore 리스너 해제");
+    unsubscribe();
+  };
+}, []);
 
   // 문의 작성 후 새로고침 (실시간 업데이트로 자동 처리됨)
   const handleWonderCreated = () => {
+    console.log("🎉 새 문의가 생성되었습니다!");
     // onSnapshot으로 실시간 업데이트되므로 별도 처리 불필요
   };
 
   if (loading) {
     return (
-      <main className="bg-white dark:bg-black min-h-screen flex items-center justify-center transition-colors">
-        <div className="animate-spin rounded-full h-12 w-12 border-2 border-yellow-400 border-t-transparent"></div>
-      </main>
+      <>
+        <Header />
+        <main className="bg-white dark:bg-black min-h-screen flex items-center justify-center transition-colors">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-2 border-yellow-400 border-t-transparent mx-auto mb-4"></div>
+            <p className="text-gray-600 dark:text-gray-400">문의 불러오는 중...</p>
+          </div>
+        </main>
+      </>
+    );
+  }
+
+  if (error) {
+    return (
+      <>
+        <Header />
+        <main className="bg-white dark:bg-black min-h-screen flex items-center justify-center transition-colors">
+          <div className="text-center">
+            <p className="text-red-600 dark:text-red-400 mb-4">{error}</p>
+            <button 
+              onClick={() => window.location.reload()} 
+              className="px-4 py-2 bg-yellow-400 text-black rounded-md hover:bg-yellow-500 transition-colors"
+            >
+              다시 시도
+            </button>
+          </div>
+        </main>
+      </>
     );
   }
 
@@ -137,6 +214,7 @@ export default function WondersPage() {
                     adminReply: wonder.adminReply,
                     adminReplyAt: wonder.adminReplyAt?.toDate ? 
                       wonder.adminReplyAt.toDate().toLocaleDateString('ko-KR') : null,
+                    images: wonder.images, // 🔧 이미지 데이터 추가
                   }} 
                 />
               ))

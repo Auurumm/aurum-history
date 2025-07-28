@@ -35,16 +35,16 @@ export default function HeroSection() {
       </div>
 
       {/* Content */}
-      <div className="relative z-20 text-center px-4 sm:px-6 lg:px-8 max-w-4xl mx-auto pb-24">
+      <div className="relative z-20 text-center px-4 sm:px-6 lg:px-8 max-w-5xl mx-auto pb-24">
         <h2
-          className="text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-bold text-[#D4AF37] mb-10 leading-tight"
-          style={{ 
-            fontFamily: 'Noto Serif KR, Georgia, serif',
-            textShadow: "2px 2px 4px rgba(0, 0, 0, 0.5)" 
+          className="font-eastSeaDokdo text-7xl sm:text-8xl lg:text-9xl xl:text-[10rem] text-[#D4AF37] leading-tight tracking-wide mb-12"
+          style={{
+            textShadow: "6px 6px 12px rgba(0, 0, 0, 0.85)"
           }}
         >
-          흐르는 강물처럼
+          흐르는 <br /> 강물처럼<span className="opacity-60 font-serif">...</span>
         </h2>
+
 
         <p className="text-lg sm:text-xl lg:text-2xl font-light text-gray-300 mb-8 max-w-2xl mx-auto leading-relaxed drop-shadow-md">
           모두의 삶에 도움이 되는 기능들,
@@ -52,6 +52,8 @@ export default function HeroSection() {
           언제나 항상 있어야 하는 그러한 서비스를 만듭니다
         </p>
       </div>
+
+
 
       {/* Scroll Down Button */}
       <button
