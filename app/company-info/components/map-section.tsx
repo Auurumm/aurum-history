@@ -1,7 +1,7 @@
 "use client"
 
 import { Card, CardContent } from "@/components/ui/card"
-import { MapPin, Navigation, ParkingCircle } from "lucide-react"
+import { MapPin, Navigation, ParkingCircle, Mail } from "lucide-react"
 import { useLanguage } from "../../contexts/language-context"
 
 export default function MapSection() {
@@ -80,6 +80,28 @@ export default function MapSection() {
                     <p>{t('busInfo')}</p>
                     <p className="text-gray-500 dark:text-gray-400 text-xs">{t('busRoutes')}</p>
                   </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* 이메일 연락처 */}
+            <Card className="bg-gray-100 dark:bg-gray-800 border-gray-200 dark:border-gray-700">
+              <CardContent className="p-6">
+                <div className="flex items-center space-x-3 mb-4">
+                  <Mail className="h-6 w-6 text-yellow-500 dark:text-yellow-400" />
+                  <h3 className="text-lg font-bold text-gray-900 dark:text-white">{t('이메일 문의') || '이메일 문의'}</h3>
+                </div>
+                <div className="text-sm text-gray-700 dark:text-gray-300 space-y-2">
+                  <p>{t('궁금한 사항이 있으시면 언제든 연락해 주세요.') || '궁금한 사항이 있으시면 언제든 연락해 주세요.'}</p>
+                  <a 
+                    href="mailto:account@aurum.nexus"
+                    className="inline-flex items-center text-yellow-600 dark:text-yellow-400 hover:text-yellow-700 dark:hover:text-yellow-300 font-medium transition-colors"
+                  >
+                    account@aurum.nexus
+                  </a>
+                  <p className="text-gray-500 dark:text-gray-400 text-xs">
+                    {t('평일 10시 - 17시 (주말 및 공휴일 제외)') || '평일 10시 - 17시 (주말 및 공휴일 제외)'}
+                  </p>
                 </div>
               </CardContent>
             </Card>

@@ -26,7 +26,7 @@ export default function MessageHero({ onScrollToNext }: MessageHeroProps) {
       <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 z-10">
         <button
           onClick={onScrollToNext}
-          className="flex flex-col items-center text-gray-400 hover:text-white transition-colors group"
+          className="flex flex-col items-center text-white hover:text-yellow-600 transition-colors group"
         >
           <span className="text-sm mb-2 opacity-80">Scroll Down</span>
           <div className="animate-bounce">

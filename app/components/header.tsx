@@ -75,9 +75,9 @@ export default function Header() {
         {
           category: "",
           items: [
-            { name: t("welcome"), href: getLocalizedPath("/company-info") },
-            { name: t("culture"), href: getLocalizedPath("/message") },
-            { name: t("history"), href: getLocalizedPath("/history") },
+            { name: t("culture"), href: getLocalizedPath("/message") }, // 🔥 오럼의 문화를 첫 번째로
+            { name: t("history"), href: getLocalizedPath("/history") }, // 🔥 발자국을 두 번째로
+            { name: t("welcome"), href: getLocalizedPath("/company-info") }, // 🔥 어서 오럼을 세 번째로
           ],
         },
       ],
@@ -178,9 +178,42 @@ export default function Header() {
           font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif !important;
           -webkit-font-smoothing: antialiased;
           -moz-osx-font-smoothing: grayscale;
+          /* 🔥 모바일 일관성을 위한 추가 스타일 */
+          -webkit-text-size-adjust: 100% !important;
+          -moz-text-size-adjust: 100% !important;
+          -ms-text-size-adjust: 100% !important;
+          text-size-adjust: 100% !important;
+          font-size: 16px !important;
+          line-height: 1.5 !important;
         }
         header * {
           font-family: inherit !important;
+          -webkit-text-size-adjust: 100% !important;
+          -moz-text-size-adjust: 100% !important;
+          -ms-text-size-adjust: 100% !important;
+          text-size-adjust: 100% !important;
+          box-sizing: border-box !important;
+        }
+        /* 🔥 모바일 뷰포트 고정 */
+        @media (max-width: 768px) {
+          header {
+            font-size: 14px !important;
+            min-height: 96px !important;
+          }
+          header .logo-text {
+            font-size: 1.5rem !important;
+            line-height: 1.2 !important;
+          }
+          header .mobile-menu-item {
+            font-size: 14px !important;
+            line-height: 1.4 !important;
+            padding: 12px 8px !important;
+          }
+          header .mobile-menu-category {
+            font-size: 16px !important;
+            line-height: 1.3 !important;
+            font-weight: 600 !important;
+          }
         }
       `}</style>
       <header 
@@ -189,7 +222,9 @@ export default function Header() {
           margin: 0, 
           padding: 0, 
           width: '100vw',
-          fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen", "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif'
+          fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen", "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif',
+          WebkitTextSizeAdjust: '100%',
+          textSizeAdjust: '100%'
         }}
       >
         <div className="absolute inset-0 bg-white dark:bg-black"></div>
@@ -200,7 +235,8 @@ export default function Header() {
             <div className="flex-shrink-0">
               <Link
                 href={getLocalizedPath("/")}
-                className="flex items-center space-x-2 text-2xl font-bold transition-opacity hover:opacity-80 text-black dark:text-white"
+                className="flex items-center space-x-2 text-2xl font-bold transition-opacity hover:opacity-80 text-black dark:text-white logo-text"
+                style={{ fontSize: 'clamp(1.25rem, 4vw, 2rem)', lineHeight: '1.2' }}
               >
                 <span className="text-black dark:text-white" style={{ fontSize: "0.875rem" }}>●</span>
                 <span>Aurum</span>
@@ -415,7 +451,7 @@ export default function Header() {
                 <div className="space-y-3">
                   {menuItems.map((item) => (
                     <div key={item.title} className="space-y-2">
-                      <div className="font-medium text-gray-900 dark:text-white px-2 py-1">
+                      <div className="font-medium text-gray-900 dark:text-white px-2 py-1 mobile-menu-category">
                         {item.title}
                       </div>
                       <div className="pl-4 space-y-1">
@@ -424,7 +460,14 @@ export default function Header() {
                             key={index}
                             href={subItem.href}
                             onClick={() => setIsMobileMenuOpen(false)}
-                            className="block px-2 py-2 text-sm text-gray-600 dark:text-gray-400 hover:text-yellow-600 dark:hover:text-yellow-400 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-md transition-colors"
+                            className="block px-2 py-2 text-sm text-gray-600 dark:text-gray-400 hover:text-yellow-600 dark:hover:text-yellow-400 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-md transition-colors mobile-menu-item"
+                            style={{ 
+                              fontSize: '14px', 
+                              lineHeight: '1.4',
+                              whiteSpace: 'nowrap',
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis'
+                            }}
                           >
                             {subItem.name}
                           </Link>
