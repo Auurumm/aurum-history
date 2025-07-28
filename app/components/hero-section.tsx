@@ -46,11 +46,12 @@ export default function HeroSection() {
         </h2>
 
 
-        <p className="text-lg sm:text-xl lg:text-2xl font-light text-gray-300 mb-8 max-w-2xl mx-auto leading-relaxed drop-shadow-md">
-          모두의 삶에 도움이 되는 기능들,
-          <br />
+        <p className="text-white text-base leading-relaxed break-keep max-w-xs sm:max-w-md mx-auto text-balance">
+          모두의 삶에 도움이 되는 기능들, <br />
           언제나 항상 있어야 하는 그러한 서비스를 만듭니다
         </p>
+
+
       </div>
 
 
