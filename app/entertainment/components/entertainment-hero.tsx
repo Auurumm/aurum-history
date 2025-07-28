@@ -10,32 +10,35 @@ export default function EntertainmentHero() {
       <div className="absolute inset-0 z-0">
         <div
           className="w-full h-full bg-cover bg-center bg-no-repeat"
-          style={{
-            backgroundImage: "url('/images/entertainment.png')",
-          }}
+          style={{ backgroundImage: "url('/images/entertainment.png')" }}
         />
-        {/* Dark overlay */}
         <div className="absolute inset-0 bg-black/70"></div>
       </div>
 
       {/* 텍스트 콘텐츠 */}
       <div className="relative z-10 text-center px-6 sm:px-8 lg:px-12 max-w-4xl mx-auto space-y-4">
-        <p className="text-white text-xl sm:text-2xl leading-relaxed">너무 재미있는,</p>
-        <p className="text-gray-300 text-lg sm:text-xl leading-relaxed">페인 킬러가 아닌 비타민?</p>
-        <p className="text-gray-400 text-base sm:text-lg italic leading-relaxed">아니아니..</p>
+        {/* 모바일 요약 문장 */}
+        <div className="sm:hidden space-y-3">
+          <p className="text-white text-base leading-relaxed">계속 맛보고 싶은 즐거움,</p>
+          <p className="text-amber-300 text-lg font-semibold">우리의 엔터테인먼트</p>
+        </div>
 
-        <p className="text-2xl sm:text-3xl font-bold text-amber-300 mt-6 leading-relaxed">우리는, 캔디와 초콜렛</p>
+        {/* PC 전용 전체 문장 */}
+        <div className="hidden sm:block space-y-4">
+          <p className="text-white text-xl leading-relaxed">너무 재미있는,</p>
+          <p className="text-gray-300 text-lg leading-relaxed">페인 킬러가 아닌 비타민?</p>
+          <p className="text-gray-400 text-base italic leading-relaxed">아니아니..</p>
+          <p className="text-2xl font-bold text-amber-300 mt-6 leading-relaxed">우리는, 캔디와 초콜렛</p>
+          <p className="text-white text-lg mt-6 leading-relaxed">계속 맛보고 싶은,</p>
+          <p className="text-white text-base tracking-wide leading-relaxed">우리의 엔터테인먼트</p>
+        </div>
 
-        <p className="text-white text-lg sm:text-xl mt-6 leading-relaxed">계속 맛보고 싶은,</p>
-        <p className="text-white text-base sm:text-lg tracking-wide leading-relaxed">우리의 엔터테인먼트</p>
-
-        <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold mt-8 text-white leading-tight">
+        <h1 className="text-2xl sm:text-5xl lg:text-6xl font-bold mt-8 text-white leading-tight">
           <span className="text-pink-300">"심지어 눈물도 즐거운"</span>
         </h1>
 
-        <p className="text-base sm:text-lg italic text-gray-500 mb-10 leading-relaxed mt-6">
-          Aurum,
-          <br />– entertainment department representative, chief
+        <p className="text-sm sm:text-lg italic text-gray-500 mb-10 leading-relaxed mt-6">
+          Aurum,<br />– entertainment department representative, chief
         </p>
 
         <button

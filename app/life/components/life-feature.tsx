@@ -1,3 +1,4 @@
+// 📄 life-feature.tsx (텍스트-이미지 간격 개선)
 "use client"
 import Image from "next/image"
 
@@ -7,7 +8,7 @@ interface LifeFeatureProps {
   image: string
   color: string
   bgColor?: string
-  tags?: string[] // 태그 props
+  tags?: string[]
 }
 
 export default function LifeFeature({
@@ -19,17 +20,18 @@ export default function LifeFeature({
 }: LifeFeatureProps) {
   return (
     <section
-      className={`min-h-screen bg-white dark:bg-black transition-colors duration-300 px-6 md:px-16 py-20 flex flex-col md:flex-row items-center justify-center gap-8`}
+      className={`min-h-screen ${bgColor} dark:bg-black transition-colors duration-300 px-6 md:px-12 py-20 flex flex-col md:flex-row items-center justify-center gap-2 md:gap-4`}
     >
       {/* 텍스트 영역 */}
-      <div className="md:w-2/3 w-full mb-12 md:mb-0">
+      <div className="md:w-3/5 w-full mb-12 md:mb-0">
         <div className="max-w-3xl mx-auto text-left space-y-6">
-          <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 leading-tight">{title}</h2>
-          <p className="text-lg md:text-xl lg:text-2xl text-gray-700 dark:text-gray-300 leading-loose">{description}</p>
+          <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-4 leading-tight">{title}</h2>
+          <p className="text-lg md:text-xl lg:text-2xl text-gray-700 dark:text-gray-300 leading-loose">
+            {description}
+          </p>
 
-          {/* 태그 영역 */}
           {tags.length > 0 && (
-            <div className="mt-8 flex gap-3 flex-wrap">
+            <div className="mt-6 flex gap-3 flex-wrap">
               {tags.map((tag) => (
                 <span
                   key={tag}
@@ -44,7 +46,7 @@ export default function LifeFeature({
       </div>
 
       {/* 이미지 영역 */}
-      <div className="md:w-1/3 w-full flex justify-center">
+      <div className="md:w-2/5 w-full flex justify-center">
         <Image
           src={image}
           alt={title}

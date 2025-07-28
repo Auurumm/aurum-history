@@ -1,9 +1,10 @@
+// 📄 brand-dalgona.tsx (모바일 여백 개선)
 "use client"
 
 export default function BrandDalgona() {
   return (
-    <section className="snap-start min-h-screen flex items-center justify-center px-4 sm:px-6 lg:px-8 bg-white dark:bg-black transition-colors duration-300">
-      <div className="max-w-3xl mx-auto text-center">
+    <section className="snap-start min-h-screen flex items-center justify-center px-6 py-20 sm:px-6 sm:py-24 lg:px-8 bg-white dark:bg-black transition-colors duration-300">
+      <div className="max-w-3xl mx-auto text-center space-y-6">
         {/* 이미지 + 타이틀 태그 */}
         <div className="relative mb-14">
           <img
@@ -16,31 +17,24 @@ export default function BrandDalgona() {
           </div>
         </div>
 
-        {/* 헤드라인 */}
-        <h2 className="text-5xl sm:text-6xl font-extrabold text-gray-900 dark:text-yellow-400 mb-8 leading-tight">
+        <h2 className="text-4xl sm:text-6xl font-extrabold text-gray-900 dark:text-yellow-400 mb-6 leading-snug">
           DalGona
         </h2>
 
-        {/* 해시태그/강조 문구 */}
-        <p className="text-xl font-semibold text-yellow-500 dark:text-yellow-300 mb-4 leading-relaxed">
+        <p className="text-base sm:text-xl font-semibold text-yellow-500 dark:text-yellow-300 mb-4 leading-relaxed">
           #별들의 리그, 무슨 말이 필요해..!
         </p>
 
-        {/* 서브 카피 (감성) */}
-        <p className="italic text-base sm:text-lg text-gray-500 dark:text-gray-400 mb-8 leading-relaxed">
+        <p className="italic text-sm sm:text-lg text-gray-500 dark:text-gray-400 mb-6 leading-relaxed">
           우리의 땀과 열정이, 호흡이
           <br />
           더 나은 세상으로, 그리고 즐거움으로
         </p>
 
-        {/* 본문 설명 */}
-        <p className="text-lg sm:text-xl leading-loose text-gray-800 dark:text-gray-300">
+        <p className="text-base sm:text-xl leading-loose text-gray-800 dark:text-gray-300">
           엔터테인먼트 플랫폼 <strong>달고나</strong>는, <br />
-          우리의 별들이 뛰노는 경쟁 리그에서,
-          <br />
-          마음껏 열정하며, 모두가 함께 즐기는 온라인 서비스입니다.
-          <br />
-          내가 꿈꾸는 셀럽의 치열하고 숭고한 경쟁을 느껴보세요.
+          우리의 별들이 뛰노는 경쟁 리그에서, 마음껏 열정하며, 모두가 함께 즐기는 온라인 서비스입니다.
+          <br />내가 꿈꾸는 셀럽의 치열하고 숭고한 경쟁을 느껴보세요.
         </p>
       </div>
     </section>

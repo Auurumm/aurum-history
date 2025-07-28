@@ -15,14 +15,14 @@ export default function LifePage() {
   if (!mounted) return null
 
   return (
-    <div className="h-screen overflow-y-scroll snap-y snap-mandatory">
+    <div className="flex flex-col w-full h-full overflow-x-hidden">
       {/* Hero Section */}
-      <section className="snap-start h-screen flex-shrink-0">
+      <section className="snap-start h-screen w-full flex-shrink-0">
         <LifeHero />
       </section>
 
-      {/* Product Features */}
-      <section id="product-feature-1" className="snap-start h-screen flex-shrink-0">
+      {/* Product Features (snap scroll 대상) */}
+      <section id="product-feature-1" className="snap-start h-screen w-full flex-shrink-0">
         <LifeFeature
           color="red"
           title="돈키호테"
@@ -32,7 +32,7 @@ export default function LifePage() {
         />
       </section>
 
-      <section className="snap-start h-screen flex-shrink-0">
+      <section className="snap-start h-screen w-full flex-shrink-0">
         <LifeFeature
           color="green"
           title="알렉산드리아"
@@ -42,7 +42,7 @@ export default function LifePage() {
         />
       </section>
 
-      <section className="snap-start h-screen flex-shrink-0">
+      <section className="snap-start h-screen w-full flex-shrink-0">
         <LifeFeature
           color="blue"
           title="사트라프"
@@ -52,8 +52,8 @@ export default function LifePage() {
         />
       </section>
 
-      {/* Contact Section */}
-      <section className="snap-start h-screen flex-shrink-0">
+      {/* Contact Section (scroll snap 제외) */}
+      <section className="min-h-screen w-full">
         <LifeContact />
       </section>
     </div>

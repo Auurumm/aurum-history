@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { db } from "@/lib/firebase";
-import { collection, query, orderBy, onSnapshot, where } from "firebase/firestore";
+import { collection, query, onSnapshot, where } from "firebase/firestore";
 import { MessageSquare, Plus } from "lucide-react";
 import Header from "../components/header";
 import WondersHeroSection from "./components/WondersHeroSection";
@@ -37,80 +37,60 @@ export default function WondersPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  // 실시간 문의글 가져오기 (공개된 글만)
-  // page.tsx의 useEffect 부분을 다음과 같이 수정
-
-useEffect(() => {
-  console.log("🔍 WondersPage 마운트됨");
-  
-  if (!db) {
-    console.error("❌ Firebase DB가 초기화되지 않았습니다");
-    setError("Firebase 연결 오류");
-    setLoading(false);
-    return;
-  }
-
-  console.log("📡 Firestore 리스너 설정 중...");
-
-  // 임시: orderBy 없이 where만 사용 (인덱스 불필요)
-  const q = query(
-    collection(db, "wonders"),
-    where("isPublic", "==", true)
-    // orderBy 제거 - 인덱스 생성 후 다시 추가
-  );
-
-  const unsubscribe = onSnapshot(
-    q, 
-    (snapshot) => {
-      console.log("📊 Firestore 데이터 수신:", snapshot.size, "개");
-      
-      const wondersData = snapshot.docs.map((doc) => {
-        const data = doc.data();
-        console.log("📄 문서 데이터:", doc.id, data);
-        
-        return {
-          id: doc.id,
-          ...data,
-        };
-      }) as Wonder[];
-      
-      // JavaScript에서 정렬 (임시)
-      const sortedWonders = wondersData.sort((a, b) => {
-        const aTime = a.createdAt?.toDate?.() || new Date(0);
-        const bTime = b.createdAt?.toDate?.() || new Date(0);
-        return bTime.getTime() - aTime.getTime(); // 최신순
-      });
-      
-      console.log("✅ 처리된 문의 데이터:", sortedWonders);
-      setWonders(sortedWonders);
+  useEffect(() => {
+    if (!db) {
+      console.error("❌ Firebase DB가 초기화되지 않았습니다");
+      setError("Firebase 연결 오류");
       setLoading(false);
-      setError("");
-    }, 
-    (error) => {
-      console.error("💥 문의글 가져오기 오류:", error);
-      let errorMessage = "문의글을 불러오는 중 오류가 발생했습니다.";
-      
-      if (error.code === 'permission-denied') {
-        errorMessage = "권한이 없습니다. Firestore 보안 규칙을 확인해주세요.";
-      } else if (error.code === 'unavailable') {
-        errorMessage = "서버에 연결할 수 없습니다. 인터넷 연결을 확인해주세요.";
-      }
-      
-      setError(errorMessage);
-      setLoading(false);
+      return;
     }
-  );
 
-  return () => {
-    console.log("🧹 Firestore 리스너 해제");
-    unsubscribe();
-  };
-}, []);
+    const q = query(
+      collection(db, "wonders"),
+      where("isPublic", "==", true)
+    );
 
-  // 문의 작성 후 새로고침 (실시간 업데이트로 자동 처리됨)
+    const unsubscribe = onSnapshot(
+      q,
+      (snapshot) => {
+        const wondersData = snapshot.docs.map((doc) => {
+          const data = doc.data();
+          return {
+            id: doc.id,
+            ...data,
+          };
+        }) as Wonder[];
+
+        const sortedWonders = wondersData.sort((a, b) => {
+          const aTime = a.createdAt?.toDate?.() || new Date(0);
+          const bTime = b.createdAt?.toDate?.() || new Date(0);
+          return bTime.getTime() - aTime.getTime();
+        });
+
+        setWonders(sortedWonders);
+        setLoading(false);
+        setError("");
+      },
+      (error) => {
+        let errorMessage = "문의글을 불러오는 중 오류가 발생했습니다.";
+        if (error.code === "permission-denied") {
+          errorMessage = "권한이 없습니다. Firestore 보안 규칙을 확인해주세요.";
+        } else if (error.code === "unavailable") {
+          errorMessage = "서버에 연결할 수 없습니다. 인터넷 연결을 확인해주세요.";
+        }
+
+        setError(errorMessage);
+        setLoading(false);
+      }
+    );
+
+    return () => {
+      unsubscribe();
+    };
+  }, []);
+
   const handleWonderCreated = () => {
     console.log("🎉 새 문의가 생성되었습니다!");
-    // onSnapshot으로 실시간 업데이트되므로 별도 처리 불필요
   };
 
   if (loading) {
@@ -134,8 +114,8 @@ useEffect(() => {
         <main className="bg-white dark:bg-black min-h-screen flex items-center justify-center transition-colors">
           <div className="text-center">
             <p className="text-red-600 dark:text-red-400 mb-4">{error}</p>
-            <button 
-              onClick={() => window.location.reload()} 
+            <button
+              onClick={() => window.location.reload()}
               className="px-4 py-2 bg-yellow-400 text-black rounded-md hover:bg-yellow-500 transition-colors"
             >
               다시 시도
@@ -164,10 +144,11 @@ useEffect(() => {
                 궁금한 점이나 문의사항을 자유롭게 남겨주세요. 빠른 시일 내에 답변드리겠습니다.
               </p>
             </div>
-            
+
+            {/* 👉 데스크탑에서만 표시 */}
             <button
               onClick={() => setIsNewWonderOpen(true)}
-              className="flex items-center gap-2 bg-yellow-400 hover:bg-yellow-500 text-black px-6 py-3 rounded-lg font-semibold transition-colors shadow-sm"
+              className="hidden md:flex items-center gap-2 bg-yellow-400 hover:bg-yellow-500 text-black px-6 py-3 rounded-lg font-semibold transition-colors shadow-sm"
             >
               <MessageSquare className="h-5 w-5" />
               문의하기
@@ -183,13 +164,13 @@ useEffect(() => {
             <div className="bg-green-50 dark:bg-green-900/20 p-4 rounded-lg">
               <h3 className="text-sm font-medium text-green-600 dark:text-green-400 mb-1">답변 완료</h3>
               <p className="text-2xl font-bold text-green-700 dark:text-green-300">
-                {wonders.filter(wonder => wonder.status === "answered").length}
+                {wonders.filter((w) => w.status === "answered").length}
               </p>
             </div>
             <div className="bg-orange-50 dark:bg-orange-900/20 p-4 rounded-lg">
               <h3 className="text-sm font-medium text-orange-600 dark:text-orange-400 mb-1">답변 대기</h3>
               <p className="text-2xl font-bold text-orange-700 dark:text-orange-300">
-                {wonders.filter(wonder => wonder.status === "pending").length}
+                {wonders.filter((w) => w.status === "pending").length}
               </p>
             </div>
           </div>
@@ -198,8 +179,8 @@ useEffect(() => {
           <div className="space-y-6">
             {wonders.length > 0 ? (
               wonders.map((wonder) => (
-                <WonderCard 
-                  key={wonder.id} 
+                <WonderCard
+                  key={wonder.id}
                   wonder={{
                     id: wonder.id,
                     title: wonder.title,
@@ -208,14 +189,15 @@ useEffect(() => {
                     authorName: wonder.authorName,
                     company: wonder.company,
                     status: wonder.status,
-                    date: wonder.createdAt?.toDate ? 
-                      wonder.createdAt.toDate().toLocaleDateString('ko-KR') :
-                      new Date().toLocaleDateString('ko-KR'),
+                    date: wonder.createdAt?.toDate
+                      ? wonder.createdAt.toDate().toLocaleDateString("ko-KR")
+                      : new Date().toLocaleDateString("ko-KR"),
                     adminReply: wonder.adminReply,
-                    adminReplyAt: wonder.adminReplyAt?.toDate ? 
-                      wonder.adminReplyAt.toDate().toLocaleDateString('ko-KR') : null,
-                    images: wonder.images, // 🔧 이미지 데이터 추가
-                  }} 
+                    adminReplyAt: wonder.adminReplyAt?.toDate
+                      ? wonder.adminReplyAt.toDate().toLocaleDateString("ko-KR")
+                      : null,
+                    images: wonder.images,
+                  }}
                 />
               ))
             ) : (
@@ -235,7 +217,7 @@ useEffect(() => {
             )}
           </div>
 
-          {/* 플로팅 문의하기 버튼 (모바일용) */}
+          {/* 👉 모바일 전용 플로팅 버튼 */}
           <button
             onClick={() => setIsNewWonderOpen(true)}
             className="fixed bottom-6 right-6 bg-yellow-400 hover:bg-yellow-500 text-black p-4 rounded-full shadow-lg transition-colors md:hidden z-40"
@@ -244,7 +226,7 @@ useEffect(() => {
           </button>
         </section>
 
-        {/* 문의하기 모달 */}
+        {/* 문의 작성 모달 */}
         <NewWonderForm
           isOpen={isNewWonderOpen}
           onClose={() => setIsNewWonderOpen(false)}

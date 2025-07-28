@@ -89,11 +89,11 @@ export default function CoreValues() {
   {/* Bottom Text Messages */}
   <div className="space-y-12">
     <div className="mt-4">
-      <p className="text-white text-lg sm:text-xl leading-relaxed">세상 모두가</p>
+      <p className="text-white text-xl sm:text-2xl leading-relaxed">세상 모두가</p>
     </div>
 
     <div className="-mt-2">
-      <p className="text-white text-2xl sm:text-2xl font-semibold leading-relaxed">
+      <p className="text-white text-3xl sm:text-4xl font-semibold leading-relaxed">
         보다 더 따뜻하게,
         <br />
         보다 더 즐겁게
@@ -101,15 +101,16 @@ export default function CoreValues() {
     </div>
 
     <div className="-mt-1">
-      <p className="text-white text-lg sm:text-xl leading-relaxed">당신의 꿈에, 항상</p>
+      <p className="text-white text-xl sm:text-2xl leading-relaxed">당신의 꿈에, 항상</p>
     </div>
 
     <div className="pt-4">
-      <p className="text-white text-4xl sm:text-5xl font-bold leading-relaxed">
+      <p className="text-white text-5xl sm:text-6xl font-bold leading-relaxed">
         오럼이 함께 하겠습니다
       </p>
     </div>
   </div>
+
 </div>
 
   </section>
