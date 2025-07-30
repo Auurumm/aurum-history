@@ -1,4 +1,4 @@
-// app/admin/wonders/page.tsx - 삭제 기능 추가
+// app/admin/wonders/page.tsx - 관리자 인증 추가
 
 "use client";
 
@@ -33,7 +33,10 @@ import {
   AlertCircle,
   Trash2,
   AlertTriangle,
-  MoreVertical
+  MoreVertical,
+  Shield,
+  EyeOff,
+  LogOut
 } from "lucide-react";
 
 interface Wonder {
@@ -58,13 +61,24 @@ interface Wonder {
   }>;
 }
 
+// 관리자 비밀번호 (실제 프로덕션에서는 환경변수나 더 안전한 방법 사용)
+const ADMIN_PASSWORD = "admin123!@#"; // 여기서 원하는 비밀번호로 변경하세요
+
 export default function AdminWondersPage() {
+  // 인증 관련 상태
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [passwordInput, setPasswordInput] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [authError, setAuthError] = useState("");
+  const [isAuthenticating, setIsAuthenticating] = useState(false);
+
+  // 기존 상태들
   const [wonders, setWonders] = useState<Wonder[]>([]);
   const [filteredWonders, setFilteredWonders] = useState<Wonder[]>([]);
   const [selectedWonder, setSelectedWonder] = useState<Wonder | null>(null);
   const [replyText, setReplyText] = useState("");
   const [isReplying, setIsReplying] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   
   // 삭제 관련 상태
@@ -78,14 +92,64 @@ export default function AdminWondersPage() {
   const [visibilityFilter, setVisibilityFilter] = useState<"all" | "public" | "private">("all");
   const [searchTerm, setSearchTerm] = useState("");
 
-  // 실시간 데이터 가져오기
+  // 로컬 스토리지에서 인증 상태 확인
   useEffect(() => {
+    const savedAuth = localStorage.getItem("admin_authenticated");
+    const authTime = localStorage.getItem("admin_auth_time");
+    
+    if (savedAuth === "true" && authTime) {
+      const authTimestamp = parseInt(authTime);
+      const now = Date.now();
+      // 24시간(86400000ms) 후 자동 로그아웃
+      if (now - authTimestamp < 86400000) {
+        setIsAuthenticated(true);
+      } else {
+        localStorage.removeItem("admin_authenticated");
+        localStorage.removeItem("admin_auth_time");
+      }
+    }
+  }, []);
+
+  // 관리자 인증
+  const handleAdminLogin = (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsAuthenticating(true);
+    setAuthError("");
+
+    // 실제로는 서버에서 검증하는 것이 좋지만, 여기서는 클라이언트에서 간단히 처리
+    setTimeout(() => {
+      if (passwordInput === ADMIN_PASSWORD) {
+        setIsAuthenticated(true);
+        localStorage.setItem("admin_authenticated", "true");
+        localStorage.setItem("admin_auth_time", Date.now().toString());
+        setPasswordInput("");
+      } else {
+        setAuthError("비밀번호가 올바르지 않습니다.");
+      }
+      setIsAuthenticating(false);
+    }, 500); // 실제 인증하는 것처럼 약간의 지연
+  };
+
+  // 로그아웃
+  const handleLogout = () => {
+    setIsAuthenticated(false);
+    localStorage.removeItem("admin_authenticated");
+    localStorage.removeItem("admin_auth_time");
+    setPasswordInput("");
+    setAuthError("");
+  };
+
+  // 실시간 데이터 가져오기 (인증된 경우에만)
+  useEffect(() => {
+    if (!isAuthenticated) return;
+
     if (!db) {
       setError("Firebase 연결 오류");
       setLoading(false);
       return;
     }
 
+    setLoading(true);
     const q = query(
       collection(db, "wonders"),
       orderBy("createdAt", "desc")
@@ -111,7 +175,7 @@ export default function AdminWondersPage() {
     );
 
     return () => unsubscribe();
-  }, []);
+  }, [isAuthenticated]);
 
   // 필터링 로직
   useEffect(() => {
@@ -204,7 +268,6 @@ export default function AdminWondersPage() {
               await deleteObject(storageRef);
             } catch (error) {
               console.warn(`이미지 삭제 실패: ${image.fileName}`, error);
-              // 이미지 삭제 실패해도 문의는 삭제 진행
             }
           })
         );
@@ -253,6 +316,84 @@ export default function AdminWondersPage() {
     return timestamp.toDate().toLocaleString("ko-KR");
   };
 
+  // 인증되지 않은 경우 로그인 화면 표시
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="bg-white rounded-xl shadow-xl w-full max-w-md p-8">
+          <div className="text-center mb-8">
+            <div className="mx-auto w-16 h-16 bg-yellow-100 rounded-full flex items-center justify-center mb-4">
+              <Shield className="h-8 w-8 text-yellow-600" />
+            </div>
+            <h1 className="text-2xl font-bold text-gray-900 mb-2">관리자 인증</h1>
+            <p className="text-gray-600">관리자 대시보드에 접근하려면 비밀번호를 입력하세요</p>
+          </div>
+
+          <form onSubmit={handleAdminLogin} className="space-y-6">
+            {authError && (
+              <div className="flex items-center gap-2 text-red-600 text-sm bg-red-50 p-3 rounded-md">
+                <AlertCircle className="h-4 w-4 flex-shrink-0" />
+                {authError}
+              </div>
+            )}
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                관리자 비밀번호
+              </label>
+              <div className="relative">
+                <input
+                  type={showPassword ? "text" : "password"}
+                  value={passwordInput}
+                  onChange={(e) => setPasswordInput(e.target.value)}
+                  className="w-full p-3 pr-12 border border-gray-300 rounded-md bg-white text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-yellow-400 focus:border-transparent"
+                  placeholder="비밀번호를 입력하세요"
+                  required
+                  disabled={isAuthenticating}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 p-1 text-gray-500 hover:text-gray-700"
+                  disabled={isAuthenticating}
+                >
+                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
+            </div>
+
+            <button
+              type="submit"
+              disabled={isAuthenticating || !passwordInput.trim()}
+              className="w-full py-3 px-4 bg-yellow-500 hover:bg-yellow-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-semibold rounded-md transition-colors flex items-center justify-center gap-2"
+            >
+              {isAuthenticating ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent" />
+                  인증 중...
+                </>
+              ) : (
+                <>
+                  <Lock className="h-4 w-4" />
+                  로그인
+                </>
+              )}
+            </button>
+          </form>
+
+          <div className="mt-6 text-center">
+            <p className="text-xs text-gray-500">
+              💡 힌트: 기본 비밀번호는 "admin123!@#" 입니다
+            </p>
+            <p className="text-xs text-gray-400 mt-1">
+              (실제 운영 시에는 변경하세요)
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -274,11 +415,20 @@ export default function AdminWondersPage() {
               <h1 className="text-2xl font-bold text-gray-900">🔧 문의 관리 대시보드</h1>
               <p className="text-gray-600">등록된 문의를 확인하고 답변할 수 있습니다</p>
             </div>
-            <div className="text-right">
-              <p className="text-sm text-gray-500">총 {wonders.length}개 문의</p>
-              <p className="text-sm text-gray-500">
-                미답변 {wonders.filter(w => w.status === "pending").length}개
-              </p>
+            <div className="flex items-center gap-4">
+              <div className="text-right">
+                <p className="text-sm text-gray-500">총 {wonders.length}개 문의</p>
+                <p className="text-sm text-gray-500">
+                  미답변 {wonders.filter(w => w.status === "pending").length}개
+                </p>
+              </div>
+              <button
+                onClick={handleLogout}
+                className="flex items-center gap-2 px-4 py-2 bg-red-100 hover:bg-red-200 text-red-700 rounded-md transition-colors text-sm"
+              >
+                <LogOut className="h-4 w-4" />
+                로그아웃
+              </button>
             </div>
           </div>
         </div>
