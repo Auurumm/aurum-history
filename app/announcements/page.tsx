@@ -1,67 +1,30 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
+import { getAllAnnouncements } from "../../lib/announcements"
+import { Announcement } from "../../types/announcement"
 import HeroSection from "./components/announcements-hero"
 import Image from "next/image"
 import Link from "next/link"
-
-
-const allPosts = [
-  {
-    id: 1,
-    title: "AI와 함께하는 강아지 콘텐츠",
-    date: "2024. 6. 1",
-    category: "Media",
-    image: "/images/girl.png",
-    excerpt: "낮잠이 불타오르는 중",
-  },
-  {
-    id: 2,
-    title: "외모 편향을 깨는 강아지 캠페인",
-    date: "2024. 6. 4",
-    category: "Media",
-    image: "/images/sample2.jpg",
-    excerpt: "그들의 외모 뒤에 숨은 이야기",
-  },
-  {
-    id: 3,
-    title: "반려견 식품 캠페인 성과 공개",
-    date: "2024. 6. 10",
-    category: "Media",
-    image: "/images/sample3.jpg",
-    excerpt: "함께 만든 의미 있는 변화",
-  },
-  {
-    id: 3,
-    title: "반려견 식품 캠페인 성과 공개",
-    date: "2024. 6. 10",
-    category: "Media",
-    image: "/images/sample3.jpg",
-    excerpt: "함께 만든 의미 있는 변화",
-  },
-  {
-    id: 3,
-    title: "반려견 식품 캠페인 성과 공개",
-    date: "2024. 6. 10",
-    category: "Media",
-    image: "/images/sample3.jpg",
-    excerpt: "함께 만든 의미 있는 변화",
-  },
-  {
-    id: 3,
-    title: "반려견 식품 캠페인 성과 공개",
-    date: "2024. 6. 10",
-    category: "Media",
-    image: "/images/sample3.jpg",
-    excerpt: "함께 만든 의미 있는 변화",
-  },
-]
 
 const categories = ["전체", "Media", "Service", "Cooperation", "Recruit", "Social", "Others"]
 
 export default function AnnouncementsPage() {
   const [selectedCategory, setSelectedCategory] = useState("전체")
   const [visibleCount, setVisibleCount] = useState(2)
+  const [allPosts, setAllPosts] = useState<Announcement[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    async function fetchData() {
+      setLoading(true)
+      const posts = await getAllAnnouncements()
+      setAllPosts(posts)
+      setLoading(false)
+    }
+
+    fetchData()
+  }, [])
 
   const filtered = selectedCategory === "전체"
     ? allPosts
@@ -72,7 +35,6 @@ export default function AnnouncementsPage() {
 
   return (
     <div className="bg-white text-black dark:bg-black dark:text-white min-h-screen pb-20 transition-colors duration-300">
-      {/* Hero Section */}
       <HeroSection />
 
       <div id="scroll-target">
@@ -96,18 +58,27 @@ export default function AnnouncementsPage() {
           ))}
         </div>
 
-        {/* 게시물 카드 리스트 */}
+        {/* 게시물 카드 */}
         <div className="max-w-6xl mx-auto px-4 grid grid-cols-1 md:grid-cols-2 gap-10 mt-16">
           {visiblePosts.map((post) => (
             <Link href={`/announcements/${post.id}`} key={post.id} className="block">
               <div className="bg-gray-100 dark:bg-zinc-900 border border-gray-200 dark:border-zinc-700 rounded-lg shadow-md p-6 hover:shadow-xl transition-all duration-300 hover:scale-105">
-                <Image
-                  src={post.image}
-                  alt={post.title}
-                  width={600}
-                  height={400}
-                  className="rounded-lg mb-6 object-cover w-full h-64"
-                />
+
+                {/* ✅ 이미지 조건부 렌더링 */}
+                {post.image ? (
+                  <Image
+                    src={post.image}
+                    alt={post.title}
+                    width={600}
+                    height={400}
+                    className="rounded-lg mb-6 object-cover w-full h-64"
+                  />
+                ) : (
+                  <div className="w-full h-64 bg-gray-300 dark:bg-zinc-700 rounded-lg mb-6 flex items-center justify-center text-gray-500 dark:text-gray-400">
+                    이미지 없음
+                  </div>
+                )}
+
                 <div className="text-base text-yellow-600 dark:text-yellow-400 mb-3 font-medium">{post.category}</div>
                 <h3 className="text-2xl font-bold mb-3 leading-tight">{post.title}</h3>
                 <p className="text-lg text-gray-700 dark:text-gray-400 leading-relaxed">{post.excerpt}</p>
@@ -117,12 +88,10 @@ export default function AnnouncementsPage() {
           ))}
         </div>
 
-        {/* 더보기 or 종료 */}
+        {/* 더보기 */}
         <div className="text-center mt-20">
           {isAllLoaded ? (
-            <p className="text-lg text-gray-500 dark:text-gray-400">
-              로드할 내용이 없습니다.
-            </p>
+            <p className="text-lg text-gray-500 dark:text-gray-400">로드할 내용이 없습니다.</p>
           ) : (
             <button
               onClick={() => setVisibleCount((prev) => prev + 2)}
