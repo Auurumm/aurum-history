@@ -1,17 +1,10 @@
-// app/announcements/[id]/page.tsx
 import { notFound } from "next/navigation"
 import { getAnnouncementById } from "../../../lib/announcements"
 import { Metadata } from "next"
 import Image from "next/image"
 import Link from "next/link"
 
-interface Props {
-  params: {
-    id: string
-  }
-}
-
-export default async function AnnouncementDetail({ params }: Props) {
+export default async function AnnouncementDetail({ params }: { params: { id: string } }) {
   const post = await getAnnouncementById(params.id)
 
   if (!post) return notFound()
@@ -35,13 +28,15 @@ export default async function AnnouncementDetail({ params }: Props) {
         </div>
 
         {/* 이미지 */}
-        <Image
-          src={post.image}
-          alt={post.title}
-          width={800}
-          height={500}
-          className="rounded object-cover"
-        />
+        {post.image && (
+          <Image
+            src={post.image}
+            alt={post.title}
+            width={800}
+            height={500}
+            className="rounded object-cover"
+          />
+        )}
 
         {/* 본문 */}
         <p className="text-lg leading-relaxed whitespace-pre-line">{post.content}</p>
@@ -51,7 +46,7 @@ export default async function AnnouncementDetail({ params }: Props) {
 }
 
 // 🔧 메타데이터 설정 (선택)
-export async function generateMetadata({ params }: Props): Promise<Metadata> {
+export async function generateMetadata({ params }: { params: { id: string } }): Promise<Metadata> {
   const post = await getAnnouncementById(params.id)
 
   if (!post) {
