@@ -1,9 +1,9 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Filter } from "lucide-react"
+import { Filter, X, ChevronLeft, ChevronRight } from "lucide-react"
 // import { Heart, Eye, Filter } from "lucide-react"
 
 interface GalleryItem {
@@ -116,6 +116,8 @@ const categories = ["전체", "사무실", "구성원", "일상", "워크숍", "
 export default function GalleryGrid() {
   const [activeCategory, setActiveCategory] = useState("전체")
   const [visibleItems, setVisibleItems] = useState(6)
+  const [selectedImage, setSelectedImage] = useState<GalleryItem | null>(null)
+  const [currentImageIndex, setCurrentImageIndex] = useState(0)
 
   const filteredItems = galleryItems.filter((item) => activeCategory === "전체" || item.category === activeCategory)
 
@@ -124,6 +126,63 @@ export default function GalleryGrid() {
   const loadMore = () => {
     setVisibleItems((prev) => Math.min(prev + 6, filteredItems.length))
   }
+
+  const openModal = (item: GalleryItem) => {
+    setSelectedImage(item)
+    const index = filteredItems.findIndex(i => i.id === item.id)
+    setCurrentImageIndex(index)
+  }
+
+  const closeModal = () => {
+    setSelectedImage(null)
+  }
+
+  const goToNext = () => {
+    const nextIndex = (currentImageIndex + 1) % filteredItems.length
+    setCurrentImageIndex(nextIndex)
+    setSelectedImage(filteredItems[nextIndex])
+  }
+
+  const goToPrevious = () => {
+    const prevIndex = currentImageIndex === 0 ? filteredItems.length - 1 : currentImageIndex - 1
+    setCurrentImageIndex(prevIndex)
+    setSelectedImage(filteredItems[prevIndex])
+  }
+
+  // 키보드 이벤트 처리
+  const handleKeyDown = (e: KeyboardEvent) => {
+    if (!selectedImage) return
+    
+    switch (e.key) {
+      case 'Escape':
+        closeModal()
+        break
+      case 'ArrowLeft':
+        goToPrevious()
+        break
+      case 'ArrowRight':
+        goToNext()
+        break
+    }
+  }
+
+  // 키보드 이벤트 리스너 등록
+  useEffect(() => {
+    const handleKeyDownWrapper = (e: KeyboardEvent) => handleKeyDown(e)
+    
+    if (selectedImage) {
+      document.addEventListener('keydown', handleKeyDownWrapper)
+      document.body.style.overflow = 'hidden'
+    } else {
+      document.removeEventListener('keydown', handleKeyDownWrapper)
+      document.body.style.overflow = 'unset'
+    }
+
+    return () => {
+      document.removeEventListener('keydown', handleKeyDownWrapper)
+      document.body.style.overflow = 'unset'
+    }
+  }, [selectedImage, currentImageIndex])
 
   return (
     <section className="py-20 px-4 sm:px-6 lg:px-8 bg-white dark:bg-black text-gray-900 dark:text-gray-100">
@@ -155,7 +214,9 @@ export default function GalleryGrid() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
           {displayedItems.map((item) => (
             <Card
-              className={`bg-white/80 dark:bg-gray-900/30 border-gray-300 dark:border-gray-800 hover:border-yellow-400/50 transition-all duration-300 hover:-translate-y-2 group overflow-hidden ${
+              key={item.id}
+              onClick={() => openModal(item)}
+              className={`bg-white/80 dark:bg-gray-900/30 border-gray-300 dark:border-gray-800 hover:border-yellow-400/50 transition-all duration-300 hover:-translate-y-2 group overflow-hidden cursor-pointer ${
                 item.size === "tall" ? "md:row-span-2" : ""
               }`}
             >
@@ -242,6 +303,77 @@ export default function GalleryGrid() {
             <div className="text-6xl mb-4">📸</div>
             <h3 className="text-2xl font-bold text-gray-400 mb-2">아직 사진이 없어요</h3>
             <p className="text-gray-500">선택하신 카테고리의 사진을 준비 중입니다.</p>
+          </div>
+        )}
+
+        {/* Image Modal */}
+        {selectedImage && (
+          <div className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4">
+            {/* Close Button */}
+            <button
+              onClick={closeModal}
+              className="absolute top-4 right-4 z-10 p-2 rounded-full bg-black/50 text-white hover:bg-black/70 transition-colors"
+            >
+              <X className="h-6 w-6" />
+            </button>
+
+            {/* Navigation Buttons */}
+            {filteredItems.length > 1 && (
+              <>
+                <button
+                  onClick={goToPrevious}
+                  className="absolute left-4 top-1/2 -translate-y-1/2 z-10 p-2 rounded-full bg-black/50 text-white hover:bg-black/70 transition-colors"
+                >
+                  <ChevronLeft className="h-6 w-6" />
+                </button>
+                <button
+                  onClick={goToNext}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 z-10 p-2 rounded-full bg-black/50 text-white hover:bg-black/70 transition-colors"
+                >
+                  <ChevronRight className="h-6 w-6" />
+                </button>
+              </>
+            )}
+
+            {/* Modal Content */}
+            <div className="max-w-6xl max-h-full w-full flex flex-col lg:flex-row bg-white dark:bg-gray-900 rounded-lg overflow-hidden">
+              {/* Image Section */}
+              <div className="flex-1 relative bg-black flex items-center justify-center">
+                <img
+                  src={selectedImage.image}
+                  alt={selectedImage.title}
+                  className="max-w-full max-h-full object-contain"
+                />
+              </div>
+
+              {/* Info Section */}
+              <div className="lg:w-80 p-6 bg-white dark:bg-gray-900">
+                <div className="mb-4">
+                  <span className="bg-yellow-400 text-black px-3 py-1 rounded-full text-xs font-medium">
+                    #{selectedImage.category}
+                  </span>
+                </div>
+                
+                <h2 className="text-2xl font-bold mb-4 text-yellow-600 dark:text-yellow-400">
+                  {selectedImage.title}
+                </h2>
+                
+                <p className="text-gray-700 dark:text-gray-300 leading-relaxed mb-6">
+                  {selectedImage.caption}
+                </p>
+
+                {/* Image Counter */}
+                <div className="text-sm text-gray-500 dark:text-gray-400">
+                  {currentImageIndex + 1} / {filteredItems.length}
+                </div>
+              </div>
+            </div>
+
+            {/* Click outside to close */}
+            <div 
+              className="absolute inset-0 -z-10" 
+              onClick={closeModal}
+            ></div>
           </div>
         )}
       </div>
