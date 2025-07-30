@@ -57,7 +57,7 @@ export default function Footer() {
             <Link href={getLocalizedPath("/wonders")} className="text-lg text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white">
               제휴문의
             </Link>
-            <Link href={getLocalizedPath("/trace")} className="text-lg text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white">
+            <Link href={getLocalizedPath("/traces")} className="text-lg text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white">
               흔적들
             </Link>
           </div>
