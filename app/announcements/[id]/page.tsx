@@ -1,15 +1,18 @@
-import { notFound } from "next/navigation"
-import { getAnnouncementById } from "../../../lib/announcements"
-import { Metadata } from "next"
-import Image from "next/image"
-import Link from "next/link"
+import { notFound } from "next/navigation";
+import { getAnnouncementById } from "../../../lib/announcements";
+import { Metadata } from "next";
+import Image from "next/image";
+import Link from "next/link";
 
-type Params = { params: { id: string } }
+interface PageProps {
+  params: { id: string };
+}
 
-export default async function AnnouncementDetail({ params }: Params) {
-  const post = await getAnnouncementById(params.id)
+// ✅ 페이지 컴포넌트
+export default async function AnnouncementDetail({ params }: PageProps) {
+  const post = await getAnnouncementById(params.id);
 
-  if (!post) return notFound()
+  if (!post) return notFound();
 
   return (
     <div className="bg-white dark:bg-black text-black dark:text-white min-h-screen px-6 pt-32 pb-20 transition-colors duration-300">
@@ -44,21 +47,21 @@ export default async function AnnouncementDetail({ params }: Params) {
         <p className="text-lg leading-relaxed whitespace-pre-line">{post.content}</p>
       </div>
     </div>
-  )
+  );
 }
 
-// ✅ 메타데이터 함수도 동일한 방식으로 수정
-export async function generateMetadata({ params }: Params): Promise<Metadata> {
-  const post = await getAnnouncementById(params.id)
+// ✅ generateMetadata 함수도 동일하게 타입 수정
+export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+  const post = await getAnnouncementById(params.id);
 
   if (!post) {
     return {
       title: "공지사항을 찾을 수 없습니다",
-    }
+    };
   }
 
   return {
     title: `${post.title} - Aurum`,
     description: post.excerpt,
-  }
+  };
 }
