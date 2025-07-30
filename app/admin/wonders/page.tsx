@@ -381,14 +381,7 @@ export default function AdminWondersPage() {
             </button>
           </form>
 
-          <div className="mt-6 text-center">
-            <p className="text-xs text-gray-500">
-              💡 힌트: 기본 비밀번호는 "admin123!@#" 입니다
-            </p>
-            <p className="text-xs text-gray-400 mt-1">
-              (실제 운영 시에는 변경하세요)
-            </p>
-          </div>
+          
         </div>
       </div>
     );
