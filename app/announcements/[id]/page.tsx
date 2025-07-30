@@ -4,7 +4,9 @@ import { Metadata } from "next"
 import Image from "next/image"
 import Link from "next/link"
 
-export default async function AnnouncementDetail({ params }: { params: { id: string } }) {
+type Params = { params: { id: string } }
+
+export default async function AnnouncementDetail({ params }: Params) {
   const post = await getAnnouncementById(params.id)
 
   if (!post) return notFound()
@@ -45,8 +47,8 @@ export default async function AnnouncementDetail({ params }: { params: { id: str
   )
 }
 
-// 🔧 메타데이터 설정 (선택)
-export async function generateMetadata({ params }: { params: { id: string } }): Promise<Metadata> {
+// ✅ 메타데이터 함수도 동일한 방식으로 수정
+export async function generateMetadata({ params }: Params): Promise<Metadata> {
   const post = await getAnnouncementById(params.id)
 
   if (!post) {
