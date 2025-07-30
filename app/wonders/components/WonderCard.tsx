@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 import { db } from "@/lib/firebase";
-import { collection, query, where, getDocs } from "firebase/firestore";
-import { MessageSquare, Building, Clock, CheckCircle, X, Maximize2, User, ChevronLeft, ChevronRight, Lock, Eye, EyeOff, AlertCircle } from "lucide-react";
+import { collection, query, where, getDocs, doc, updateDoc, deleteDoc, serverTimestamp } from "firebase/firestore";
+import { MessageSquare, Building, Clock, CheckCircle, X, Maximize2, User, ChevronLeft, ChevronRight, Lock, Eye, EyeOff, AlertCircle, Edit, Trash2, MoreHorizontal, AlertTriangle } from "lucide-react";
 
 interface WonderImage {
   url: string;
@@ -42,9 +42,74 @@ export default function WonderCard({ wonder }: WonderCardProps) {
   const [passwordError, setPasswordError] = useState("");
   const [isChecking, setIsChecking] = useState(false);
 
+  // 작성자 인증 관련 상태
+  const [isAuthorVerified, setIsAuthorVerified] = useState(false);
+  const [showAuthorVerification, setShowAuthorVerification] = useState(false);
+  const [verificationPassword, setVerificationPassword] = useState("");
+  const [verificationError, setVerificationError] = useState("");
+  const [isVerifying, setIsVerifying] = useState(false);
+
+  // 수정/삭제 관련 상태
+  const [showMenu, setShowMenu] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editTitle, setEditTitle] = useState(wonder.title);
+  const [editContent, setEditContent] = useState(wonder.content);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [isUpdating, setIsUpdating] = useState(false);
+
   // 비공개 문의인지 확인
   const isPrivate = !wonder.isPublic;
   const canViewContent = !isPrivate || isPrivateUnlocked;
+
+  // 메뉴 표시 여부 (작성자 본인 확인 완료 시에만)
+  const canShowMenu = isAuthorVerified;
+
+  // 작성자 본인 확인 (비밀번호 기반)
+  const handleAuthorVerification = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!verificationPassword.trim()) {
+      setVerificationError("비밀번호를 입력해주세요.");
+      return;
+    }
+
+    setIsVerifying(true);
+    setVerificationError("");
+
+    try {
+      // 작성자 이메일과 비밀번호로 확인
+      const q = query(
+        collection(db, "wonders"),
+        where("id", "==", wonder.id),
+        where("authorEmail", "==", wonder.authorEmail),
+        where("password", "==", verificationPassword.trim())
+      );
+
+      const snapshot = await getDocs(q);
+      
+      if (snapshot.empty) {
+        setVerificationError("비밀번호가 올바르지 않습니다.");
+        return;
+      }
+
+      // 작성자 확인 완료
+      setIsAuthorVerified(true);
+      setShowAuthorVerification(false);
+      setVerificationPassword("");
+      setVerificationError("");
+
+      // 비공개 문의의 경우 내용도 함께 해제
+      if (isPrivate) {
+        setIsPrivateUnlocked(true);
+      }
+
+    } catch (error) {
+      console.error("작성자 확인 오류:", error);
+      setVerificationError("확인 중 오류가 발생했습니다.");
+    } finally {
+      setIsVerifying(false);
+    }
+  };
 
   // 비공개 문의 비밀번호 확인
   const handlePasswordCheck = async (e: React.FormEvent) => {
@@ -60,9 +125,9 @@ export default function WonderCard({ wonder }: WonderCardProps) {
     try {
       const q = query(
         collection(db, "wonders"),
+        where("id", "==", wonder.id),
         where("authorEmail", "==", wonder.authorEmail),
-        where("password", "==", passwordInput.trim()),
-        where("isPublic", "==", false)
+        where("password", "==", passwordInput.trim())
       );
 
       const snapshot = await getDocs(q);
@@ -72,8 +137,9 @@ export default function WonderCard({ wonder }: WonderCardProps) {
         return;
       }
 
-      // 비밀번호가 맞으면 잠금 해제
+      // 비밀번호가 맞으면 잠금 해제 및 작성자 인증
       setIsPrivateUnlocked(true);
+      setIsAuthorVerified(true); // 비밀번호 확인했으므로 작성자로 인증
       setShowPasswordInput(false);
       setPasswordInput("");
       setPasswordError("");
@@ -84,6 +150,78 @@ export default function WonderCard({ wonder }: WonderCardProps) {
     } finally {
       setIsChecking(false);
     }
+  };
+
+  // 수정 기능
+  const handleEdit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editTitle.trim() || !editContent.trim()) {
+      alert("제목과 내용을 입력해주세요.");
+      return;
+    }
+
+    if (!isAuthorVerified) {
+      alert("작성자 본인만 수정할 수 있습니다.");
+      return;
+    }
+
+    setIsUpdating(true);
+    try {
+      await updateDoc(doc(db, "wonders", wonder.id), {
+        title: editTitle.trim(),
+        content: editContent.trim(),
+        updatedAt: serverTimestamp(),
+      });
+      
+      setIsEditing(false);
+      setShowMenu(false);
+      alert("문의가 수정되었습니다.");
+    } catch (error) {
+      console.error("문의 수정 오류:", error);
+      alert("문의 수정 중 오류가 발생했습니다.");
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
+  // 삭제 기능
+  const handleDelete = async () => {
+    if (!isAuthorVerified) {
+      alert("작성자 본인만 삭제할 수 있습니다.");
+      return;
+    }
+
+    setIsDeleting(true);
+    try {
+      await deleteDoc(doc(db, "wonders", wonder.id));
+      setShowDeleteConfirm(false);
+      alert("문의가 삭제되었습니다.");
+    } catch (error) {
+      console.error("문의 삭제 오류:", error);
+      alert("문의 삭제 중 오류가 발생했습니다.");
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  // 수정 취소
+  const handleCancelEdit = () => {
+    setEditTitle(wonder.title);
+    setEditContent(wonder.content);
+    setIsEditing(false);
+    setShowMenu(false);
+  };
+
+  // 메뉴 버튼 클릭 시 작성자 확인
+  const handleMenuClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    
+    if (!isAuthorVerified) {
+      setShowAuthorVerification(true);
+      return;
+    }
+    
+    setShowMenu(!showMenu);
   };
 
   // 상태별 스타일 및 텍스트
@@ -116,6 +254,11 @@ export default function WonderCard({ wonder }: WonderCardProps) {
   const handleCardClick = (e: React.MouseEvent) => {
     // 버튼 클릭은 모달 열지 않음
     if ((e.target as HTMLElement).closest('button')) return;
+    if ((e.target as HTMLElement).closest('input')) return;
+    if ((e.target as HTMLElement).closest('textarea')) return;
+    
+    // 수정 모드일 때는 모달 열지 않음
+    if (isEditing) return;
     
     // 비공개 문의이고 잠금 해제되지 않았으면 비밀번호 입력 표시
     if (isPrivate && !isPrivateUnlocked) {
@@ -275,10 +418,23 @@ export default function WonderCard({ wonder }: WonderCardProps) {
         </div>
         
         <div className="flex-1 min-w-0">
+          {/* 제목 부분 - 수정 모드일 때 변경 */}
           <div className="flex items-center gap-3 mb-2">
-            <h3 className="font-bold text-lg text-gray-900 dark:text-white truncate">
-              {wonder.title}
-            </h3>
+            {isEditing ? (
+              <input
+                type="text"
+                value={editTitle}
+                onChange={(e) => setEditTitle(e.target.value)}
+                className="flex-1 text-lg font-bold bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded px-2 py-1 text-gray-900 dark:text-white"
+                placeholder="제목을 입력하세요"
+                onClick={(e) => e.stopPropagation()}
+              />
+            ) : (
+              <h3 className="font-bold text-lg text-gray-900 dark:text-white truncate">
+                {wonder.title}
+              </h3>
+            )}
+            
             <span className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium border ${statusInfo.className}`}>
               {statusInfo.icon}
               {statusInfo.text}
@@ -317,7 +473,53 @@ export default function WonderCard({ wonder }: WonderCardProps) {
           </div>
         </div>
 
-        <Maximize2 className="h-4 w-4 text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" />
+        {/* 메뉴 버튼 (항상 표시하되, 작성자 확인 후 기능 활성화) */}
+        <div className="flex items-center gap-2">
+          <div className="relative">
+            <button
+              onClick={handleMenuClick}
+              className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors"
+              title={!isAuthorVerified ? "작성자 확인이 필요합니다" : "메뉴"}
+            >
+              <MoreHorizontal className="h-4 w-4 text-gray-500" />
+            </button>
+            
+            {showMenu && isAuthorVerified && (
+              <>
+                <div 
+                  className="fixed inset-0 z-10" 
+                  onClick={() => setShowMenu(false)}
+                />
+                <div className="absolute right-0 mt-2 w-32 bg-white dark:bg-gray-800 rounded-md shadow-lg border border-gray-200 dark:border-gray-700 z-20">
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setIsEditing(true);
+                      setShowMenu(false);
+                    }}
+                    className="flex items-center gap-2 w-full px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                  >
+                    <Edit className="h-3 w-3" />
+                    수정
+                  </button>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setShowDeleteConfirm(true);
+                      setShowMenu(false);
+                    }}
+                    className="flex items-center gap-2 w-full px-3 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-700"
+                  >
+                    <Trash2 className="h-3 w-3" />
+                    삭제
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+          
+          <Maximize2 className="h-4 w-4 text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" />
+        </div>
       </div>
 
       {/* 이미지 갤러리 (컴팩트 모드) */}
@@ -325,7 +527,45 @@ export default function WonderCard({ wonder }: WonderCardProps) {
 
       {/* 문의 내용 미리보기 */}
       <div className="text-gray-700 dark:text-gray-300 mb-4 leading-relaxed">
-        {canViewContent ? (
+        {isEditing ? (
+          <div onClick={(e) => e.stopPropagation()}>
+            <textarea
+              value={editContent}
+              onChange={(e) => setEditContent(e.target.value)}
+              className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white resize-none"
+              rows={6}
+              placeholder="내용을 입력하세요"
+            />
+            <div className="flex justify-between items-center mt-2">
+              <span className="text-xs text-gray-500">
+                {editContent.length} / 1000
+              </span>
+              <div className="flex gap-2">
+                <button
+                  onClick={handleCancelEdit}
+                  className="px-3 py-1 bg-gray-300 hover:bg-gray-400 text-gray-700 text-sm rounded-md transition-colors"
+                  disabled={isUpdating}
+                >
+                  취소
+                </button>
+                <button
+                  onClick={handleEdit}
+                  disabled={isUpdating || !editTitle.trim() || !editContent.trim()}
+                  className="px-3 py-1 bg-yellow-400 hover:bg-yellow-500 disabled:bg-gray-300 disabled:cursor-not-allowed text-black text-sm rounded-md transition-colors flex items-center gap-1"
+                >
+                  {isUpdating ? (
+                    <>
+                      <div className="animate-spin rounded-full h-3 w-3 border-2 border-black border-t-transparent" />
+                      저장 중
+                    </>
+                  ) : (
+                    "저장"
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        ) : canViewContent ? (
           <div 
             className="overflow-hidden"
             style={{
@@ -518,6 +758,116 @@ export default function WonderCard({ wonder }: WonderCardProps) {
       {isExpanded && <ExpandedModal />}
       <ImageModal />
       
+      {/* 작성자 본인 확인 모달 */}
+      {showAuthorVerification && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[60] p-4">
+          <div className="bg-white dark:bg-gray-900 rounded-xl shadow-xl w-full max-w-md">
+            <div className="p-6 border-b border-gray-200 dark:border-gray-700">
+              <div className="flex items-center justify-between">
+                <h2 className="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                  <User className="h-5 w-5" />
+                  작성자 본인 확인
+                </h2>
+                <button
+                  onClick={() => {
+                    setShowAuthorVerification(false);
+                    setVerificationPassword("");
+                    setVerificationError("");
+                  }}
+                  className="p-2 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-full transition-colors"
+                >
+                  <X className="h-5 w-5 text-gray-500 dark:text-gray-400" />
+                </button>
+              </div>
+            </div>
+
+            <div className="p-6">
+              <form onSubmit={handleAuthorVerification} className="space-y-4">
+                {verificationError && (
+                  <div className="flex items-center gap-2 text-red-600 text-sm bg-red-50 dark:bg-red-900/20 p-3 rounded-md">
+                    <AlertCircle className="h-4 w-4 flex-shrink-0" />
+                    {verificationError}
+                  </div>
+                )}
+
+                <div className="bg-yellow-50 dark:bg-yellow-900/20 p-4 rounded-lg">
+                  <h3 className="font-medium text-yellow-700 dark:text-yellow-300 mb-2">
+                    📋 {wonder.title}
+                  </h3>
+                  <p className="text-sm text-yellow-600 dark:text-yellow-400">
+                    작성자: {wonder.authorName} | {wonder.date}
+                  </p>
+                  <p className="text-xs text-yellow-500 dark:text-yellow-500 mt-2">
+                    본인이 작성한 문의가 맞다면 등록 시 설정한 비밀번호를 입력하세요.
+                  </p>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    문의 등록 시 설정한 비밀번호
+                  </label>
+                  <div className="relative">
+                    <input
+                      type={showPassword ? "text" : "password"}
+                      value={verificationPassword}
+                      onChange={(e) => setVerificationPassword(e.target.value)}
+                      className="w-full p-3 pr-12 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-yellow-400 focus:border-transparent"
+                      placeholder="비밀번호 입력"
+                      required
+                      disabled={isVerifying}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3 top-1/2 transform -translate-y-1/2 p-1 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                      disabled={isVerifying}
+                    >
+                      {showPassword ? (
+                        <EyeOff className="h-4 w-4" />
+                      ) : (
+                        <Eye className="h-4 w-4" />
+                      )}
+                    </button>
+                  </div>
+                </div>
+
+                <div className="flex gap-3 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowAuthorVerification(false);
+                      setVerificationPassword("");
+                      setVerificationError("");
+                    }}
+                    className="flex-1 py-3 px-4 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-md hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                    disabled={isVerifying}
+                  >
+                    취소
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={isVerifying || !verificationPassword.trim()}
+                    className="flex-1 py-3 px-4 bg-yellow-500 hover:bg-yellow-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-semibold rounded-md transition-colors flex items-center justify-center gap-2"
+                  >
+                    {isVerifying ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent" />
+                        확인 중...
+                      </>
+                    ) : (
+                      <>
+                        <User className="h-4 w-4" />
+                        본인 확인
+                      </>
+                    )}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
+      
       {/* 비공개 문의 비밀번호 입력 모달 */}
       {showPasswordInput && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[60] p-4">
@@ -620,6 +970,57 @@ export default function WonderCard({ wonder }: WonderCardProps) {
                   </button>
                 </div>
               </form>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 삭제 확인 모달 */}
+      {showDeleteConfirm && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[70] p-4">
+          <div className="bg-white dark:bg-gray-900 rounded-xl shadow-xl w-full max-w-md">
+            <div className="p-6">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="flex-shrink-0">
+                  <AlertTriangle className="h-8 w-8 text-red-600" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-medium text-gray-900 dark:text-white">문의 삭제</h3>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">이 작업은 되돌릴 수 없습니다.</p>
+                </div>
+              </div>
+              
+              <p className="text-gray-700 dark:text-gray-300 mb-6">
+                정말로 이 문의를 삭제하시겠습니까?<br />
+                삭제된 문의는 복구할 수 없습니다.
+              </p>
+
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setShowDeleteConfirm(false)}
+                  className="flex-1 py-3 px-4 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-md hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                  disabled={isDeleting}
+                >
+                  취소
+                </button>
+                <button
+                  onClick={handleDelete}
+                  disabled={isDeleting}
+                  className="flex-1 py-3 px-4 bg-red-600 hover:bg-red-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-semibold rounded-md transition-colors flex items-center justify-center gap-2"
+                >
+                  {isDeleting ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent" />
+                      삭제 중...
+                    </>
+                  ) : (
+                    <>
+                      <Trash2 className="h-4 w-4" />
+                      삭제하기
+                    </>
+                  )}
+                </button>
+              </div>
             </div>
           </div>
         </div>

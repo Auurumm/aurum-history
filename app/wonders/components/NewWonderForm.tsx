@@ -4,7 +4,7 @@ import { useState, useRef } from "react";
 import { db, storage } from "@/lib/firebase";
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL, deleteObject } from "firebase/storage";
-import { X, Send, AlertCircle, User, Building, Mail, Phone, Lock, Eye, EyeOff, Upload, Image as ImageIcon, Trash2 } from "lucide-react";
+import { X, Send, AlertCircle, User, Building, Mail, Phone, Lock, Eye, EyeOff, Upload, Image as ImageIcon, Trash2, Shield } from "lucide-react";
 
 interface NewWonderFormProps {
   isOpen: boolean;
@@ -29,10 +29,12 @@ export default function NewWonderForm({ isOpen, onClose, onWonderCreated }: NewW
     company: "",
     isPublic: true,
     password: "",
+    passwordConfirm: "",
   });
   const [uploadedImages, setUploadedImages] = useState<UploadedImage[]>([]);
   const [isUploadingImage, setIsUploadingImage] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [showPasswordConfirm, setShowPasswordConfirm] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -46,26 +48,24 @@ export default function NewWonderForm({ isOpen, onClose, onWonderCreated }: NewW
     "기타"
   ];
 
-  const handleInputChange = (field: string, value: string | boolean) => {
+  const handleInputChange = (field: string, value: string | boolean): void => {
     setFormData(prev => ({
       ...prev,
       [field]: value
     }));
     
-    if (field === "isPublic" && value === true) {
-      setFormData(prev => ({
-        ...prev,
-        password: ""
-      }));
+    // 비밀번호 확인 검증
+    if (field === "password" || field === "passwordConfirm") {
+      setError("");
     }
   };
 
   // 이미지 업로드 처리
-  const handleImageUpload = async (files: FileList) => {
+  const handleImageUpload = async (files: FileList): Promise<void> => {
     if (!files || files.length === 0) return;
 
     // 최대 5개 이미지 제한
-    if (uploadedImages.length + files.length > 5) {
+    if (uploadedImages.length + Array.from(files).length > 5) {
       setError("이미지는 최대 5개까지 업로드할 수 있습니다.");
       return;
     }
@@ -118,7 +118,7 @@ export default function NewWonderForm({ isOpen, onClose, onWonderCreated }: NewW
   };
 
   // 이미지 삭제
-  const handleImageDelete = async (imageId: string) => {
+  const handleImageDelete = async (imageId: string): Promise<void> => {
     try {
       // Firebase Storage에서 삭제
       const storageRef = ref(storage, imageId);
@@ -133,7 +133,7 @@ export default function NewWonderForm({ isOpen, onClose, onWonderCreated }: NewW
     }
   };
 
-  const validateForm = () => {
+  const validateForm = (): boolean => {
     if (!formData.title.trim()) {
       setError("제목을 입력해주세요.");
       return false;
@@ -155,18 +155,25 @@ export default function NewWonderForm({ isOpen, onClose, onWonderCreated }: NewW
       setError("올바른 이메일 형식을 입력해주세요.");
       return false;
     }
-    if (!formData.isPublic && !formData.password.trim()) {
-      setError("비공개 문의의 경우 비밀번호를 설정해주세요.");
+    
+    // 비밀번호 검증 (모든 문의에 필수)
+    if (!formData.password.trim()) {
+      setError("비밀번호를 설정해주세요.");
       return false;
     }
-    if (!formData.isPublic && formData.password.length < 4) {
+    if (formData.password.length < 4) {
       setError("비밀번호는 최소 4자 이상이어야 합니다.");
       return false;
     }
+    if (formData.password !== formData.passwordConfirm) {
+      setError("비밀번호와 비밀번호 확인이 일치하지 않습니다.");
+      return false;
+    }
+    
     return true;
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent): Promise<void> => {
     e.preventDefault();
     
     if (!validateForm()) return;
@@ -179,7 +186,7 @@ export default function NewWonderForm({ isOpen, onClose, onWonderCreated }: NewW
         throw new Error("Firebase 초기화되지 않음");
       }
 
-      const wonderData: any = {
+      const wonderData = {
         title: formData.title.trim(),
         content: formData.content.trim(),
         category: formData.category,
@@ -188,19 +195,16 @@ export default function NewWonderForm({ isOpen, onClose, onWonderCreated }: NewW
         authorPhone: formData.authorPhone.trim() || null,
         company: formData.company.trim() || null,
         isPublic: formData.isPublic,
-        status: "pending",
+        password: formData.password.trim(), // 모든 문의에 비밀번호 저장
+        status: "pending" as const,
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
         images: uploadedImages.map(img => ({
           url: img.url,
           fileName: img.file.name,
           storageId: img.id,
-        })), // 업로드된 이미지 정보 저장
+        })),
       };
-
-      if (!formData.isPublic) {
-        wonderData.password = formData.password.trim();
-      }
 
       const wondersCollection = collection(db, "wonders");
       const docRef = await addDoc(wondersCollection, wonderData);
@@ -218,6 +222,7 @@ export default function NewWonderForm({ isOpen, onClose, onWonderCreated }: NewW
         company: "",
         isPublic: true,
         password: "",
+        passwordConfirm: "",
       });
       setUploadedImages([]);
       
@@ -225,10 +230,10 @@ export default function NewWonderForm({ isOpen, onClose, onWonderCreated }: NewW
       onClose();
       
       const message = formData.isPublic 
-        ? "문의가 성공적으로 등록되었습니다. 빠른 시일 내에 답변드리겠습니다."
-        : "비공개 문의가 성공적으로 등록되었습니다. 설정하신 비밀번호로 문의 내용을 확인하실 수 있습니다.";
+        ? "공개 문의가 성공적으로 등록되었습니다. 설정하신 비밀번호로 나중에 문의를 수정하거나 삭제하실 수 있습니다."
+        : "비공개 문의가 성공적으로 등록되었습니다. 설정하신 비밀번호로 문의 내용을 확인하고 수정하실 수 있습니다.";
       
-      alert(message);
+      window.alert(message);
 
     } catch (err: any) {
       console.error("💥 문의 등록 오류:", err);
@@ -252,10 +257,10 @@ export default function NewWonderForm({ isOpen, onClose, onWonderCreated }: NewW
   };
 
   // 폼 닫기 시 업로드된 이미지 정리
-  const handleClose = async () => {
+  const handleClose = async (): Promise<void> => {
     // 업로드된 이미지가 있다면 삭제 확인
     if (uploadedImages.length > 0) {
-      const confirmed = confirm("업로드된 이미지가 있습니다. 정말로 취소하시겠습니까?");
+      const confirmed = window.confirm("업로드된 이미지가 있습니다. 정말로 취소하시겠습니까?");
       if (!confirmed) return;
 
       // 업로드된 이미지들을 Storage에서 삭제
@@ -364,6 +369,93 @@ export default function NewWonderForm({ isOpen, onClose, onWonderCreated }: NewW
                 disabled={isSubmitting}
               />
             </div>
+          </div>
+
+          {/* 비밀번호 설정 섹션 - 모든 문의에 필수 */}
+          <div className="p-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
+            <div className="flex items-center gap-2 mb-3">
+              <Shield className="h-5 w-5 text-yellow-600 dark:text-yellow-400" />
+              <h3 className="text-sm font-medium text-yellow-700 dark:text-yellow-300">
+                보안 비밀번호 설정 *
+              </h3>
+            </div>
+            <p className="text-xs text-yellow-600 dark:text-yellow-400 mb-4">
+              💡 나중에 문의를 <strong>수정하거나 삭제</strong>할 때 필요한 비밀번호입니다. 반드시 기억해 주세요!
+            </p>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-yellow-700 dark:text-yellow-300 mb-2">
+                  <Lock className="inline h-4 w-4 mr-1" />
+                  비밀번호 *
+                </label>
+                <div className="relative">
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    value={formData.password}
+                    onChange={(e) => handleInputChange("password", e.target.value)}
+                    placeholder="비밀번호 (최소 4자)"
+                    className="w-full p-3 pr-12 border border-yellow-300 dark:border-yellow-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-yellow-400 focus:border-transparent"
+                    disabled={isSubmitting}
+                    minLength={4}
+                    required
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 p-1 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                    disabled={isSubmitting}
+                  >
+                    {showPassword ? (
+                      <EyeOff className="h-4 w-4" />
+                    ) : (
+                      <Eye className="h-4 w-4" />
+                    )}
+                  </button>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-yellow-700 dark:text-yellow-300 mb-2">
+                  <Lock className="inline h-4 w-4 mr-1" />
+                  비밀번호 확인 *
+                </label>
+                <div className="relative">
+                  <input
+                    type={showPasswordConfirm ? "text" : "password"}
+                    value={formData.passwordConfirm}
+                    onChange={(e) => handleInputChange("passwordConfirm", e.target.value)}
+                    placeholder="비밀번호 다시 입력"
+                    className="w-full p-3 pr-12 border border-yellow-300 dark:border-yellow-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-yellow-400 focus:border-transparent"
+                    disabled={isSubmitting}
+                    required
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPasswordConfirm(!showPasswordConfirm)}
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 p-1 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                    disabled={isSubmitting}
+                  >
+                    {showPasswordConfirm ? (
+                      <EyeOff className="h-4 w-4" />
+                    ) : (
+                      <Eye className="h-4 w-4" />
+                    )}
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* 비밀번호 일치 여부 표시 */}
+            {formData.password && formData.passwordConfirm && (
+              <div className="mt-2 text-xs">
+                {formData.password === formData.passwordConfirm ? (
+                  <span className="text-green-600 dark:text-green-400">✓ 비밀번호가 일치합니다</span>
+                ) : (
+                  <span className="text-red-600 dark:text-red-400">✗ 비밀번호가 일치하지 않습니다</span>
+                )}
+              </div>
+            )}
           </div>
 
           {/* 문의 정보 섹션 */}
@@ -534,49 +626,12 @@ export default function NewWonderForm({ isOpen, onClose, onWonderCreated }: NewW
                         비공개 문의
                       </div>
                       <div className="text-xs text-gray-500 dark:text-gray-400">
-                        비밀번호를 설정하여 본인만 확인할 수 있습니다
+                        설정한 비밀번호로만 본인이 확인할 수 있습니다
                       </div>
                     </div>
                   </label>
                 </div>
               </div>
-
-              {/* 비공개 문의 시 비밀번호 입력 */}
-              {!formData.isPublic && (
-                <div className="p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
-                  <label className="block text-sm font-medium text-blue-700 dark:text-blue-300 mb-2">
-                    <Lock className="inline h-4 w-4 mr-1" />
-                    비공개 문의 비밀번호 *
-                  </label>
-                  <div className="relative">
-                    <input
-                      type={showPassword ? "text" : "password"}
-                      value={formData.password}
-                      onChange={(e) => handleInputChange("password", e.target.value)}
-                      placeholder="비밀번호를 입력하세요 (최소 4자)"
-                      className="w-full p-3 pr-12 border border-blue-300 dark:border-blue-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-blue-400 focus:border-transparent"
-                      disabled={isSubmitting}
-                      minLength={4}
-                      required={!formData.isPublic}
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-1/2 transform -translate-y-1/2 p-1 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
-                      disabled={isSubmitting}
-                    >
-                      {showPassword ? (
-                        <EyeOff className="h-4 w-4" />
-                      ) : (
-                        <Eye className="h-4 w-4" />
-                      )}
-                    </button>
-                  </div>
-                  <p className="text-xs text-blue-600 dark:text-blue-400 mt-2">
-                    💡 이 비밀번호로 나중에 문의 내용과 답변을 확인하실 수 있습니다.
-                  </p>
-                </div>
-              )}
             </div>
           </div>
 
@@ -592,7 +647,16 @@ export default function NewWonderForm({ isOpen, onClose, onWonderCreated }: NewW
             </button>
             <button
               type="submit"
-              disabled={isSubmitting || isUploadingImage || !formData.title.trim() || !formData.content.trim() || !formData.authorName.trim() || !formData.authorEmail.trim()}
+              disabled={
+                isSubmitting || 
+                isUploadingImage || 
+                !formData.title.trim() || 
+                !formData.content.trim() || 
+                !formData.authorName.trim() || 
+                !formData.authorEmail.trim() || 
+                !formData.password.trim() ||
+                formData.password !== formData.passwordConfirm
+              }
               className="flex-1 py-3 px-4 bg-yellow-400 hover:bg-yellow-500 disabled:bg-gray-300 disabled:cursor-not-allowed text-black font-semibold rounded-md transition-colors flex items-center justify-center gap-2"
             >
               {isSubmitting ? (

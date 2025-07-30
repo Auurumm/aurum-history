@@ -1,9 +1,9 @@
-// app/admin/wonders/page.tsx - 새로 생성할 파일
+// app/admin/wonders/page.tsx - 삭제 기능 추가
 
 "use client";
 
 import { useState, useEffect } from "react";
-import { db } from "@/lib/firebase";
+import { db, storage } from "@/lib/firebase";
 import { 
   collection, 
   query, 
@@ -11,9 +11,11 @@ import {
   orderBy, 
   doc, 
   updateDoc, 
+  deleteDoc,
   serverTimestamp,
   where 
 } from "firebase/firestore";
+import { ref, deleteObject } from "firebase/storage";
 import { 
   MessageSquare, 
   Clock, 
@@ -29,7 +31,9 @@ import {
   Eye,
   Lock,
   AlertCircle,
-  Trash2
+  Trash2,
+  AlertTriangle,
+  MoreVertical
 } from "lucide-react";
 
 interface Wonder {
@@ -62,6 +66,12 @@ export default function AdminWondersPage() {
   const [isReplying, setIsReplying] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  
+  // 삭제 관련 상태
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [wonderToDelete, setWonderToDelete] = useState<Wonder | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [showWonderMenu, setShowWonderMenu] = useState<string | null>(null);
   
   // 필터 상태
   const [statusFilter, setStatusFilter] = useState<"all" | "pending" | "answered" | "closed">("all");
@@ -169,6 +179,49 @@ export default function AdminWondersPage() {
     } catch (error) {
       console.error("상태 변경 오류:", error);
       alert("상태 변경 중 오류가 발생했습니다.");
+    }
+  };
+
+  // 문의 삭제 확인
+  const handleDeleteClick = (wonder: Wonder) => {
+    setWonderToDelete(wonder);
+    setShowDeleteConfirm(true);
+    setShowWonderMenu(null);
+  };
+
+  // 문의 삭제 실행
+  const handleDelete = async () => {
+    if (!wonderToDelete) return;
+
+    setIsDeleting(true);
+    try {
+      // 1. 첨부된 이미지들 삭제
+      if (wonderToDelete.images && wonderToDelete.images.length > 0) {
+        await Promise.all(
+          wonderToDelete.images.map(async (image) => {
+            try {
+              const storageRef = ref(storage, image.storageId);
+              await deleteObject(storageRef);
+            } catch (error) {
+              console.warn(`이미지 삭제 실패: ${image.fileName}`, error);
+              // 이미지 삭제 실패해도 문의는 삭제 진행
+            }
+          })
+        );
+      }
+
+      // 2. Firestore에서 문의 삭제
+      await deleteDoc(doc(db, "wonders", wonderToDelete.id));
+
+      setShowDeleteConfirm(false);
+      setWonderToDelete(null);
+      alert("문의가 삭제되었습니다.");
+
+    } catch (error) {
+      console.error("문의 삭제 오류:", error);
+      alert("문의 삭제 중 오류가 발생했습니다.");
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -379,6 +432,34 @@ export default function AdminWondersPage() {
                           </div>
                         )}
                       </div>
+
+                      {/* 메뉴 버튼 */}
+                      <div className="relative ml-4">
+                        <button
+                          onClick={() => setShowWonderMenu(showWonderMenu === wonder.id ? null : wonder.id)}
+                          className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+                        >
+                          <MoreVertical className="h-4 w-4 text-gray-500" />
+                        </button>
+                        
+                        {showWonderMenu === wonder.id && (
+                          <>
+                            <div 
+                              className="fixed inset-0 z-10" 
+                              onClick={() => setShowWonderMenu(null)}
+                            />
+                            <div className="absolute right-0 mt-2 w-40 bg-white rounded-md shadow-lg border border-gray-200 z-20">
+                              <button
+                                onClick={() => handleDeleteClick(wonder)}
+                                className="flex items-center gap-2 w-full px-3 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
+                              >
+                                <Trash2 className="h-3 w-3" />
+                                삭제
+                              </button>
+                            </div>
+                          </>
+                        )}
+                      </div>
                     </div>
 
                     <div className="flex items-center justify-between">
@@ -510,6 +591,69 @@ export default function AdminWondersPage() {
                   </button>
                 </div>
               </form>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 삭제 확인 모달 */}
+      {showDeleteConfirm && wonderToDelete && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[60] p-4">
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-md">
+            <div className="p-6">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="flex-shrink-0">
+                  <AlertTriangle className="h-8 w-8 text-red-600" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-medium text-gray-900">문의 삭제</h3>
+                  <p className="text-sm text-gray-500">이 작업은 되돌릴 수 없습니다.</p>
+                </div>
+              </div>
+              
+              <div className="bg-gray-50 p-4 rounded-lg mb-6">
+                <h4 className="font-medium text-gray-900 mb-2">삭제할 문의:</h4>
+                <p className="text-sm text-gray-600">📋 {wonderToDelete.title}</p>
+                <p className="text-sm text-gray-500">작성자: {wonderToDelete.authorName}</p>
+                {wonderToDelete.images && wonderToDelete.images.length > 0 && (
+                  <p className="text-sm text-gray-500">첨부 이미지: {wonderToDelete.images.length}개</p>
+                )}
+              </div>
+
+              <p className="text-gray-700 mb-6">
+                정말로 이 문의를 삭제하시겠습니까?<br />
+                삭제된 문의와 첨부 이미지는 복구할 수 없습니다.
+              </p>
+
+              <div className="flex gap-3">
+                <button
+                  onClick={() => {
+                    setShowDeleteConfirm(false);
+                    setWonderToDelete(null);
+                  }}
+                  className="flex-1 py-3 px-4 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 transition-colors"
+                  disabled={isDeleting}
+                >
+                  취소
+                </button>
+                <button
+                  onClick={handleDelete}
+                  disabled={isDeleting}
+                  className="flex-1 py-3 px-4 bg-red-600 hover:bg-red-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-semibold rounded-md transition-colors flex items-center justify-center gap-2"
+                >
+                  {isDeleting ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent" />
+                      삭제 중...
+                    </>
+                  ) : (
+                    <>
+                      <Trash2 className="h-4 w-4" />
+                      삭제하기
+                    </>
+                  )}
+                </button>
+              </div>
             </div>
           </div>
         </div>
