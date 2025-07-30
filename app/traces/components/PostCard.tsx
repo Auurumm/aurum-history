@@ -345,7 +345,7 @@ export default function PostCard({ post, onPostDeleted, onPostUpdated }: PostCar
         <img
           src={post.imageUrl}
           alt="게시글 이미지"
-          className={`w-full h-full object-cover rounded-lg ${imageLoading ? 'opacity-0' : 'opacity-100'} transition-opacity`}
+          className={`w-full h-full object-cover object-center rounded-lg ${imageLoading ? 'opacity-0' : 'opacity-100'} transition-opacity`}
           onLoad={handleImageLoad}
           onError={handleImageError}
         />
