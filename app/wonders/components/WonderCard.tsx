@@ -1,7 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { MessageSquare, Building, Clock, CheckCircle, X, Maximize2, User, ChevronLeft, ChevronRight } from "lucide-react";
+import { db } from "@/lib/firebase";
+import { collection, query, where, getDocs } from "firebase/firestore";
+import { MessageSquare, Building, Clock, CheckCircle, X, Maximize2, User, ChevronLeft, ChevronRight, Lock, Eye, EyeOff, AlertCircle } from "lucide-react";
 
 interface WonderImage {
   url: string;
@@ -16,12 +18,14 @@ interface WonderCardProps {
     content: string;
     category: string;
     authorName: string;
+    authorEmail: string;
     company?: string;
     status: "pending" | "answered" | "closed";
     date: string;
     adminReply?: string;
     adminReplyAt?: string | null;
-    images?: WonderImage[]; // 이미지 배열 추가
+    images?: WonderImage[];
+    isPublic: boolean;
   };
 }
 
@@ -29,6 +33,58 @@ export default function WonderCard({ wonder }: WonderCardProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isImageModalOpen, setIsImageModalOpen] = useState(false);
+  
+  // 비공개 문의 확인 관련 상태
+  const [isPrivateUnlocked, setIsPrivateUnlocked] = useState(false);
+  const [passwordInput, setPasswordInput] = useState("");
+  const [showPasswordInput, setShowPasswordInput] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [passwordError, setPasswordError] = useState("");
+  const [isChecking, setIsChecking] = useState(false);
+
+  // 비공개 문의인지 확인
+  const isPrivate = !wonder.isPublic;
+  const canViewContent = !isPrivate || isPrivateUnlocked;
+
+  // 비공개 문의 비밀번호 확인
+  const handlePasswordCheck = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!passwordInput.trim()) {
+      setPasswordError("비밀번호를 입력해주세요.");
+      return;
+    }
+
+    setIsChecking(true);
+    setPasswordError("");
+
+    try {
+      const q = query(
+        collection(db, "wonders"),
+        where("authorEmail", "==", wonder.authorEmail),
+        where("password", "==", passwordInput.trim()),
+        where("isPublic", "==", false)
+      );
+
+      const snapshot = await getDocs(q);
+      
+      if (snapshot.empty) {
+        setPasswordError("비밀번호가 올바르지 않습니다.");
+        return;
+      }
+
+      // 비밀번호가 맞으면 잠금 해제
+      setIsPrivateUnlocked(true);
+      setShowPasswordInput(false);
+      setPasswordInput("");
+      setPasswordError("");
+
+    } catch (error) {
+      console.error("비공개 문의 확인 오류:", error);
+      setPasswordError("확인 중 오류가 발생했습니다.");
+    } finally {
+      setIsChecking(false);
+    }
+  };
 
   // 상태별 스타일 및 텍스트
   const getStatusInfo = (status: string) => {
@@ -60,6 +116,13 @@ export default function WonderCard({ wonder }: WonderCardProps) {
   const handleCardClick = (e: React.MouseEvent) => {
     // 버튼 클릭은 모달 열지 않음
     if ((e.target as HTMLElement).closest('button')) return;
+    
+    // 비공개 문의이고 잠금 해제되지 않았으면 비밀번호 입력 표시
+    if (isPrivate && !isPrivateUnlocked) {
+      setShowPasswordInput(true);
+      return;
+    }
+    
     setIsExpanded(true);
   };
 
@@ -240,6 +303,12 @@ export default function WonderCard({ wonder }: WonderCardProps) {
             <span className="text-xs bg-blue-100 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400 px-2 py-1 rounded-full border border-blue-200 dark:border-blue-800">
               {wonder.category}
             </span>
+            {isPrivate && (
+              <span className="text-xs bg-purple-100 dark:bg-purple-900/20 text-purple-700 dark:text-purple-400 px-2 py-1 rounded-full border border-purple-200 dark:border-purple-800 flex items-center gap-1">
+                <Lock className="h-3 w-3" />
+                비공개
+              </span>
+            )}
             {wonder.images && wonder.images.length > 0 && (
               <span className="text-xs bg-purple-100 dark:bg-purple-900/20 text-purple-700 dark:text-purple-400 px-2 py-1 rounded-full border border-purple-200 dark:border-purple-800">
                 📷 {wonder.images.length}개
@@ -252,24 +321,36 @@ export default function WonderCard({ wonder }: WonderCardProps) {
       </div>
 
       {/* 이미지 갤러리 (컴팩트 모드) */}
-      {wonder.images && <ImageGallery images={wonder.images} compact />}
+      {canViewContent && wonder.images && <ImageGallery images={wonder.images} compact />}
 
       {/* 문의 내용 미리보기 */}
       <div className="text-gray-700 dark:text-gray-300 mb-4 leading-relaxed">
-        <div 
-          className="overflow-hidden"
-          style={{
-            display: '-webkit-box',
-            WebkitLineClamp: 2,
-            WebkitBoxOrient: 'vertical',
-          }}
-        >
-          {wonder.content}
-        </div>
+        {canViewContent ? (
+          <div 
+            className="overflow-hidden"
+            style={{
+              display: '-webkit-box',
+              WebkitLineClamp: 2,
+              WebkitBoxOrient: 'vertical',
+            }}
+          >
+            {wonder.content}
+          </div>
+        ) : (
+          <div className="bg-gray-100 dark:bg-gray-800 p-4 rounded-lg text-center">
+            <Lock className="h-8 w-8 text-gray-400 mx-auto mb-2" />
+            <p className="text-gray-500 dark:text-gray-400 text-sm">
+              비공개 문의입니다
+            </p>
+            <p className="text-gray-400 dark:text-gray-500 text-xs mt-1">
+              작성자만 내용을 확인할 수 있습니다
+            </p>
+          </div>
+        )}
       </div>
 
       {/* 답변 상태 */}
-      {wonder.adminReply && (
+      {canViewContent && wonder.adminReply && (
         <div className="bg-green-50 dark:bg-green-900/10 border border-green-200 dark:border-green-800 rounded-lg p-3">
           <div className="flex items-center gap-2 mb-2">
             <CheckCircle className="h-4 w-4 text-green-600 dark:text-green-400" />
@@ -334,6 +415,12 @@ export default function WonderCard({ wonder }: WonderCardProps) {
                 <span className="bg-blue-100 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400 px-2 py-1 rounded-full">
                   {wonder.category}
                 </span>
+                {isPrivate && (
+                  <span className="bg-purple-100 dark:bg-purple-900/20 text-purple-700 dark:text-purple-400 px-2 py-1 rounded-full flex items-center gap-1">
+                    <Lock className="h-3 w-3" />
+                    비공개
+                  </span>
+                )}
               </div>
             </div>
           </div>
@@ -348,39 +435,75 @@ export default function WonderCard({ wonder }: WonderCardProps) {
             <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-3 flex items-center gap-2">
               <MessageSquare className="h-5 w-5" />
               문의 내용
+              {isPrivate && (
+                <span className="text-sm bg-purple-100 dark:bg-purple-900/20 text-purple-700 dark:text-purple-400 px-2 py-1 rounded-full flex items-center gap-1">
+                  <Lock className="h-3 w-3" />
+                  비공개
+                </span>
+              )}
             </h2>
-            <div className="text-gray-700 dark:text-gray-300 whitespace-pre-wrap leading-relaxed mb-4">
-              {wonder.content}
-            </div>
             
-            {/* 이미지 갤러리 (전체 모드) */}
-            {wonder.images && <ImageGallery images={wonder.images} />}
+            {canViewContent ? (
+              <>
+                <div className="text-gray-700 dark:text-gray-300 whitespace-pre-wrap leading-relaxed mb-4">
+                  {wonder.content}
+                </div>
+                
+                {/* 이미지 갤러리 (전체 모드) */}
+                {wonder.images && <ImageGallery images={wonder.images} />}
+              </>
+            ) : (
+              <div className="bg-gray-100 dark:bg-gray-700 p-8 rounded-lg text-center">
+                <Lock className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                <p className="text-gray-500 dark:text-gray-400 mb-2">
+                  비공개 문의입니다
+                </p>
+                <p className="text-gray-400 dark:text-gray-500 text-sm mb-4">
+                  작성자만 내용을 확인할 수 있습니다
+                </p>
+                <button
+                  onClick={() => setShowPasswordInput(true)}
+                  className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-md text-sm transition-colors"
+                >
+                  비밀번호로 확인하기
+                </button>
+              </div>
+            )}
           </div>
 
           {/* 관리자 답변 */}
-          {wonder.adminReply ? (
-            <div className="bg-green-50 dark:bg-green-900/10 border border-green-200 dark:border-green-800 rounded-lg p-6">
-              <h2 className="text-lg font-semibold text-green-700 dark:text-green-400 mb-3 flex items-center gap-2">
-                <CheckCircle className="h-5 w-5" />
-                관리자 답변
-                {wonder.adminReplyAt && (
-                  <span className="text-sm font-normal text-green-600 dark:text-green-500">
-                    ({wonder.adminReplyAt})
-                  </span>
-                )}
-              </h2>
-              <div className="text-green-800 dark:text-green-300 whitespace-pre-wrap leading-relaxed">
-                {wonder.adminReply}
+          {canViewContent ? (
+            wonder.adminReply ? (
+              <div className="bg-green-50 dark:bg-green-900/10 border border-green-200 dark:border-green-800 rounded-lg p-6">
+                <h2 className="text-lg font-semibold text-green-700 dark:text-green-400 mb-3 flex items-center gap-2">
+                  <CheckCircle className="h-5 w-5" />
+                  관리자 답변
+                  {wonder.adminReplyAt && (
+                    <span className="text-sm font-normal text-green-600 dark:text-green-500">
+                      ({wonder.adminReplyAt})
+                    </span>
+                  )}
+                </h2>
+                <div className="text-green-800 dark:text-green-300 whitespace-pre-wrap leading-relaxed">
+                  {wonder.adminReply}
+                </div>
               </div>
-            </div>
+            ) : (
+              <div className="bg-orange-50 dark:bg-orange-900/10 border border-orange-200 dark:border-orange-800 rounded-lg p-6 text-center">
+                <Clock className="h-8 w-8 text-orange-500 mx-auto mb-2" />
+                <p className="text-orange-700 dark:text-orange-400 font-medium">
+                  답변을 준비 중입니다
+                </p>
+                <p className="text-sm text-orange-600 dark:text-orange-500 mt-1">
+                  빠른 시일 내에 답변드리겠습니다
+                </p>
+              </div>
+            )
           ) : (
-            <div className="bg-orange-50 dark:bg-orange-900/10 border border-orange-200 dark:border-orange-800 rounded-lg p-6 text-center">
-              <Clock className="h-8 w-8 text-orange-500 mx-auto mb-2" />
-              <p className="text-orange-700 dark:text-orange-400 font-medium">
-                답변을 준비 중입니다
-              </p>
-              <p className="text-sm text-orange-600 dark:text-orange-500 mt-1">
-                빠른 시일 내에 답변드리겠습니다
+            <div className="bg-gray-100 dark:bg-gray-800 p-6 rounded-lg text-center">
+              <Lock className="h-8 w-8 text-gray-400 mx-auto mb-2" />
+              <p className="text-gray-500 dark:text-gray-400">
+                답변을 확인하려면 비밀번호가 필요합니다
               </p>
             </div>
           )}
@@ -394,6 +517,113 @@ export default function WonderCard({ wonder }: WonderCardProps) {
       <CompactCard />
       {isExpanded && <ExpandedModal />}
       <ImageModal />
+      
+      {/* 비공개 문의 비밀번호 입력 모달 */}
+      {showPasswordInput && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[60] p-4">
+          <div className="bg-white dark:bg-gray-900 rounded-xl shadow-xl w-full max-w-md">
+            <div className="p-6 border-b border-gray-200 dark:border-gray-700">
+              <div className="flex items-center justify-between">
+                <h2 className="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                  <Lock className="h-5 w-5" />
+                  비공개 문의 확인
+                </h2>
+                <button
+                  onClick={() => {
+                    setShowPasswordInput(false);
+                    setPasswordInput("");
+                    setPasswordError("");
+                  }}
+                  className="p-2 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-full transition-colors"
+                >
+                  <X className="h-5 w-5 text-gray-500 dark:text-gray-400" />
+                </button>
+              </div>
+            </div>
+
+            <div className="p-6">
+              <form onSubmit={handlePasswordCheck} className="space-y-4">
+                {passwordError && (
+                  <div className="flex items-center gap-2 text-red-600 text-sm bg-red-50 dark:bg-red-900/20 p-3 rounded-md">
+                    <AlertCircle className="h-4 w-4 flex-shrink-0" />
+                    {passwordError}
+                  </div>
+                )}
+
+                <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg">
+                  <h3 className="font-medium text-blue-700 dark:text-blue-300 mb-2">
+                    📋 {wonder.title}
+                  </h3>
+                  <p className="text-sm text-blue-600 dark:text-blue-400">
+                    작성자: {wonder.authorName} | {wonder.date}
+                  </p>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    문의 등록 시 설정한 비밀번호를 입력하세요
+                  </label>
+                  <div className="relative">
+                    <input
+                      type={showPassword ? "text" : "password"}
+                      value={passwordInput}
+                      onChange={(e) => setPasswordInput(e.target.value)}
+                      className="w-full p-3 pr-12 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-purple-400 focus:border-transparent"
+                      placeholder="비밀번호 입력"
+                      required
+                      disabled={isChecking}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3 top-1/2 transform -translate-y-1/2 p-1 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                      disabled={isChecking}
+                    >
+                      {showPassword ? (
+                        <EyeOff className="h-4 w-4" />
+                      ) : (
+                        <Eye className="h-4 w-4" />
+                      )}
+                    </button>
+                  </div>
+                </div>
+
+                <div className="flex gap-3 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowPasswordInput(false);
+                      setPasswordInput("");
+                      setPasswordError("");
+                    }}
+                    className="flex-1 py-3 px-4 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-md hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                    disabled={isChecking}
+                  >
+                    취소
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={isChecking || !passwordInput.trim()}
+                    className="flex-1 py-3 px-4 bg-purple-600 hover:bg-purple-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-semibold rounded-md transition-colors flex items-center justify-center gap-2"
+                  >
+                    {isChecking ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent" />
+                        확인 중...
+                      </>
+                    ) : (
+                      <>
+                        <Eye className="h-4 w-4" />
+                        확인
+                      </>
+                    )}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }

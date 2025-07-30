@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { db } from "@/lib/firebase";
-import { collection, query, onSnapshot, where } from "firebase/firestore";
+import { collection, query, onSnapshot } from "firebase/firestore";
 import { MessageSquare, Plus } from "lucide-react";
 import Header from "../components/header";
 import WondersHeroSection from "./components/WondersHeroSection";
@@ -45,10 +45,8 @@ export default function WondersPage() {
       return;
     }
 
-    const q = query(
-      collection(db, "wonders"),
-      where("isPublic", "==", true)
-    );
+    // 모든 문의 가져오기 (공개/비공개 모두)
+    const q = query(collection(db, "wonders"));
 
     const unsubscribe = onSnapshot(
       q,
@@ -187,6 +185,7 @@ export default function WondersPage() {
                     content: wonder.content,
                     category: wonder.category,
                     authorName: wonder.authorName,
+                    authorEmail: wonder.authorEmail,
                     company: wonder.company,
                     status: wonder.status,
                     date: wonder.createdAt?.toDate
@@ -197,6 +196,7 @@ export default function WondersPage() {
                       ? wonder.adminReplyAt.toDate().toLocaleDateString("ko-KR")
                       : null,
                     images: wonder.images,
+                    isPublic: wonder.isPublic,
                   }}
                 />
               ))
@@ -217,7 +217,7 @@ export default function WondersPage() {
             )}
           </div>
 
-          {/* 👉 모바일 전용 플로팅 버튼 */}
+          {/* 모바일 전용 플로팅 버튼 */}
           <button
             onClick={() => setIsNewWonderOpen(true)}
             className="fixed bottom-6 right-6 bg-yellow-400 hover:bg-yellow-500 text-black p-4 rounded-full shadow-lg transition-colors md:hidden z-40"
