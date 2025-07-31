@@ -14,26 +14,20 @@ export default function EditPage() {
   const [formData, setFormData] = useState<Partial<Announcement>>({})
   const [saving, setSaving] = useState(false)
   const [uploading, setUploading] = useState(false)
+  const [editorInitialized, setEditorInitialized] = useState(false)
   const editorRef = useRef<HTMLDivElement>(null)
 
-  // 텍스트의 줄바꿈을 HTML로 변환하는 함수
-  const convertTextToHtml = (text: string) => {
-    if (!text) return ""
+  // 기존 HTML은 그대로, 플레인 텍스트만 줄바꿈 변환
+  const processContentForEditor = (content: string) => {
+    if (!content) return ""
     
-    // 이미 HTML 태그가 포함되어 있는지 확인
-    const hasHtmlTags = /<[^>]*>/.test(text)
-    
-    if (hasHtmlTags) {
-      // 이미 HTML 형식이면 그대로 반환
-      return text
-    } else {
-      // 플레인 텍스트면 줄바꿈을 <br>로 변환하고 HTML 이스케이프 처리
-      return text
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/\n/g, '<br>')
+    // HTML 태그가 하나라도 있으면 그대로 반환
+    if (content.includes('<') && content.includes('>')) {
+      return content
     }
+    
+    // 순수 텍스트면 줄바꿈만 <br>로 변환
+    return content.replace(/\n/g, '<br>')
   }
 
   useEffect(() => {
@@ -44,25 +38,14 @@ export default function EditPage() {
         // 에디터에 직접 내용 설정 (약간의 지연 후)
         setTimeout(() => {
           if (editorRef.current && post.content !== undefined) {
-            const htmlContent = convertTextToHtml(post.content || "")
-            editorRef.current.innerHTML = htmlContent
+            const processedContent = processContentForEditor(post.content || "")
+            editorRef.current.innerHTML = processedContent
             setEditorInitialized(true)
           }
         }, 100)
       }
     })
   }, [params?.id])
-
-  // 에디터 초기화 상태 관리
-  const [editorInitialized, setEditorInitialized] = useState(false)
-
-  // 에디터에 기존 내용 설정 - 이제 위의 useEffect에서 처리하므로 제거
-  // useEffect(() => {
-  //   if (editorRef.current && formData.content !== undefined && !editorInitialized) {
-  //     editorRef.current.innerHTML = formData.content || ""
-  //     setEditorInitialized(true)
-  //   }
-  // }, [formData.content, editorInitialized])
 
   // 텍스트 포맷팅 함수들
   const formatText = (command: string, value?: string) => {
