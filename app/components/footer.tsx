@@ -26,10 +26,15 @@ export default function Footer() {
         <div className="max-w-md mx-auto space-y-3 text-left">
           <div className="text-base space-y-2 text-gray-500 dark:text-gray-400">
             <p>Aurum Inc</p>
-            <p>사업자 등록번호 : 538-86-01639 | CEO : 박동근 | 주소 : 서울시 송파구 위례성대로12길 36, 금원빌딩 4층 전체 </p>
+            <p>
+              사업자 등록번호 : 538-86-01639<br />
+              대표자 : 박동근<br />
+              주소 : 서울시 송파구 위례성대로12길 36, <br /> 금원빌딩 4층 전체
+            </p>
           </div>
         </div>
       </footer>
+
 
       {/* ✅ 데스크탑/태블릿 전용 푸터 */}
       <footer className="hidden sm:block bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white transition-colors duration-300 border-t border-gray-200 dark:border-gray-700">
@@ -68,7 +73,7 @@ export default function Footer() {
               Aurum Inc
             </h3>
             <p className="text-base text-gray-600 dark:text-gray-400">
-              사업자 등록번호 : 538-86-01639 | CEO : 박동근 | 주소 : 서울시 송파구 위례성대로12길 36, 금원빌딩 4층 전체  
+              사업자 등록번호 : 538-86-01639 | 대표자 : 박동근 | 주소 : 서울시 송파구 위례성대로12길 36, 금원빌딩 4층 전체  
             </p>
           </div>
         </div>
