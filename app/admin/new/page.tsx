@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useRef } from "react"
 import { useRouter } from "next/navigation"
 import { createAnnouncement } from "../../../lib/announcements"
 import { useAuth } from "../../../lib/auth"
@@ -21,6 +21,22 @@ export default function NewPostPage() {
     content: "",
     published: true,
   })
+
+  const editorRef = useRef<HTMLDivElement>(null)
+  
+  // 텍스트 포맷팅 함수들
+  const formatText = (command: string, value?: string) => {
+    document.execCommand(command, false, value)
+    editorRef.current?.focus()
+  }
+
+  const insertHTML = (html: string) => {
+    document.execCommand('insertHTML', false, html)
+    editorRef.current?.focus()
+  }
+
+  const colors = ['#000000', '#FF0000', '#00FF00', '#0000FF', '#FFFF00', '#FF00FF', '#00FFFF', '#FFA500', '#800080', '#FFC0CB']
+  const highlightColors = ['transparent', '#FFFF00', '#00FF00', '#FF0000', '#0000FF', '#FFA500', '#FF00FF', '#00FFFF']
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -71,18 +87,19 @@ export default function NewPostPage() {
   }
 
   return (
-    <div className="max-w-2xl mx-auto px-4 py-10">
+    <div className="max-w-4xl mx-auto px-4 py-10">
       <h1 className="text-2xl font-bold mb-6">새 공지 작성</h1>
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={handleSubmit} className="space-y-6">
         <input
-          className="w-full border px-4 py-2"
+          className="w-full border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-yellow-500"
           placeholder="제목"
           value={formData.title}
           onChange={(e) => setFormData({ ...formData, title: e.target.value })}
           required
         />
+        
         <select
-          className="w-full border px-4 py-2"
+          className="w-full border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-yellow-500"
           value={formData.category}
           onChange={(e) =>
             setFormData({ ...formData, category: e.target.value as Announcement["category"] })
@@ -96,62 +113,321 @@ export default function NewPostPage() {
           <option value="Others">Others</option>
         </select>
 
-        {/* ✅ 드래그 & 클릭 이미지 업로드 */}
-        <div
-          onDrop={(e) => {
-            e.preventDefault()
-            const file = e.dataTransfer.files[0]
-            if (file) handleImageUpload(file)
-          }}
-          onDragOver={(e) => e.preventDefault()}
-          className="w-full h-40 border-2 border-dashed border-gray-400 rounded flex items-center justify-center text-gray-500 relative"
-        >
-          {formData.image ? (
-            <img src={formData.image} alt="미리보기" className="h-full object-contain rounded" />
-          ) : uploading ? (
-            <p>업로드 중...</p>
-          ) : (
-            <p>이미지를 드래그하거나 클릭하여 업로드</p>
-          )}
-          <input
-            type="file"
-            accept="image/*"
-            className="absolute w-full h-full opacity-0 cursor-pointer"
-            onChange={(e) => {
-              const file = e.target.files?.[0]
+        {/* 썸네일 이미지 업로드 */}
+        <div className="space-y-2">
+          <label className="block text-sm font-medium text-gray-700">썸네일 이미지</label>
+          <div
+            onDrop={(e) => {
+              e.preventDefault()
+              const file = e.dataTransfer.files[0]
               if (file) handleImageUpload(file)
             }}
-          />
+            onDragOver={(e) => e.preventDefault()}
+            className="w-full h-40 border-2 border-dashed border-gray-400 rounded-md flex items-center justify-center text-gray-500 relative hover:border-yellow-500 transition-colors"
+          >
+            {formData.image ? (
+              <img src={formData.image} alt="미리보기" className="h-full object-contain rounded-md" />
+            ) : uploading ? (
+              <p>업로드 중...</p>
+            ) : (
+              <p>이미지를 드래그하거나 클릭하여 업로드</p>
+            )}
+            <input
+              type="file"
+              accept="image/*"
+              className="absolute w-full h-full opacity-0 cursor-pointer"
+              onChange={(e) => {
+                const file = e.target.files?.[0]
+                if (file) handleImageUpload(file)
+              }}
+            />
+          </div>
         </div>
 
         <input
-          className="w-full border px-4 py-2"
+          className="w-full border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-yellow-500"
           placeholder="요약 (excerpt)"
           value={formData.excerpt}
           onChange={(e) => setFormData({ ...formData, excerpt: e.target.value })}
         />
-        <textarea
-          className="w-full border px-4 py-2 h-40"
-          placeholder="본문"
-          value={formData.content}
-          onChange={(e) => setFormData({ ...formData, content: e.target.value })}
-        />
+
+        {/* 커스텀 리치 텍스트 에디터 */}
+        <div className="space-y-2">
+          <label className="block text-sm font-medium text-gray-700">본문</label>
+          
+          {/* 툴바 */}
+          <div className="border border-gray-300 rounded-t-md bg-gray-50 p-2 flex flex-wrap gap-1">
+            {/* 텍스트 스타일 */}
+            <button
+              type="button"
+              onClick={() => formatText('bold')}
+              className="px-3 py-1 border rounded hover:bg-gray-200 font-bold"
+              title="굵게"
+            >
+              B
+            </button>
+            <button
+              type="button"
+              onClick={() => formatText('italic')}
+              className="px-3 py-1 border rounded hover:bg-gray-200 italic"
+              title="기울임"
+            >
+              I
+            </button>
+            <button
+              type="button"
+              onClick={() => formatText('underline')}
+              className="px-3 py-1 border rounded hover:bg-gray-200 underline"
+              title="밑줄"
+            >
+              U
+            </button>
+            <button
+              type="button"
+              onClick={() => formatText('strikeThrough')}
+              className="px-3 py-1 border rounded hover:bg-gray-200 line-through"
+              title="취소선"
+            >
+              S
+            </button>
+
+            <div className="w-px h-6 bg-gray-300 mx-1"></div>
+
+            {/* 제목 스타일 */}
+            <select
+              onChange={(e) => formatText('formatBlock', e.target.value)}
+              className="px-2 py-1 border rounded text-sm"
+              defaultValue=""
+            >
+              <option value="">일반</option>
+              <option value="h1">제목 1</option>
+              <option value="h2">제목 2</option>
+              <option value="h3">제목 3</option>
+              <option value="h4">제목 4</option>
+              <option value="h5">제목 5</option>
+              <option value="h6">제목 6</option>
+            </select>
+
+            {/* 폰트 크기 */}
+            <select
+              onChange={(e) => formatText('fontSize', e.target.value)}
+              className="px-2 py-1 border rounded text-sm"
+              defaultValue="3"
+            >
+              <option value="1">매우 작게</option>
+              <option value="2">작게</option>
+              <option value="3">보통</option>
+              <option value="4">크게</option>
+              <option value="5">매우 크게</option>
+              <option value="6">가장 크게</option>
+              <option value="7">초대형</option>
+            </select>
+
+            <div className="w-px h-6 bg-gray-300 mx-1"></div>
+
+            {/* 텍스트 색상 */}
+            <div className="flex items-center gap-1">
+              <span className="text-sm">색상:</span>
+              {colors.map((color) => (
+                <button
+                  key={color}
+                  type="button"
+                  onClick={() => formatText('foreColor', color)}
+                  className="w-6 h-6 border border-gray-300 rounded"
+                  style={{ backgroundColor: color }}
+                  title={`텍스트 색상: ${color}`}
+                />
+              ))}
+            </div>
+
+            <div className="w-px h-6 bg-gray-300 mx-1"></div>
+
+            {/* 형광펜/배경색 */}
+            <div className="flex items-center gap-1">
+              <span className="text-sm">형광펜:</span>
+              {highlightColors.map((color) => (
+                <button
+                  key={color}
+                  type="button"
+                  onClick={() => formatText('backColor', color)}
+                  className="w-6 h-6 border border-gray-300 rounded"
+                  style={{ backgroundColor: color === 'transparent' ? 'white' : color }}
+                  title={`배경 색상: ${color}`}
+                >
+                  {color === 'transparent' && '×'}
+                </button>
+              ))}
+            </div>
+
+            <div className="w-px h-6 bg-gray-300 mx-1"></div>
+
+            {/* 정렬 */}
+            <button
+              type="button"
+              onClick={() => formatText('justifyLeft')}
+              className="px-3 py-1 border rounded hover:bg-gray-200"
+              title="왼쪽 정렬"
+            >
+              ⬅
+            </button>
+            <button
+              type="button"
+              onClick={() => formatText('justifyCenter')}
+              className="px-3 py-1 border rounded hover:bg-gray-200"
+              title="가운데 정렬"
+            >
+              ⬌
+            </button>
+            <button
+              type="button"
+              onClick={() => formatText('justifyRight')}
+              className="px-3 py-1 border rounded hover:bg-gray-200"
+              title="오른쪽 정렬"
+            >
+              ➡
+            </button>
+
+            <div className="w-px h-6 bg-gray-300 mx-1"></div>
+
+            {/* 목록 */}
+            <button
+              type="button"
+              onClick={() => formatText('insertUnorderedList')}
+              className="px-3 py-1 border rounded hover:bg-gray-200"
+              title="글머리 기호"
+            >
+              • 목록
+            </button>
+            <button
+              type="button"
+              onClick={() => formatText('insertOrderedList')}
+              className="px-3 py-1 border rounded hover:bg-gray-200"
+              title="번호 매기기"
+            >
+              1. 목록
+            </button>
+
+            <div className="w-px h-6 bg-gray-300 mx-1"></div>
+
+            {/* 기타 */}
+            <button
+              type="button"
+              onClick={() => {
+                const url = prompt('링크 URL을 입력하세요:')
+                if (url) formatText('createLink', url)
+              }}
+              className="px-3 py-1 border rounded hover:bg-gray-200"
+              title="링크 추가"
+            >
+              🔗
+            </button>
+            <button
+              type="button"
+              onClick={() => formatText('removeFormat')}
+              className="px-3 py-1 border rounded hover:bg-gray-200 text-red-600"
+              title="서식 지우기"
+            >
+              지우기
+            </button>
+          </div>
+
+          {/* 에디터 영역 */}
+          <div
+            ref={editorRef}
+            contentEditable
+            onInput={(e) => {
+              const content = e.currentTarget.innerHTML
+              setFormData({ ...formData, content })
+            }}
+            className="min-h-[300px] p-4 border border-t-0 border-gray-300 rounded-b-md focus:outline-none focus:ring-2 focus:ring-yellow-500"
+            style={{ 
+              maxHeight: '500px', 
+              overflowY: 'auto',
+              lineHeight: '1.6'
+            }}
+            dangerouslySetInnerHTML={{ __html: formData.content }}
+            suppressContentEditableWarning={true}
+          >
+          </div>
+        </div>
+
         <label className="flex items-center gap-2">
           <input
             type="checkbox"
             checked={formData.published}
             onChange={(e) => setFormData({ ...formData, published: e.target.checked })}
+            className="w-4 h-4 text-yellow-600 bg-gray-100 border-gray-300 rounded focus:ring-yellow-500"
           />
-          발행 여부
+          <span className="text-sm font-medium text-gray-700">발행 여부</span>
         </label>
+
         <button
           type="submit"
           disabled={saving}
-          className="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded"
+          className="bg-yellow-500 hover:bg-yellow-600 disabled:bg-yellow-300 text-white px-6 py-3 rounded-md font-medium transition-colors"
         >
           {saving ? "저장 중..." : "저장하기"}
         </button>
       </form>
+
+      {/* 커스텀 에디터 스타일 */}
+      <style jsx global>{`
+        [contenteditable] {
+          outline: none;
+        }
+        
+        [contenteditable] h1 {
+          font-size: 2em;
+          font-weight: bold;
+          margin: 0.67em 0;
+        }
+        
+        [contenteditable] h2 {
+          font-size: 1.5em;
+          font-weight: bold;
+          margin: 0.75em 0;
+        }
+        
+        [contenteditable] h3 {
+          font-size: 1.17em;
+          font-weight: bold;
+          margin: 0.83em 0;
+        }
+        
+        [contenteditable] h4 {
+          font-size: 1em;
+          font-weight: bold;
+          margin: 1.12em 0;
+        }
+        
+        [contenteditable] h5 {
+          font-size: 0.83em;
+          font-weight: bold;
+          margin: 1.5em 0;
+        }
+        
+        [contenteditable] h6 {
+          font-size: 0.75em;
+          font-weight: bold;
+          margin: 1.67em 0;
+        }
+        
+        [contenteditable] ul {
+          list-style-type: disc;
+          margin: 1em 0;
+          padding-left: 40px;
+        }
+        
+        [contenteditable] ol {
+          list-style-type: decimal;
+          margin: 1em 0;
+          padding-left: 40px;
+        }
+        
+        [contenteditable] li {
+          margin: 0.5em 0;
+        }
+      `}</style>
     </div>
   )
 }
