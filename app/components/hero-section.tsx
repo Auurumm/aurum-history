@@ -36,22 +36,18 @@ export default function HeroSection() {
 
       {/* Content */}
       <div className="relative z-20 text-center px-4 sm:px-6 lg:px-8 max-w-5xl mx-auto pb-24">
-        <h2 className="text-7xl sm:text-8xl lg:text-9xl xl:text-[10rem] text-[#D4AF37] leading-tight mb-12"
+        <h2 className="font-blackHanSans text-7xl sm:text-8xl lg:text-9xl xl:text-[10rem] text-[#D4AF37] leading-tight mb-12"
           style={{
-            fontFamily: '"Black Han Sans", sans-serif',
-            letterSpacing: '0.02em'
+            letterSpacing: '0.02em',
+            fontWeight: 'normal' // Black Han Sans는 이미 굵은 폰트라서
           }}>
-        흐르는 <br /> 강물처럼<span className="opacity-60 font-serif"></span>
-      </h2>
-
+          흐르는 <br /> 강물처럼
+        </h2>
 
         <p className="text-white text-base leading-relaxed break-keep max-w-xs sm:max-w-md mx-auto text-balance">
           모두의 삶에 도움이 되는 기능들, <br />
-          언제나 항상 있어야 하는 <br />그러한 서비스를 만듭니다
+          언제나 항상 있어야 하는 <br /> 그러한 서비스를 만듭니다
         </p>
-
-
-
       </div>
 
 
