@@ -8,17 +8,37 @@ export default function CustomCursor() {
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   const [trackerPosition, setTrackerPosition] = useState({ x: 0, y: 0 });
   const [isHovering, setIsHovering] = useState(false);
-  const [hasHover, setHasHover] = useState(true); // ← 디바이스에서 hover 지원 여부 판단
+  const [shouldShowCursor, setShouldShowCursor] = useState(false);
 
   useEffect(() => {
     setMounted(true);
     if (typeof window !== "undefined") {
-      setHasHover(window.matchMedia("(hover: hover)").matches);
+      // 🎯 더 강력한 데스크톱 감지
+      const hasHoverSupport = window.matchMedia("(hover: hover)").matches;
+      const hasMousePointer = window.matchMedia("(pointer: fine)").matches;
+      const isNotTouchDevice = !window.matchMedia("(pointer: coarse)").matches;
+      const isNotMobileUA = !/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+      
+      // 모든 조건을 만족해야 커서 표시
+      const shouldShow = hasHoverSupport && hasMousePointer && isNotTouchDevice && isNotMobileUA;
+      
+      setShouldShowCursor(shouldShow);
+      
+      // 🔍 디버그 정보 (개발 중에만 사용)
+      console.log('🔍 Cursor Detection:', {
+        hasHoverSupport,
+        hasMousePointer,
+        isNotTouchDevice,
+        isNotMobileUA,
+        shouldShow,
+        userAgent: navigator.userAgent,
+        screenWidth: window.innerWidth
+      });
     }
   }, []);
 
   useEffect(() => {
-    if (!mounted || !hasHover) return;
+    if (!mounted || !shouldShowCursor) return;
 
     const updateMousePosition = (e: MouseEvent) => {
       setMousePosition({ x: e.clientX, y: e.clientY });
@@ -42,11 +62,11 @@ export default function CustomCursor() {
         el.removeEventListener("mouseleave", handleMouseLeave);
       });
     };
-  }, [mounted, hasHover]);
+  }, [mounted, shouldShowCursor]);
 
-  // 부드러운 추적 애니메이션 (requestAnimationFrame 루프)
+  // 부드러운 추적 애니메이션
   useEffect(() => {
-    if (!mounted || !hasHover) return;
+    if (!mounted || !shouldShowCursor) return;
 
     let frameId: number;
     const animate = () => {
@@ -59,10 +79,10 @@ export default function CustomCursor() {
 
     animate();
     return () => cancelAnimationFrame(frameId);
-  }, [mousePosition, mounted, hasHover]);
+  }, [mousePosition, mounted, shouldShowCursor]);
 
-  // 모바일에서는 아예 렌더링 X
-  if (!mounted || !hasHover) return null;
+  // 🎯 강화된 조건: 모바일/터치 디바이스에서는 완전히 숨김
+  if (!mounted || !shouldShowCursor) return null;
 
   return (
     <>
