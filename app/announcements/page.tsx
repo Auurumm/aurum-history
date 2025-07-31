@@ -105,7 +105,7 @@ export default function AnnouncementsPage() {
             // 로딩 스켈레톤
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mt-12">
               {Array.from({ length: 4 }).map((_, i) => (
-                <div key={i} className="bg-gray-100 dark:bg-zinc-900 rounded-lg p-6 animate-pulse">
+                <div key={i} className="bg-gray-100 dark:bg-zinc-900 rounded-lg p-6 animate-pulse h-[480px]">
                   <div className="w-full h-48 bg-gray-300 dark:bg-zinc-700 rounded-lg mb-4"></div>
                   <div className="h-4 bg-gray-300 dark:bg-zinc-700 rounded mb-2 w-20"></div>
                   <div className="h-6 bg-gray-300 dark:bg-zinc-700 rounded mb-3"></div>
@@ -118,11 +118,11 @@ export default function AnnouncementsPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-10 mt-12">
               {visiblePosts.map((post) => (
                 <Link href={`/announcements/${post.id}`} key={post.id} className="block group">
-                  <article className="bg-gray-50 dark:bg-zinc-900 border border-gray-200 dark:border-zinc-700 rounded-xl shadow-sm p-6 hover:shadow-lg transition-all duration-300 group-hover:scale-[1.02] group-hover:border-yellow-400 dark:group-hover:border-yellow-500">
+                  <article className="bg-gray-50 dark:bg-zinc-900 border border-gray-200 dark:border-zinc-700 rounded-xl shadow-sm p-6 hover:shadow-lg transition-all duration-300 group-hover:scale-[1.02] group-hover:border-yellow-400 dark:group-hover:border-yellow-500 h-[480px] flex flex-col">
 
                     {/* 이미지 */}
                     {post.image ? (
-                      <div className="relative overflow-hidden rounded-lg mb-5">
+                      <div className="relative overflow-hidden rounded-lg mb-5 flex-shrink-0">
                         <Image
                           src={post.image}
                           alt={post.title}
@@ -132,7 +132,7 @@ export default function AnnouncementsPage() {
                         />
                       </div>
                     ) : (
-                      <div className="w-full h-48 md:h-52 bg-gradient-to-br from-gray-200 to-gray-300 dark:from-zinc-700 dark:to-zinc-800 rounded-lg mb-5 flex items-center justify-center">
+                      <div className="w-full h-48 md:h-52 bg-gradient-to-br from-gray-200 to-gray-300 dark:from-zinc-700 dark:to-zinc-800 rounded-lg mb-5 flex items-center justify-center flex-shrink-0">
                         <div className="text-center">
                           <div className="w-12 h-12 mx-auto mb-2 bg-gray-300 dark:bg-zinc-600 rounded-full flex items-center justify-center">
                             <svg className="w-6 h-6 text-gray-500 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -144,9 +144,9 @@ export default function AnnouncementsPage() {
                       </div>
                     )}
 
-                    {/* 콘텐츠 */}
-                    <div className="space-y-3">
-                      <div className="flex items-center justify-between">
+                    {/* 콘텐츠 - flex-grow로 남은 공간 채우기 */}
+                    <div className="flex flex-col flex-grow">
+                      <div className="flex items-center justify-between mb-3">
                         <span className="inline-block text-sm font-semibold text-yellow-600 dark:text-yellow-400 bg-yellow-50 dark:bg-yellow-900/20 px-3 py-1 rounded-full">
                           {post.category}
                         </span>
@@ -155,13 +155,16 @@ export default function AnnouncementsPage() {
                         </time>
                       </div>
                       
-                      <h3 className="text-xl md:text-2xl font-bold leading-tight group-hover:text-yellow-600 dark:group-hover:text-yellow-400 transition-colors line-clamp-2">
+                      <h3 className="text-xl md:text-2xl font-bold leading-tight group-hover:text-yellow-600 dark:group-hover:text-yellow-400 transition-colors line-clamp-2 mb-3">
                         {post.title}
                       </h3>
                       
-                      <p className="text-base text-gray-700 dark:text-gray-400 leading-relaxed line-clamp-3">
-                        {post.excerpt}
-                      </p>
+                      {/* flex-grow로 남은 공간을 모두 차지하여 excerpt가 일정한 위치에 배치 */}
+                      <div className="flex-grow flex items-start">
+                        <p className="text-base text-gray-700 dark:text-gray-400 leading-relaxed line-clamp-3">
+                          {post.excerpt}
+                        </p>
+                      </div>
                     </div>
                   </article>
                 </Link>
