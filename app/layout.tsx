@@ -6,6 +6,7 @@ import Footer from "./components/footer"
 import Providers from "./providers"
 import CustomCursor from "./components/custom-cursor"
 import ScrollToTop from "./components/scroll-to-top"
+import { ResponsiveProvider } from "./contexts/responsive-context"
 
 export const metadata: Metadata = {
   title: {
@@ -76,13 +77,15 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         className="font-pretendard bg-white dark:bg-black text-black dark:text-white transition-colors duration-300 min-h-screen flex flex-col antialiased"
       >
         <Providers>
-          <CustomCursor />
-          <ScrollToTop />
-          <Header />
-          <main className="flex-grow flex flex-col">
-            <div className="flex-grow">{children}</div>
-          </main>
-          <Footer />
+          <ResponsiveProvider>
+            <CustomCursor />
+            <ScrollToTop />
+            <Header />
+            <main className="flex-grow flex flex-col">
+              <div className="flex-grow">{children}</div>
+            </main>
+            <Footer />
+          </ResponsiveProvider>
         </Providers>
       </body>
     </html>

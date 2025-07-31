@@ -82,6 +82,22 @@
     line-height: 1.6;
   }
 
+  /* 🎯 기본 HTML 태그들에 의미 단위 줄바꿈 적용 */
+  h1, h2, h3, h4, h5, h6, p {
+    word-break: keep-all;
+    overflow-wrap: break-word;
+  }
+
+  /* 모바일에서 의미 단위 줄바꿈 강화 (양쪽 정렬 제거) */
+  @media (max-width: 767px) {
+    h1, h2, h3, h4, h5, h6, p {
+      word-spacing: 0.1em;  /* 줄임 */
+      line-height: 1.6;     /* 줄임 */
+      /* text-align: justify 제거 */
+      /* text-justify: inter-word 제거 */
+    }
+  }
+
   /* 제목 스타일 */
   h1 {
     @apply text-4xl font-bold;
@@ -139,6 +155,8 @@
     line-height: 1.6;
     letter-spacing: -0.01em;
     font-weight: 400;
+    word-break: keep-all;
+    overflow-wrap: break-word;
   }
 
   /* 버튼 기본 스타일 */
@@ -162,6 +180,72 @@
   /* 강조 텍스트 */
   strong, b {
     font-weight: 600;
+  }
+
+  /* 🎯 반응형 텍스트 자동 스타일 + 의미 단위 줄바꿈 */
+  .responsive-text {
+    word-break: keep-all;
+    overflow-wrap: break-word;
+    line-break: strict;
+  }
+  
+  /* 모바일에서 더 적극적인 의미 단위 줄바꿈 (양쪽 정렬 제거) */
+  @media (max-width: 767px) {
+    .responsive-text {
+      word-spacing: 0.1em;  /* 줄임 */
+      line-height: 1.6;     /* 줄임 */
+      /* text-align: justify 제거 */
+      /* text-justify: inter-word 제거 */
+    }
+  }
+  
+  /* 히어로 텍스트 자동 스타일 */
+  .hero {
+    @apply font-blackHanSans text-6xl sm:text-7xl md:text-8xl lg:text-9xl xl:text-[10rem] text-[#D4AF37] leading-tight tracking-wide responsive-text;
+  }
+  
+  /* 제목 자동 스타일 */
+  .title {
+    @apply text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-bold leading-tight tracking-tight responsive-text;
+  }
+
+  /* 섹션 제목 자동 스타일 */
+  .heading {
+    @apply text-3xl sm:text-4xl lg:text-5xl xl:text-6xl font-semibold leading-tight tracking-tight responsive-text;
+  }
+  
+  /* 본문 자동 스타일 - 의미 단위 줄바꿈 강화 */
+  .body {
+    @apply text-base sm:text-lg lg:text-xl leading-relaxed tracking-tight responsive-text;
+  }
+
+  /* 모바일에서 .body 클래스 특별 처리 (양쪽 정렬 제거) */
+  @media (max-width: 767px) {
+    .body {
+      word-spacing: 0.1em;   /* 많이 줄임 */
+      line-height: 1.7;      /* 적당히 줄임 */
+      /* text-align: justify 제거 */
+      /* hyphens: auto 제거 */
+    }
+  }
+
+  /* 캡션 자동 스타일 */
+  .caption {
+    @apply text-sm sm:text-base lg:text-lg leading-relaxed tracking-tight responsive-text;
+  }
+
+  /* 🎯 특별한 의미 단위 줄바꿈 클래스 (선택적 사용) */
+  .smart-break {
+    word-break: keep-all !important;
+    overflow-wrap: break-word !important;
+    word-spacing: 0.1em;
+  }
+
+  @media (max-width: 767px) {
+    .smart-break {
+      word-spacing: 0.15em !important;
+      line-height: 1.6 !important;
+    }
   }
 }
 
