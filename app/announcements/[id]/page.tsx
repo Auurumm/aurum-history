@@ -5,12 +5,13 @@ import Image from "next/image";
 import Link from "next/link";
 
 interface PageProps {
-  params: { id: string };
+  params: Promise<{ id: string }>; // Promise 타입으로 변경
 }
 
 // ✅ 페이지 컴포넌트
 export default async function AnnouncementDetail({ params }: PageProps) {
-  const post = await getAnnouncementById(params.id);
+  const { id } = await params; // params를 await로 받기
+  const post = await getAnnouncementById(id);
 
   if (!post) return notFound();
 
@@ -50,9 +51,10 @@ export default async function AnnouncementDetail({ params }: PageProps) {
   );
 }
 
-// ✅ generateMetadata 함수도 동일하게 타입 수정
+// ✅ generateMetadata 함수도 동일하게 수정
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
-  const post = await getAnnouncementById(params.id);
+  const { id } = await params; // params를 await로 받기
+  const post = await getAnnouncementById(id);
 
   if (!post) {
     return {
