@@ -18,13 +18,14 @@ export default function MissionSection() {
               className="lg:col-span-2 space-y-10"
             >
               <div className="space-y-6 mb-10">
-                <h2 className="text-7xl font-bold text-gray-900 dark:text-white leading-tight">인문학</h2>
-                <h3 className="text-5xl font-medium text-gray-700 dark:text-gray-300 leading-tight">人文學</h3>
-                <h4 className="text-4xl font-light text-gray-600 dark:text-gray-400 italic leading-tight">Humanities</h4>
+                <h2 className="text-6xl font-bold text-gray-900 dark:text-white leading-tight">인문학</h2>
+                <h3 className="text-4xl font-medium text-gray-700 dark:text-gray-300 leading-tight">人文學</h3>
+                <h4 className="text-3xl font-light text-gray-600 dark:text-gray-400 italic leading-tight">Humanities</h4>
               </div>
-              <p className="text-xl text-gray-600 dark:text-gray-300 leading-loose">
+              <p className="text-lg text-gray-600 dark:text-gray-300 leading-loose">
                 기술과 인간성의 조화를 추구하며, 사람의 본질을 이해하고 더 나은 삶을 위한 가치를 창조합니다.
               </p>
+
             </motion.div>
 
             <motion.div

@@ -15,7 +15,7 @@ export default function MessageHero({ onScrollToNext }: MessageHeroProps) {
       {/* Content */}
       <div className="relative z-10 flex items-center justify-center h-full">
         <h1
-          className="text-white text-4xl sm:text-5xl lg:text-7xl font-bold"
+          className="text-white text-8xl sm:text-9xl lg:text-[12rem] font-bold"
           style={{ textShadow: "2px 4px 10px rgba(0,0,0,0.7)" }}
         >
           으랏차차
