@@ -1,14 +1,11 @@
 // app/layout.tsx
 import "./globals.css"
-import { Inter } from "next/font/google"
 import type { Metadata } from "next"
 import Header from "./components/header"
 import Footer from "./components/footer"
 import Providers from "./providers"
 import CustomCursor from "./components/custom-cursor"
 import ScrollToTop from "./components/scroll-to-top"
-
-const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
   title: {
@@ -66,8 +63,17 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="ko" className="scroll-smooth">
+      <head>
+        {/* Pretendard 폰트 CDN - 가장 최신 버전 */}
+        <link 
+          rel="stylesheet" 
+          as="style"
+          crossOrigin=""
+          href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" 
+        />
+      </head>
       <body
-        className={`${inter.className} bg-white dark:bg-black text-black dark:text-white transition-colors duration-300 min-h-screen flex flex-col`}
+        className="font-pretendard bg-white dark:bg-black text-black dark:text-white transition-colors duration-300 min-h-screen flex flex-col antialiased"
       >
         <Providers>
           <CustomCursor />
