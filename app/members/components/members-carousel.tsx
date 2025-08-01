@@ -88,6 +88,33 @@ const members: Member[] = [
     avatar: "/images/profiles/Hyojin.png",
     color: "from-pink-500 to-pink-600",
   },
+  {
+  id: 9,
+  name: "Jihye",
+  department: "종합지원실",
+  role: "Rookie",
+  motto: "도전은 늘 설레는 일이다.",
+  avatar: "/images/profiles/Jihye.png",
+  color: "from-orange-500 to-orange-600",
+  },
+  {
+  id: 10,
+  name: "Yong",
+  department: "종합지원실",
+  role: "Rookie",
+  motto: "배움에는 끝이 없다.",
+  avatar: "/images/profiles/Yong.png",
+  color: "from-blue-500 to-blue-600",
+  },
+  {
+  id: 11,
+  name: "Sam",
+  department: "종합지원실",
+  role: "Rookie",
+  motto: "작은 걸음이 큰 변화를 만든다.",
+  avatar: "/images/profiles/Sam.png",
+  color: "from-indigo-500 to-indigo-600",
+  },
 ]
 
 export default function MembersCarousel() {
