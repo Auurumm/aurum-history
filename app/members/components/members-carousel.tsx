@@ -103,7 +103,7 @@ const members: Member[] = [
   department: "종합지원실",
   role: "Rookie",
   motto: "배움에는 끝이 없다.",
-  avatar: "/images/profiles/Yong.png",
+  avatar: "/images/profiles/Yong.webp",
   color: "from-blue-500 to-blue-600",
   },
   {
@@ -112,7 +112,7 @@ const members: Member[] = [
   department: "종합지원실",
   role: "Rookie",
   motto: "작은 걸음이 큰 변화를 만든다.",
-  avatar: "/images/profiles/Sam.png",
+  avatar: "/images/profiles/Sam.webp",
   color: "from-indigo-500 to-indigo-600",
   },
 ]
