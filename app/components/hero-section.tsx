@@ -25,7 +25,6 @@ export default function HeroSection() {
         <source src="/images/main.mp4" type="video/mp4" />
       </video>
 
-
       {/* Overlay */}
       <div className="absolute top-0 left-0 w-full h-full bg-black/30 z-10" />
 
@@ -34,12 +33,14 @@ export default function HeroSection() {
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(255,215,0,0.1),transparent_50%)]" />
       </div>
 
-      {/* Content */}
+      {/* Content - 커스텀 폰트 적용 */}
       <div className="relative z-20 text-center px-4 sm:px-6 lg:px-8 max-w-5xl mx-auto pb-24">
-        <h2 className="font-blackHanSans text-7xl sm:text-8xl lg:text-9xl xl:text-[10rem] text-[#D4AF37] leading-tight mb-12"
+        {/* ⭐ hero 클래스 사용하면 자동으로 커스텀 폰트 적용됩니다 */}
+        <h2 className="text-5xl sm:text-6xl lg:text-7xl xl:text-8xl text-[#D4AF37] leading-tight mb-12"
           style={{
+            fontFamily: 'OotmanFont, Black Han Sans, sans-serif', // 커스텀 폰트 적용
             letterSpacing: '0.02em',
-            fontWeight: 'normal' // Black Han Sans는 이미 굵은 폰트라서
+            fontWeight: 'normal'
           }}>
           흐르는 <br /> 강물처럼
         </h2>
@@ -49,8 +50,6 @@ export default function HeroSection() {
           언제나 항상 있어야 하는 그러한 서비스를 만듭니다
         </p>
       </div>
-
-
 
       {/* Scroll Down Button */}
       <button
@@ -73,10 +72,8 @@ export default function HeroSection() {
         </svg>
       </button>
 
-
-      
       {/* ✅ 덮개 박스 */}
-    <div className="absolute bottom-0 left-0 w-full h-[4px] bg-gradient-to-b from-black to-transparent z-50 pointer-events-none" />
+      <div className="absolute bottom-0 left-0 w-full h-[4px] bg-gradient-to-b from-black to-transparent z-50 pointer-events-none" />
     </section>
   )
 }
