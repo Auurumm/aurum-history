@@ -1,3 +1,5 @@
+// 수정 페이지 (page.tsx) - 수정된 부분
+
 "use client"
 
 import { useEffect, useState, useRef } from "react"
@@ -14,8 +16,10 @@ export default function EditPage() {
   const [formData, setFormData] = useState<Partial<Announcement>>({})
   const [saving, setSaving] = useState(false)
   const [uploading, setUploading] = useState(false)
+  const [uploadingInline, setUploadingInline] = useState(false) // 인라인 이미지 업로드 상태
   const [editorInitialized, setEditorInitialized] = useState(false)
   const editorRef = useRef<HTMLDivElement>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null) // 인라인 이미지용 파일 입력
 
   // 기존 HTML은 그대로, 플레인 텍스트만 줄바꿈 변환
   const processContentForEditor = (content: string) => {
@@ -53,6 +57,100 @@ export default function EditPage() {
     editorRef.current?.focus()
   }
 
+  const insertHTML = (html: string) => {
+    document.execCommand('insertHTML', false, html)
+    editorRef.current?.focus()
+  }
+
+  // 인라인 이미지 삽입 함수 (디버깅 강화)
+  const handleInlineImageUpload = async (file: File) => {
+    console.log('📁 파일 선택됨:', file.name, file.size, file.type)
+    
+    if (!file.type.startsWith('image/')) {
+      alert('이미지 파일만 업로드 가능합니다.')
+      return
+    }
+
+    if (file.size > 10 * 1024 * 1024) { // 10MB 제한
+      alert('파일 크기가 너무 큽니다. (최대 10MB)')
+      return
+    }
+
+    setUploadingInline(true)
+    console.log('📤 업로드 시작...')
+    
+    try {
+      const url = await uploadImage(file)
+      console.log('✅ 업로드 완료:', url)
+      
+      if (!url) {
+        throw new Error('업로드된 URL이 없습니다')
+      }
+      
+      // 현재 선택된 위치 저장
+      const selection = window.getSelection()
+      const range = selection?.getRangeAt(0)
+      
+      // 에디터에 포커스 설정  
+      editorRef.current?.focus()
+      
+      // 저장된 위치로 복원 (가능한 경우)
+      if (range && selection) {
+        selection.removeAllRanges()
+        selection.addRange(range)
+      }
+      
+      // 이미지 HTML 생성 - 더 안전한 방식
+      const imageHtml = `<img src="${url}" alt="삽입된 이미지" style="max-width: 100%; height: auto; margin: 10px 0; border-radius: 4px; display: block;" /><br>`
+      
+      // insertHTML 대신 더 안전한 방법 사용
+      if (document.queryCommandSupported('insertHTML')) {
+        document.execCommand('insertHTML', false, imageHtml)
+      } else {
+        // insertHTML이 지원되지 않는 경우 대체 방법
+        const img = document.createElement('img')
+        img.src = url
+        img.alt = '삽입된 이미지'
+        img.style.cssText = 'max-width: 100%; height: auto; margin: 10px 0; border-radius: 4px; display: block;'
+        
+        const br = document.createElement('br')
+        
+        if (range) {
+          range.insertNode(br)
+          range.insertNode(img)
+          range.collapse(false)
+        } else if (editorRef.current) {
+          editorRef.current.appendChild(img)
+          editorRef.current.appendChild(br)
+        }
+      }
+      
+      // 에디터 내용 강제 업데이트
+      setTimeout(() => {
+        if (editorRef.current) {
+          const content = editorRef.current.innerHTML
+          console.log('📝 에디터 내용 업데이트:', content.substring(0, 200) + '...')
+          setFormData(prev => ({ ...prev, content }))
+          
+          // 강제 리렌더링 트리거
+          const event = new Event('input', { bubbles: true })
+          editorRef.current.dispatchEvent(event)
+        }
+      }, 100)
+      
+    } catch (err) {
+      console.error('❌ 업로드 실패:', err)
+      alert(`이미지 업로드 실패: ${err instanceof Error ? err.message : '알 수 없는 오류'}`)
+    } finally {
+      setUploadingInline(false)
+    }
+  }
+
+  // 인라인 이미지 삽입 버튼 클릭 핸들러
+  const handleImageButtonClick = () => {
+    fileInputRef.current?.click()
+  }
+
   const colors = ['#000000', '#FF0000', '#00FF00', '#0000FF', '#FFFF00', '#FF00FF', '#00FFFF', '#FFA500', '#800080', '#FFC0CB']
   const highlightColors = ['transparent', '#FFFF00', '#00FF00', '#FF0000', '#0000FF', '#FFA500', '#FF00FF', '#00FFFF']
 
@@ -71,17 +169,28 @@ export default function EditPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!params?.id) return
+    
+    console.log('📋 폼 제출 데이터:', {
+      title: formData.title,
+      contentLength: formData.content?.length || 0,
+      hasImages: formData.content?.includes('<img') || false
+    })
+    
     setSaving(true)
 
     try {
-      await updateAnnouncement(params.id as string, {
+      const updateData = {
         ...formData,
         updatedAt: new Date(),
-      })
+      }
+      
+      console.log('💾 수정할 데이터:', updateData)
+      await updateAnnouncement(params.id as string, updateData)
+      console.log('✅ 수정 완료')
       alert("수정되었습니다.")
       router.push("/admin")
     } catch (err) {
-      console.error(err)
+      console.error('❌ 수정 실패:', err)
       alert("수정 중 오류 발생")
     } finally {
       setSaving(false)
@@ -314,6 +423,31 @@ export default function EditPage() {
 
             <div className="w-px h-6 bg-gray-300 mx-1"></div>
 
+            {/* 이미지 삽입 버튼 - 새로 추가 */}
+            <button
+              type="button"
+              onClick={handleImageButtonClick}
+              disabled={uploadingInline}
+              className="px-3 py-1 border rounded hover:bg-gray-200 disabled:opacity-50"
+              title="이미지 삽입"
+            >
+              {uploadingInline ? "📤..." : "🖼️"}
+            </button>
+
+            {/* 숨겨진 파일 입력 */}
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={(e) => {
+                const file = e.target.files?.[0]
+                if (file) handleInlineImageUpload(file)
+              }}
+            />
+
+            <div className="w-px h-6 bg-gray-300 mx-1"></div>
+
             {/* 기타 */}
             <button
               type="button"
@@ -344,9 +478,45 @@ export default function EditPage() {
               // 에디터가 초기화된 후에만 내용 업데이트
               if (editorInitialized) {
                 const content = e.currentTarget.innerHTML
-                setFormData({ ...formData, content })
+                console.log('🔄 에디터 내용 변경:', content.length, '글자')
+                
+                // 내용이 실제로 변경되었을 때만 업데이트
+                if (content !== formData.content) {
+                  setFormData({ ...formData, content })
+                }
               }
             }}
+            onPaste={(e) => {
+              console.log('📋 붙여넣기 이벤트')
+              const items = e.clipboardData?.items
+              if (items) {
+                for (let i = 0; i < items.length; i++) {
+                  const item = items[i]
+                  if (item.type.indexOf('image') !== -1) {
+                    e.preventDefault()
+                    const file = item.getAsFile()
+                    if (file) {
+                      console.log('📋 이미지 붙여넣기:', file.name)
+                      handleInlineImageUpload(file)
+                    }
+                    break
+                  }
+                }
+              }
+            }}
+            onDrop={(e) => {
+              console.log('🎯 드래그앤드롭 이벤트')
+              e.preventDefault()
+              const files = e.dataTransfer.files
+              if (files.length > 0) {
+                const file = files[0]
+                if (file.type.startsWith('image/')) {
+                  console.log('🎯 이미지 드롭:', file.name)
+                  handleInlineImageUpload(file)
+                }
+              }
+            }}
+            onDragOver={(e) => e.preventDefault()}
             className="min-h-[300px] p-4 border border-t-0 border-gray-300 rounded-b-md focus:outline-none focus:ring-2 focus:ring-yellow-500"
             style={{ 
               maxHeight: '500px', 
@@ -383,6 +553,20 @@ export default function EditPage() {
           outline: none;
           white-space: normal;
           word-wrap: break-word;
+        }
+        
+        [contenteditable] img {
+          max-width: 100%;
+          height: auto;
+          margin: 10px 0;
+          border-radius: 4px;
+          cursor: pointer;
+          transition: transform 0.2s;
+        }
+        
+        [contenteditable] img:hover {
+          transform: scale(1.02);
+          box-shadow: 0 4px 8px rgba(0,0,0,0.1);
         }
         
         [contenteditable] br {
