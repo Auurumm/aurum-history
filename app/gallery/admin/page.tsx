@@ -262,46 +262,131 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
     }
   }
 
-  // 이미지를 base64로 변환하는 함수
-  const convertToBase64 = (file: File): Promise<string> => {
+  // 이미지 압축 함수
+  const compressImage = (file: File, maxWidth: number = 1200, maxHeight: number = 800, quality: number = 0.8): Promise<string> => {
     return new Promise((resolve, reject) => {
+      const canvas = document.createElement('canvas')
+      const ctx = canvas.getContext('2d')
+      const img = new Image()
+      
+      img.onload = () => {
+        // 원본 크기
+        const { width: originalWidth, height: originalHeight } = img
+        
+        // 비율 유지하면서 최대 크기 계산
+        let { width, height } = img
+        
+        if (width > maxWidth) {
+          height = (height * maxWidth) / width
+          width = maxWidth
+        }
+        
+        if (height > maxHeight) {
+          width = (width * maxHeight) / height
+          height = maxHeight
+        }
+        
+        // 캔버스 크기 설정
+        canvas.width = width
+        canvas.height = height
+        
+        // 이미지 그리기
+        ctx?.drawImage(img, 0, 0, width, height)
+        
+        // Base64로 변환 (JPEG, 품질 80%)
+        const compressedDataUrl = canvas.toDataURL('image/jpeg', quality)
+        
+        // 압축 결과 로깅
+        const originalSize = file.size
+        const compressedSize = Math.round((compressedDataUrl.length * 3) / 4) // Base64 크기 추정
+        const compressionRatio = ((originalSize - compressedSize) / originalSize * 100).toFixed(1)
+        
+        console.log(`이미지 압축 완료: ${file.name}`, {
+          originalSize: `${(originalSize / 1024 / 1024).toFixed(2)}MB`,
+          compressedSize: `${(compressedSize / 1024 / 1024).toFixed(2)}MB`,
+          compressionRatio: `${compressionRatio}% 감소`,
+          originalDimensions: `${originalWidth}x${originalHeight}`,
+          newDimensions: `${width}x${height}`
+        })
+        
+        resolve(compressedDataUrl)
+      }
+      
+      img.onerror = () => {
+        console.error('이미지 로드 실패:', file.name)
+        reject(new Error(`이미지 로드 실패: ${file.name}`))
+      }
+      
+      // 파일을 이미지로 로드
       const reader = new FileReader()
+      reader.onload = (e) => {
+        img.src = e.target?.result as string
+      }
+      reader.onerror = () => {
+        reject(new Error(`파일 읽기 실패: ${file.name}`))
+      }
       reader.readAsDataURL(file)
-      reader.onload = () => {
-        console.log(`파일 변환 완료: ${file.name} (${file.size} bytes)`)
-        resolve(reader.result as string)
-      }
-      reader.onerror = error => {
-        console.error(`파일 변환 실패: ${file.name}`, error)
-        reject(error)
-      }
     })
   }
 
-  // 이미지 업로드 처리
+  // 이미지 업로드 처리 (압축 포함)
   const handleImageUpload = async (files: FileList | null) => {
     if (!files || files.length === 0) {
       console.log("선택된 파일이 없습니다.")
       return
     }
     
-    console.log(`${files.length}개 파일 업로드 시작`)
+    console.log(`${files.length}개 파일 업로드 및 압축 시작`)
     
     try {
-      // 모든 파일을 base64로 변환
-      const base64Images = await Promise.all(
+      // 파일 크기 체크 및 압축
+      const processedImages = await Promise.all(
         Array.from(files).map(async (file, index) => {
-          console.log(`파일 ${index + 1}/${files.length} 변환 중: ${file.name}`)
-          return convertToBase64(file)
+          console.log(`파일 ${index + 1}/${files.length} 처리 중: ${file.name}`)
+          console.log(`원본 크기: ${(file.size / 1024 / 1024).toFixed(2)}MB`)
+          
+          // 이미지 파일 타입 확인
+          if (!file.type.startsWith('image/')) {
+            throw new Error(`${file.name}은(는) 이미지 파일이 아닙니다.`)
+          }
+          
+          // 파일 크기가 10MB 이상이면 더 강한 압축
+          let maxWidth = 1200
+          let maxHeight = 800
+          let quality = 0.8
+          
+          if (file.size > 10 * 1024 * 1024) { // 10MB 이상
+            maxWidth = 800
+            maxHeight = 600
+            quality = 0.6
+            console.log(`큰 파일 감지: 강한 압축 적용 (${maxWidth}x${maxHeight}, 품질 ${quality})`)
+          } else if (file.size > 5 * 1024 * 1024) { // 5MB 이상
+            maxWidth = 1000
+            maxHeight = 700
+            quality = 0.7
+            console.log(`중간 크기 파일: 중간 압축 적용 (${maxWidth}x${maxHeight}, 품질 ${quality})`)
+          }
+          
+          // 이미지 압축
+          return await compressImage(file, maxWidth, maxHeight, quality)
         })
       )
       
-      console.log(`${base64Images.length}개 이미지 변환 완료`)
+      console.log(`${processedImages.length}개 이미지 압축 완료`)
+      
+      // 총 데이터 크기 확인
+      const totalSize = processedImages.reduce((sum, img) => sum + Math.round((img.length * 3) / 4), 0)
+      console.log(`압축된 이미지 총 크기: ${(totalSize / 1024 / 1024).toFixed(2)}MB`)
+      
+      if (totalSize > 4 * 1024 * 1024) { // 4MB 제한
+        alert('압축 후에도 이미지 크기가 너무 큽니다. 이미지 개수를 줄이거나 더 작은 이미지를 사용해주세요.')
+        return
+      }
       
       setNewItem(prev => {
         const updated = {
           ...prev,
-          images: [...prev.images, ...base64Images]
+          images: [...prev.images, ...processedImages]
         }
         console.log(`현재 폼의 총 이미지 개수: ${updated.images.length}`)
         return updated
@@ -312,9 +397,16 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
         fileInputRef.current.value = ''
       }
       
+      // 성공 메시지
+      alert(`${processedImages.length}장의 이미지가 자동으로 압축되어 업로드되었습니다!`)
+      
     } catch (error) {
-      console.error('이미지 변환 실패:', error)
-      alert('이미지 업로드에 실패했습니다. 다시 시도해주세요.')
+      console.error('이미지 업로드/압축 실패:', error)
+      if (error instanceof Error) {
+        alert(`이미지 처리 실패: ${error.message}`)
+      } else {
+        alert('이미지 업로드에 실패했습니다. 다시 시도해주세요.')
+      }
     }
   }
 
@@ -670,16 +762,25 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                   <div className="text-center">
                     <Upload className="h-8 w-8 mx-auto mb-2 text-gray-400" />
                     <p className="text-sm text-gray-600">클릭해서 이미지를 선택하세요</p>
-                    <p className="text-xs text-gray-400">여러 장 선택 가능 (JPG, PNG 등 / 각 파일 5MB 이하 권장)</p>
+                    <p className="text-xs text-gray-400">
+                      여러 장 선택 가능 (JPG, PNG 등)<br/>
+                      <span className="text-green-600 font-medium">🔄 자동 압축 기능 포함!</span><br/>
+                      대용량 이미지도 자동으로 최적화됩니다
+                    </p>
                   </div>
                 </Button>
 
                 {/* 업로드된 이미지 미리보기 */}
                 {newItem.images.length > 0 && (
                   <div className="mt-4">
-                    <p className="text-sm text-gray-600 mb-2">
-                      업로드된 이미지: {newItem.images.length}장
-                    </p>
+                    <div className="flex items-center justify-between mb-2">
+                      <p className="text-sm text-gray-600">
+                        업로드된 이미지: {newItem.images.length}장
+                      </p>
+                      <p className="text-xs text-green-600">
+                        ✅ 모든 이미지가 웹 최적화 완료
+                      </p>
+                    </div>
                     <div className="grid grid-cols-4 gap-3">
                       {newItem.images.map((image, index) => (
                         <div key={index} className="relative">
@@ -825,11 +926,26 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
           <ul className="text-blue-800 dark:text-blue-200 space-y-1 text-sm">
             <li>• "새 게시글" 버튼으로 갤러리 아이템을 추가하세요</li>
             <li>• 단일 이미지 또는 여러 장의 이미지를 업로드할 수 있습니다</li>
+            <li>• <span className="bg-green-100 text-green-800 px-2 py-1 rounded font-medium">🔄 자동 압축:</span> 대용량 이미지도 자동으로 최적화됩니다!</li>
+            <li>• 이미지는 최대 1200x800 크기로 자동 리사이징되며, 품질은 80%로 압축됩니다</li>
             <li>• 작성한 게시글은 자동으로 저장되며, 일반 갤러리 페이지에서 바로 확인 가능합니다</li>
             <li>• "데이터 저장" 버튼으로 백업용 JSON 파일을 다운로드할 수 있습니다</li>
             <li>• "기본값 복원" 버튼으로 초기 샘플 데이터로 되돌릴 수 있습니다</li>
-            <li>• 브라우저 개발자 도구(F12) 콘솔에서 상세한 로그를 확인할 수 있습니다</li>
+            <li>• 브라우저 개발자 도구(F12) 콘솔에서 상세한 압축 로그를 확인할 수 있습니다</li>
           </ul>
+          
+          <div className="mt-4 p-3 bg-green-50 dark:bg-green-900/20 rounded border-l-4 border-green-400">
+            <h4 className="font-medium text-green-900 dark:text-green-100 mb-1">
+              🎯 이미지 자동 최적화 기능
+            </h4>
+            <p className="text-green-800 dark:text-green-200 text-xs">
+              • 파일 크기에 따라 자동으로 압축 강도 조절<br/>
+              • 10MB 이상: 800x600, 품질 60% 압축<br/>
+              • 5-10MB: 1000x700, 품질 70% 압축<br/>
+              • 5MB 이하: 1200x800, 품질 80% 압축<br/>
+              • 최종 결과물은 항상 4MB 이하로 제한
+            </p>
+          </div>
         </div>
       </div>
     </div>
