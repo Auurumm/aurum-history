@@ -115,6 +115,15 @@ const members: Member[] = [
   avatar: "/images/profiles/Sam.webp",
   color: "from-indigo-500 to-indigo-600",
   },
+  {
+  id: 12,
+  name: "Min",
+  department: "종합지원실",
+  role: "Rookie",
+  motto: "처음이라서 더 즐겁다.",
+  avatar: "/images/profiles/Min.png",
+  color: "from-green-500 to-green-600",
+  },
 ]
 
 export default function MembersCarousel() {
