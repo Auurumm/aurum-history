@@ -206,12 +206,58 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
   // 로컬 스토리지에 데이터 저장
   const saveToLocalStorage = (newItems: GalleryItem[]) => {
     try {
-      localStorage.setItem('gallery-items', JSON.stringify(newItems))
-      console.log("로컬 스토리지에 저장 완료:", newItems.length, "개 아이템")
+      console.log("💾 로컬 스토리지 저장 시작...")
+      
+      // 데이터 직렬화
+      const dataString = JSON.stringify(newItems)
+      const dataSize = new Blob([dataString]).size
+      
+      console.log("저장할 데이터 정보:", {
+        itemCount: newItems.length,
+        dataSize: (dataSize / 1024 / 1024).toFixed(2) + " MB",
+        firstItem: newItems[0] ? {
+          id: newItems[0].id,
+          title: newItems[0].title,
+          imageCount: newItems[0].images.length
+        } : "없음"
+      })
+      
+      // 로컬 스토리지 용량 체크 (대략 5MB 제한)
+      if (dataSize > 5 * 1024 * 1024) {
+        throw new Error("데이터 크기가 너무 큽니다. 이미지 개수를 줄여주세요.")
+      }
+      
+      // 로컬 스토리지에 저장
+      localStorage.setItem('gallery-items', dataString)
+      
+      // 저장 확인
+      const savedData = localStorage.getItem('gallery-items')
+      if (!savedData) {
+        throw new Error("로컬 스토리지 저장 실패")
+      }
+      
+      const parsedSavedData = JSON.parse(savedData)
+      if (parsedSavedData.length !== newItems.length) {
+        throw new Error("저장된 데이터 개수가 일치하지 않습니다")
+      }
+      
+      console.log("✅ 로컬 스토리지 저장 성공:", parsedSavedData.length, "개 아이템")
+      
       // 같은 탭에서 갤러리 페이지에 변경사항을 알리기 위한 커스텀 이벤트 발생
       window.dispatchEvent(new Event('gallery-updated'))
+      
     } catch (error) {
-      console.error("로컬 스토리지 저장 실패:", error)
+      console.error("❌ 로컬 스토리지 저장 실패:", error)
+      
+      // 구체적인 오류 메시지 제공
+      if (error instanceof Error) {
+        if (error.name === 'QuotaExceededError' || error.message.includes('QuotaExceededError')) {
+          throw new Error("저장 공간이 부족합니다. 이미지 크기를 줄이거나 기존 데이터를 삭제해주세요.")
+        } else {
+          throw new Error(`저장 실패: ${error.message}`)
+        }
+      }
+      
       throw error
     }
   }
@@ -308,29 +354,34 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
   }
 
   // 새 게시글 저장 또는 수정
-  const saveNewItem = () => {
-    console.log("saveNewItem 함수 시작")
+  const saveNewItem = async () => {
+    console.log("=== 저장 프로세스 시작 ===")
     console.log("현재 폼 상태:", {
       title: newItem.title,
-      titleLength: newItem.title.length,
+      titleLength: newItem.title?.length || 0,
       caption: newItem.caption,
-      captionLength: newItem.caption.length,
+      captionLength: newItem.caption?.length || 0,
       category: newItem.category,
-      imageCount: newItem.images.length,
-      editingId: editingId
+      imageCount: newItem.images?.length || 0,
+      editingId: editingId,
+      currentItemsCount: items.length
     })
 
-    // 입력값 검증 (trim 사용)
-    const titleValid = newItem.title.trim().length > 0
-    const captionValid = newItem.caption.trim().length > 0
-    const categoryValid = newItem.category.trim().length > 0
-    const imagesValid = newItem.images.length > 0
+    // 강화된 입력값 검증
+    const titleValid = newItem.title && newItem.title.trim().length > 0
+    const captionValid = newItem.caption && newItem.caption.trim().length > 0
+    const categoryValid = newItem.category && newItem.category.trim().length > 0
+    const imagesValid = newItem.images && Array.isArray(newItem.images) && newItem.images.length > 0
 
-    console.log("검증 결과:", {
-      titleValid,
-      captionValid,
-      categoryValid,
-      imagesValid
+    console.log("상세 검증 결과:", {
+      titleValid: titleValid,
+      captionValid: captionValid,
+      categoryValid: categoryValid,
+      imagesValid: imagesValid,
+      titleValue: newItem.title,
+      captionValue: newItem.caption,
+      categoryValue: newItem.category,
+      imagesArray: newItem.images
     })
 
     if (!titleValid || !captionValid || !categoryValid || !imagesValid) {
@@ -341,15 +392,22 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
       if (!imagesValid) missingFields.push("이미지")
       
       const errorMessage = `다음 필드를 입력해주세요: ${missingFields.join(", ")}`
-      console.log("검증 실패:", errorMessage)
+      console.error("❌ 검증 실패:", errorMessage)
       alert(errorMessage)
       return
     }
 
+    console.log("✅ 모든 검증 통과")
+
     try {
+      // 로컬 스토리지 용량 체크
+      const currentData = localStorage.getItem('gallery-items') || '[]'
+      const currentSize = new Blob([currentData]).size
+      console.log("현재 로컬 스토리지 크기:", (currentSize / 1024 / 1024).toFixed(2), "MB")
+
       if (editingId) {
         // 수정 모드
-        console.log("수정 모드로 실행 중... ID:", editingId)
+        console.log("🔄 수정 모드 실행 중... ID:", editingId)
         const updatedItems = items.map(item => 
           item.id === editingId 
             ? {
@@ -362,47 +420,76 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
               }
             : item
         )
+        
         console.log("수정된 아이템 배열 길이:", updatedItems.length)
+        console.log("수정할 아이템 찾기 결과:", updatedItems.find(item => item.id === editingId) ? "찾음" : "못찾음")
+        
         setItems(updatedItems)
+        await new Promise(resolve => setTimeout(resolve, 100)) // state 업데이트 대기
         saveToLocalStorage(updatedItems)
-        console.log("수정 완료!")
+        
+        console.log("✅ 수정 완료!")
         alert("게시글이 수정되었습니다!")
+        
       } else {
         // 새 게시글 모드
-        console.log("새 게시글 모드로 실행 중...")
-        const newId = Date.now()
-        const item: GalleryItem = {
+        console.log("📝 새 게시글 모드 실행 중...")
+        const newId = Date.now() + Math.random() // 고유 ID 보장
+        
+        const newItemData: GalleryItem = {
           id: newId,
           title: newItem.title.trim(),
           caption: newItem.caption.trim(),
           category: newItem.category.trim(),
-          images: [...newItem.images],
+          images: [...newItem.images], // 깊은 복사
           size: newItem.size
         }
+        
         console.log("새 아이템 생성:", {
-          id: item.id,
-          title: item.title,
-          imageCount: item.images.length
+          id: newItemData.id,
+          title: newItemData.title,
+          imageCount: newItemData.images.length,
+          category: newItemData.category
         })
         
-        const newItems = [item, ...items]
+        const newItems = [newItemData, ...items]
         console.log("새로운 전체 아이템 개수:", newItems.length)
+        
+        // 상태 업데이트
         setItems(newItems)
+        await new Promise(resolve => setTimeout(resolve, 100)) // state 업데이트 대기
+        
+        // 로컬 스토리지 저장
         saveToLocalStorage(newItems)
-        console.log("새 게시글 저장 완료!")
+        
+        console.log("✅ 새 게시글 저장 완료!")
         alert("게시글이 저장되었습니다!")
       }
       
       // 폼 초기화
-      console.log("폼 초기화 시작...")
+      console.log("🧹 폼 초기화 시작...")
       setNewItem({ title: "", caption: "", category: "", images: [], size: "normal" })
       setIsCreating(false)
       setEditingId(null)
-      console.log("폼 초기화 완료")
+      
+      // 파일 입력 필드도 초기화
+      if (fileInputRef.current) {
+        fileInputRef.current.value = ''
+      }
+      
+      console.log("✅ 폼 초기화 완료")
+      console.log("=== 저장 프로세스 완료 ===")
       
     } catch (error) {
-      console.error("저장 중 오류 발생:", error)
-      alert("저장 중 오류가 발생했습니다. 다시 시도해주세요.")
+      console.error("❌ 저장 중 치명적 오류:", error)
+      console.error("오류 스택:", error instanceof Error ? error.stack : 'No stack trace')
+      
+      // 로컬 스토리지 용량 초과 여부 확인
+      if (error instanceof Error && error.message.includes('QuotaExceededError')) {
+        alert("저장 공간이 부족합니다. 이미지 크기를 줄이거나 기존 데이터를 삭제해주세요.")
+      } else {
+        alert(`저장 중 오류가 발생했습니다: ${error instanceof Error ? error.message : '알 수 없는 오류'}`)
+      }
     }
   }
 
