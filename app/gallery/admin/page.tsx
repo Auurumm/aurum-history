@@ -19,6 +19,82 @@ interface GalleryItem {
 
 const categories = ["사무실", "구성원", "일상", "워크숍", "이벤트", "외관"]
 
+// 기본 갤러리 데이터 (초기 설정용)
+const defaultGalleryItems: GalleryItem[] = [
+  {
+    id: 1,
+    images: ["/images/gallery/aurum2.webp"],
+    title: "따뜻한 회의 공간",
+    caption: "아이디어가 모이는 우리의 회의실, 벽돌과 따뜻한 조명이 만드는 아늑한 분위기",
+    category: "사무실",
+    size: "normal",
+  },
+  {
+    id: 2,
+    images: ["/images/gallery/aurum3.webp", "/images/gallery/aurum11.png"],
+    title: "활기찬 업무 공간",
+    caption: "개성 넘치는 데스크와 포스터들, 우리만의 색깔이 묻어나는 오픈 오피스",
+    category: "일상",
+    size: "normal",
+  },
+  {
+    id: 3,
+    images: ["/images/gallery/aurum11.png", "/images/gallery/aurum10.png", "/images/gallery/aurum8.png"],
+    title: "집중의 시간",
+    caption: "조용한 오후, 각자의 자리에서 몰입하는 팀원들의 모습",
+    category: "일상",
+    size: "normal",
+  },
+  {
+    id: 4,
+    images: ["/images/gallery/gallery6.jpg"],
+    title: "우리가 있는 곳",
+    caption: "도심 속 우리의 보금자리, 매일 출근하는 익숙하면서도 특별한 공간",
+    category: "외관",
+    size: "normal",
+  },
+  {
+    id: 5,
+    images: ["/images/gallery/gallery1.jpg", "/images/gallery/image.png", "/images/gallery/aurum7.png", "/images/gallery/aurum8.png"],
+    title: "팀 워크샵 & 이벤트",
+    caption: "함께 성장하고 즐기는 우리팀의 특별한 순간들",
+    category: "구성원",
+    size: "normal",
+  },
+  {
+    id: 6,
+    images: ["/images/gallery/image.png"],
+    title: "수석 개발자의 브레인스토밍 세션",
+    caption: "새로운 프로젝트를 위한 아이디어 회의, 모두의 창의성이 빛나는 순간",
+    category: "워크숍",
+    size: "normal",
+  },
+  {
+    id: 7,
+    images: ["/images/gallery/aurum10.png", "/images/gallery/aurum7.png"],
+    title: "커피 한 잔의 여유",
+    caption: "바쁜 업무 중 잠깐의 휴식, 커피와 함께하는 소소한 대화",
+    category: "일상",
+    size: "normal",
+  },
+  {
+    id: 8,
+    images: ["/images/gallery/aurum8.png"],
+    title: "프로젝트 완료 축하",
+    caption: "성공적인 프로젝트 마무리를 축하하며, 함께 기뻐하는 우리 팀",
+    category: "이벤트",
+    size: "normal",
+  },
+  {
+    id: 9,
+    images: ["/images/gallery/aurum7.png"],
+    title: "집중은 대표님처럼",
+    caption: "다들 잘 보셨죠? 집중이란 이런 거예요.",
+    category: "이벤트",
+    size: "normal",
+  },
+]
+
 // 로그인 컴포넌트
 function LoginForm({ onLogin }: { onLogin: (username: string, password: string) => void }) {
   const [username, setUsername] = useState("")
@@ -88,17 +164,7 @@ function LoginForm({ onLogin }: { onLogin: (username: string, password: string) 
 
 // 메인 관리자 대시보드
 function AdminDashboard({ onLogout }: { onLogout: () => void }) {
-  const [items, setItems] = useState<GalleryItem[]>([
-    {
-      id: 1,
-      images: ["/images/gallery/aurum2.webp"],
-      title: "따뜻한 회의 공간",
-      caption: "아이디어가 모이는 우리의 회의실, 벽돌과 따뜻한 조명이 만드는 아늑한 분위기",
-      category: "사무실",
-      size: "normal",
-    }
-  ])
-  
+  const [items, setItems] = useState<GalleryItem[]>([])
   const [isCreating, setIsCreating] = useState(false)
   const [editingId, setEditingId] = useState<number | null>(null)
   
@@ -113,15 +179,23 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
   
   const fileInputRef = useRef<HTMLInputElement>(null)
 
-  // 로컬 스토리지에서 데이터 로드
+  // 로컬 스토리지에서 데이터 로드 또는 기본 데이터 설정
   useEffect(() => {
     const savedItems = localStorage.getItem('gallery-items')
     if (savedItems) {
       try {
-        setItems(JSON.parse(savedItems))
+        const parsedItems = JSON.parse(savedItems)
+        setItems(parsedItems)
       } catch (error) {
         console.error('Failed to load gallery items:', error)
+        // 파싱 실패 시 기본 데이터로 초기화
+        setItems(defaultGalleryItems)
+        localStorage.setItem('gallery-items', JSON.stringify(defaultGalleryItems))
       }
+    } else {
+      // 로컬 스토리지에 데이터가 없으면 기본 데이터로 초기화
+      setItems(defaultGalleryItems)
+      localStorage.setItem('gallery-items', JSON.stringify(defaultGalleryItems))
     }
   }, [])
 
@@ -189,6 +263,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
     setIsCreating(false)
     setNewItem({ title: "", caption: "", category: "", images: [], size: "normal" })
   }
+
   // 새 게시글 저장 또는 수정
   const saveNewItem = () => {
     if (!newItem.title || !newItem.caption || !newItem.category || newItem.images.length === 0) {
@@ -255,6 +330,15 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
     linkElement.click()
   }
 
+  // 기본 데이터 복원
+  const resetToDefault = () => {
+    if (confirm("모든 데이터를 기본값으로 초기화하시겠습니까? 현재 데이터는 모두 삭제됩니다.")) {
+      setItems(defaultGalleryItems)
+      saveToLocalStorage(defaultGalleryItems)
+      alert("기본 데이터로 복원되었습니다!")
+    }
+  }
+
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-4 pt-24">
       <div className="max-w-6xl mx-auto">
@@ -266,6 +350,15 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
           </div>
           
           <div className="flex gap-3">
+            <Button
+              onClick={resetToDefault}
+              variant="outline"
+              className="flex items-center gap-2 text-orange-600 border-orange-300 hover:bg-orange-50"
+            >
+              <Save className="h-4 w-4" />
+              기본값 복원
+            </Button>
+            
             <Button
               onClick={downloadJSON}
               variant="outline"
@@ -513,6 +606,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
             <li>• 단일 이미지 또는 여러 장의 이미지를 업로드할 수 있습니다</li>
             <li>• 작성한 게시글은 자동으로 저장되며, 일반 갤러리 페이지에서 바로 확인 가능합니다</li>
             <li>• "데이터 저장" 버튼으로 백업용 JSON 파일을 다운로드할 수 있습니다</li>
+            <li>• "기본값 복원" 버튼으로 초기 샘플 데이터로 되돌릴 수 있습니다</li>
           </ul>
         </div>
       </div>
