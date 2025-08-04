@@ -181,29 +181,39 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
 
   // 로컬 스토리지에서 데이터 로드 또는 기본 데이터 설정
   useEffect(() => {
-    const savedItems = localStorage.getItem('gallery-items')
-    if (savedItems) {
+    const loadData = () => {
       try {
-        const parsedItems = JSON.parse(savedItems)
-        setItems(parsedItems)
+        const savedItems = localStorage.getItem('gallery-items')
+        if (savedItems) {
+          const parsedItems = JSON.parse(savedItems)
+          console.log("로컬 스토리지에서 데이터 로드:", parsedItems.length, "개 아이템")
+          setItems(parsedItems)
+        } else {
+          console.log("로컬 스토리지에 데이터 없음, 기본 데이터로 초기화")
+          setItems(defaultGalleryItems)
+          localStorage.setItem('gallery-items', JSON.stringify(defaultGalleryItems))
+        }
       } catch (error) {
-        console.error('Failed to load gallery items:', error)
-        // 파싱 실패 시 기본 데이터로 초기화
+        console.error('데이터 로드 실패:', error)
         setItems(defaultGalleryItems)
         localStorage.setItem('gallery-items', JSON.stringify(defaultGalleryItems))
       }
-    } else {
-      // 로컬 스토리지에 데이터가 없으면 기본 데이터로 초기화
-      setItems(defaultGalleryItems)
-      localStorage.setItem('gallery-items', JSON.stringify(defaultGalleryItems))
     }
+
+    loadData()
   }, [])
 
   // 로컬 스토리지에 데이터 저장
   const saveToLocalStorage = (newItems: GalleryItem[]) => {
-    localStorage.setItem('gallery-items', JSON.stringify(newItems))
-    // 같은 탭에서 갤러리 페이지에 변경사항을 알리기 위한 커스텀 이벤트 발생
-    window.dispatchEvent(new Event('gallery-updated'))
+    try {
+      localStorage.setItem('gallery-items', JSON.stringify(newItems))
+      console.log("로컬 스토리지에 저장 완료:", newItems.length, "개 아이템")
+      // 같은 탭에서 갤러리 페이지에 변경사항을 알리기 위한 커스텀 이벤트 발생
+      window.dispatchEvent(new Event('gallery-updated'))
+    } catch (error) {
+      console.error("로컬 스토리지 저장 실패:", error)
+      throw error
+    }
   }
 
   // 이미지를 base64로 변환하는 함수
@@ -211,47 +221,79 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
     return new Promise((resolve, reject) => {
       const reader = new FileReader()
       reader.readAsDataURL(file)
-      reader.onload = () => resolve(reader.result as string)
-      reader.onerror = error => reject(error)
+      reader.onload = () => {
+        console.log(`파일 변환 완료: ${file.name} (${file.size} bytes)`)
+        resolve(reader.result as string)
+      }
+      reader.onerror = error => {
+        console.error(`파일 변환 실패: ${file.name}`, error)
+        reject(error)
+      }
     })
   }
 
   // 이미지 업로드 처리
   const handleImageUpload = async (files: FileList | null) => {
-    if (!files) return
+    if (!files || files.length === 0) {
+      console.log("선택된 파일이 없습니다.")
+      return
+    }
+    
+    console.log(`${files.length}개 파일 업로드 시작`)
     
     try {
       // 모든 파일을 base64로 변환
       const base64Images = await Promise.all(
-        Array.from(files).map(file => convertToBase64(file))
+        Array.from(files).map(async (file, index) => {
+          console.log(`파일 ${index + 1}/${files.length} 변환 중: ${file.name}`)
+          return convertToBase64(file)
+        })
       )
       
-      setNewItem(prev => ({
-        ...prev,
-        images: [...prev.images, ...base64Images]
-      }))
+      console.log(`${base64Images.length}개 이미지 변환 완료`)
+      
+      setNewItem(prev => {
+        const updated = {
+          ...prev,
+          images: [...prev.images, ...base64Images]
+        }
+        console.log(`현재 폼의 총 이미지 개수: ${updated.images.length}`)
+        return updated
+      })
+      
+      // 파일 입력 필드 초기화
+      if (fileInputRef.current) {
+        fileInputRef.current.value = ''
+      }
+      
     } catch (error) {
       console.error('이미지 변환 실패:', error)
-      alert('이미지 업로드에 실패했습니다.')
+      alert('이미지 업로드에 실패했습니다. 다시 시도해주세요.')
     }
   }
 
   // 이미지 제거
   const removeImage = (index: number) => {
-    setNewItem(prev => ({
-      ...prev,
-      images: prev.images.filter((_, i) => i !== index)
-    }))
+    console.log(`이미지 제거: ${index}번째`)
+    setNewItem(prev => {
+      const updated = {
+        ...prev,
+        images: prev.images.filter((_, i) => i !== index)
+      }
+      console.log(`이미지 제거 후 총 개수: ${updated.images.length}`)
+      return updated
+    })
   }
 
   // 수정 시작
   const startEdit = (item: GalleryItem) => {
+    console.log("수정 모드 시작:", item.id, item.title)
     setEditingId(item.id)
     setNewItem({
       title: item.title,
       caption: item.caption,
       category: item.category,
-      images: item.images,
+      images: [...item.images], // 배열 복사
       size: item.size
     })
     setIsCreating(true)
@@ -259,6 +301,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
 
   // 수정 취소
   const cancelEdit = () => {
+    console.log("수정/작성 취소")
     setEditingId(null)
     setIsCreating(false)
     setNewItem({ title: "", caption: "", category: "", images: [], size: "normal" })
@@ -266,75 +309,140 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
 
   // 새 게시글 저장 또는 수정
   const saveNewItem = () => {
-    if (!newItem.title || !newItem.caption || !newItem.category || newItem.images.length === 0) {
-      alert("모든 필드를 입력해주세요!")
+    console.log("saveNewItem 함수 시작")
+    console.log("현재 폼 상태:", {
+      title: newItem.title,
+      titleLength: newItem.title.length,
+      caption: newItem.caption,
+      captionLength: newItem.caption.length,
+      category: newItem.category,
+      imageCount: newItem.images.length,
+      editingId: editingId
+    })
+
+    // 입력값 검증 (trim 사용)
+    const titleValid = newItem.title.trim().length > 0
+    const captionValid = newItem.caption.trim().length > 0
+    const categoryValid = newItem.category.trim().length > 0
+    const imagesValid = newItem.images.length > 0
+
+    console.log("검증 결과:", {
+      titleValid,
+      captionValid,
+      categoryValid,
+      imagesValid
+    })
+
+    if (!titleValid || !captionValid || !categoryValid || !imagesValid) {
+      const missingFields = []
+      if (!titleValid) missingFields.push("제목")
+      if (!captionValid) missingFields.push("설명")
+      if (!categoryValid) missingFields.push("카테고리")
+      if (!imagesValid) missingFields.push("이미지")
+      
+      const errorMessage = `다음 필드를 입력해주세요: ${missingFields.join(", ")}`
+      console.log("검증 실패:", errorMessage)
+      alert(errorMessage)
       return
     }
 
-    if (editingId) {
-      // 수정 모드
-      const updatedItems = items.map(item => 
-        item.id === editingId 
-          ? {
-              ...item,
-              title: newItem.title,
-              caption: newItem.caption,
-              category: newItem.category,
-              images: newItem.images,
-              size: newItem.size
-            }
-          : item
-      )
-      setItems(updatedItems)
-      saveToLocalStorage(updatedItems)
-      alert("게시글이 수정되었습니다!")
-    } else {
-      // 새 게시글 모드
-      const item: GalleryItem = {
-        id: Date.now(),
-        title: newItem.title,
-        caption: newItem.caption,
-        category: newItem.category,
-        images: newItem.images,
-        size: newItem.size
+    try {
+      if (editingId) {
+        // 수정 모드
+        console.log("수정 모드로 실행 중... ID:", editingId)
+        const updatedItems = items.map(item => 
+          item.id === editingId 
+            ? {
+                ...item,
+                title: newItem.title.trim(),
+                caption: newItem.caption.trim(),
+                category: newItem.category.trim(),
+                images: [...newItem.images],
+                size: newItem.size
+              }
+            : item
+        )
+        console.log("수정된 아이템 배열 길이:", updatedItems.length)
+        setItems(updatedItems)
+        saveToLocalStorage(updatedItems)
+        console.log("수정 완료!")
+        alert("게시글이 수정되었습니다!")
+      } else {
+        // 새 게시글 모드
+        console.log("새 게시글 모드로 실행 중...")
+        const newId = Date.now()
+        const item: GalleryItem = {
+          id: newId,
+          title: newItem.title.trim(),
+          caption: newItem.caption.trim(),
+          category: newItem.category.trim(),
+          images: [...newItem.images],
+          size: newItem.size
+        }
+        console.log("새 아이템 생성:", {
+          id: item.id,
+          title: item.title,
+          imageCount: item.images.length
+        })
+        
+        const newItems = [item, ...items]
+        console.log("새로운 전체 아이템 개수:", newItems.length)
+        setItems(newItems)
+        saveToLocalStorage(newItems)
+        console.log("새 게시글 저장 완료!")
+        alert("게시글이 저장되었습니다!")
       }
-      const newItems = [item, ...items]
-      setItems(newItems)
-      saveToLocalStorage(newItems)
-      alert("게시글이 저장되었습니다!")
+      
+      // 폼 초기화
+      console.log("폼 초기화 시작...")
+      setNewItem({ title: "", caption: "", category: "", images: [], size: "normal" })
+      setIsCreating(false)
+      setEditingId(null)
+      console.log("폼 초기화 완료")
+      
+    } catch (error) {
+      console.error("저장 중 오류 발생:", error)
+      alert("저장 중 오류가 발생했습니다. 다시 시도해주세요.")
     }
-    
-    setNewItem({ title: "", caption: "", category: "", images: [], size: "normal" })
-    setIsCreating(false)
-    setEditingId(null)
   }
 
   // 게시글 삭제
   const deleteItem = (id: number) => {
+    console.log("삭제 요청:", id)
     if (confirm("정말 삭제하시겠습니까?")) {
       const newItems = items.filter(item => item.id !== id)
+      console.log("삭제 후 아이템 개수:", newItems.length)
       setItems(newItems)
       saveToLocalStorage(newItems)
+      console.log("삭제 완료")
     }
   }
 
   // JSON 다운로드
   const downloadJSON = () => {
-    const dataStr = JSON.stringify(items, null, 2)
-    const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr)
-    
-    const exportFileDefaultName = 'gallery-data.json'
-    const linkElement = document.createElement('a')
-    linkElement.setAttribute('href', dataUri)
-    linkElement.setAttribute('download', exportFileDefaultName)
-    linkElement.click()
+    try {
+      const dataStr = JSON.stringify(items, null, 2)
+      const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr)
+      
+      const exportFileDefaultName = 'gallery-data.json'
+      const linkElement = document.createElement('a')
+      linkElement.setAttribute('href', dataUri)
+      linkElement.setAttribute('download', exportFileDefaultName)
+      linkElement.click()
+      console.log("JSON 다운로드 완료")
+    } catch (error) {
+      console.error("JSON 다운로드 실패:", error)
+      alert("다운로드에 실패했습니다.")
+    }
   }
 
   // 기본 데이터 복원
   const resetToDefault = () => {
     if (confirm("모든 데이터를 기본값으로 초기화하시겠습니까? 현재 데이터는 모두 삭제됩니다.")) {
+      console.log("기본 데이터로 복원 시작...")
       setItems(defaultGalleryItems)
       saveToLocalStorage(defaultGalleryItems)
+      console.log("기본 데이터 복원 완료")
       alert("기본 데이터로 복원되었습니다!")
     }
   }
@@ -369,7 +477,10 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
             </Button>
             
             <Button
-              onClick={() => setIsCreating(true)}
+              onClick={() => {
+                console.log("새 게시글 작성 모드 시작")
+                setIsCreating(true)
+              }}
               className="bg-yellow-400 text-black hover:bg-yellow-300 flex items-center gap-2"
             >
               <Plus className="h-4 w-4" />
@@ -402,7 +513,10 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                 <label className="block text-sm font-medium mb-2">제목 *</label>
                 <Input
                   value={newItem.title}
-                  onChange={(e) => setNewItem(prev => ({ ...prev, title: e.target.value }))}
+                  onChange={(e) => {
+                    console.log("제목 변경:", e.target.value)
+                    setNewItem(prev => ({ ...prev, title: e.target.value }))
+                  }}
                   placeholder="갤러리 제목을 입력하세요"
                 />
               </div>
@@ -412,7 +526,10 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                 <label className="block text-sm font-medium mb-2">설명 *</label>
                 <Textarea
                   value={newItem.caption}
-                  onChange={(e) => setNewItem(prev => ({ ...prev, caption: e.target.value }))}
+                  onChange={(e) => {
+                    console.log("설명 변경:", e.target.value.length, "글자")
+                    setNewItem(prev => ({ ...prev, caption: e.target.value }))
+                  }}
                   placeholder="사진에 대한 설명을 입력하세요"
                   rows={3}
                 />
@@ -421,7 +538,13 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
               {/* 카테고리 */}
               <div>
                 <label className="block text-sm font-medium mb-2">카테고리 *</label>
-                <Select value={newItem.category} onValueChange={(value) => setNewItem(prev => ({ ...prev, category: value }))}>
+                <Select 
+                  value={newItem.category} 
+                  onValueChange={(value) => {
+                    console.log("카테고리 변경:", value)
+                    setNewItem(prev => ({ ...prev, category: value }))
+                  }}
+                >
                   <SelectTrigger>
                     <SelectValue placeholder="카테고리를 선택하세요" />
                   </SelectTrigger>
@@ -441,13 +564,19 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                   type="file"
                   multiple
                   accept="image/*"
-                  onChange={(e) => handleImageUpload(e.target.files)}
+                  onChange={(e) => {
+                    console.log("파일 선택 이벤트 발생:", e.target.files?.length || 0, "개 파일")
+                    handleImageUpload(e.target.files)
+                  }}
                   className="hidden"
                 />
                 
                 <Button
                   type="button"
-                  onClick={() => fileInputRef.current?.click()}
+                  onClick={() => {
+                    console.log("파일 선택 버튼 클릭")
+                    fileInputRef.current?.click()
+                  }}
                   variant="outline"
                   className="w-full h-32 border-dashed border-2 hover:border-yellow-400"
                 >
@@ -460,23 +589,28 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
 
                 {/* 업로드된 이미지 미리보기 */}
                 {newItem.images.length > 0 && (
-                  <div className="grid grid-cols-4 gap-3 mt-4">
-                    {newItem.images.map((image, index) => (
-                      <div key={index} className="relative">
-                        <img
-                          src={image}
-                          alt={`Preview ${index + 1}`}
-                          className="w-full h-20 object-cover rounded border"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => removeImage(index)}
-                          className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
-                        >
-                          <X className="h-3 w-3" />
-                        </button>
-                      </div>
-                    ))}
+                  <div className="mt-4">
+                    <p className="text-sm text-gray-600 mb-2">
+                      업로드된 이미지: {newItem.images.length}장
+                    </p>
+                    <div className="grid grid-cols-4 gap-3">
+                      {newItem.images.map((image, index) => (
+                        <div key={index} className="relative">
+                          <img
+                            src={image}
+                            alt={`Preview ${index + 1}`}
+                            className="w-full h-20 object-cover rounded border"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => removeImage(index)}
+                            className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
+                          >
+                            <X className="h-3 w-3" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 )}
               </div>
@@ -484,16 +618,16 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
               {/* 버튼 */}
               <div className="flex gap-3 pt-4">
                 <Button 
-                  onClick={saveNewItem} 
+                  onClick={() => {
+                    console.log("저장 버튼 클릭")
+                    saveNewItem()
+                  }} 
                   className="bg-yellow-400 text-black hover:bg-yellow-300"
                 >
                   {editingId ? '수정 완료' : '게시글 저장'}
                 </Button>
                 <Button
-                  onClick={editingId ? cancelEdit : () => {
-                    setIsCreating(false)
-                    setNewItem({ title: "", caption: "", category: "", images: [], size: "normal" })
-                  }}
+                  onClick={cancelEdit}
                   variant="outline"
                 >
                   취소
@@ -607,6 +741,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
             <li>• 작성한 게시글은 자동으로 저장되며, 일반 갤러리 페이지에서 바로 확인 가능합니다</li>
             <li>• "데이터 저장" 버튼으로 백업용 JSON 파일을 다운로드할 수 있습니다</li>
             <li>• "기본값 복원" 버튼으로 초기 샘플 데이터로 되돌릴 수 있습니다</li>
+            <li>• 브라우저 개발자 도구(F12) 콘솔에서 상세한 로그를 확인할 수 있습니다</li>
           </ul>
         </div>
       </div>
@@ -622,6 +757,7 @@ export default function GalleryAdminPage() {
   // 컴포넌트 마운트 시 로그인 상태 확인
   useEffect(() => {
     const authStatus = sessionStorage.getItem('gallery-admin-auth')
+    console.log("인증 상태 확인:", authStatus)
     if (authStatus === 'true') {
       setIsAuthenticated(true)
     }
@@ -630,20 +766,24 @@ export default function GalleryAdminPage() {
 
   // 로그인 처리
   const handleLogin = (username: string, password: string) => {
+    console.log("로그인 시도:", username)
     // 여기에 실제 admin 계정 정보를 입력하세요
     const ADMIN_USERNAME = "admin@aurum.nexus" // 실제 admin 아이디
     const ADMIN_PASSWORD = "admin123!@#" // 실제 admin 비밀번호
     
     if (username === ADMIN_USERNAME && password === ADMIN_PASSWORD) {
+      console.log("로그인 성공")
       setIsAuthenticated(true)
       sessionStorage.setItem('gallery-admin-auth', 'true')
     } else {
+      console.log("로그인 실패")
       alert("아이디 또는 비밀번호가 올바르지 않습니다.")
     }
   }
 
   // 로그아웃 처리
   const handleLogout = () => {
+    console.log("로그아웃")
     setIsAuthenticated(false)
     sessionStorage.removeItem('gallery-admin-auth')
   }
