@@ -395,8 +395,9 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
       })
       
       // 파일 입력 필드 초기화
-      if (fileInputRef.current) {
-        fileInputRef.current.value = ''
+      const fileInput = fileInputRef?.current
+      if (fileInput) {
+        fileInput.value = ''
       }
       
       // 성공 메시지
@@ -445,6 +446,12 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
     setEditingId(null)
     setIsCreating(false)
     setNewItem({ title: "", caption: "", category: "", images: [], size: "normal" })
+    
+    // 파일 입력 필드 초기화
+    const fileInput = fileInputRef?.current
+    if (fileInput) {
+      fileInput.value = ''
+    }
   }
 
   // 새 게시글 저장 또는 수정
@@ -567,8 +574,9 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
       setEditingId(null)
       
       // 파일 입력 필드도 초기화
-      if (fileInputRef.current) {
-        fileInputRef.current.value = ''
+      const fileInput = fileInputRef?.current
+      if (fileInput) {
+        fileInput.value = ''
       }
       
       console.log("✅ 폼 초기화 완료")
