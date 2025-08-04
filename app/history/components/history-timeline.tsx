@@ -1,5 +1,6 @@
 "use client"
-import { Calendar, Star, Rocket, Users, Award, Building, Heart, GraduationCap } from "lucide-react"
+import { Calendar, Star, Rocket, Users, Award, Building, Heart, GraduationCap, ChevronDown } from "lucide-react"
+import { useState, useEffect, useRef } from "react"
 
 interface TimelineEvent {
   date: string
@@ -171,7 +172,7 @@ const timelineData: YearData[] = [
       {
         date: "2019",
         title: "서울창조경제혁신센터 인큐베이팅센터 8기 선정",
-        description: "지속적인 성장을 위해 서울창조경제혁신센터 인큐베이팅센터 8기에 선정되었습니다.",
+        description: "지속적인 성장을 위해 서울창조경제혁신센터 인큐베이팅센터 8기에 연속 선정되었습니다.",
         icon: Rocket,
         category: "인큐베이팅",
       },
@@ -179,7 +180,7 @@ const timelineData: YearData[] = [
         date: "2018",
         title: "서울창조경제혁신센터 인큐베이팅센터 7기 선정",
         description:
-          "창업 초기 단계에서 서울창조경제혁신센터 인큐베이팅센터 7기에 선정되어 체계적인 지원을 받았습니다.",
+          "서울창조경제혁신센터 인큐베이팅센터 7기에 선정되어 체계적인 지원을 받았습니다.",
         icon: Users,
         category: "인큐베이팅",
       },
@@ -198,7 +199,7 @@ const timelineData: YearData[] = [
       {
         date: "6월",
         title: "스마트창작터 시장검증팀 선정",
-        description: "혁신적인 아이디어로 스마트창작터 시장검증팀에 선정되어 창업의 첫걸음을 내디뎠습니다.",
+        description: "혁신적인 아이디아로 스마트창작터 시장검증팀에 선정되어 스타트업의 첫걸음을 내디뎠습니다.",
         icon: Star,
         category: "시장검증",
       },
@@ -221,16 +222,96 @@ const categoryColors: { [key: string]: string } = {
 }
 
 export default function HistoryTimeline() {
+  const [activeYear, setActiveYear] = useState("2025")
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false)
+  const yearRefs = useRef<{ [key: string]: HTMLDivElement | null }>({})
+  const dropdownRef = useRef<HTMLDivElement>(null)
+
+  // 스크롤시 활성 연도 업데이트
+  useEffect(() => {
+    const handleScroll = () => {
+      const scrollPosition = window.scrollY + 200
+
+      for (const yearData of timelineData) {
+        const element = yearRefs.current[yearData.year]
+        if (element) {
+          const { offsetTop, offsetHeight } = element
+          if (scrollPosition >= offsetTop && scrollPosition < offsetTop + offsetHeight) {
+            setActiveYear(yearData.year)
+            break
+          }
+        }
+      }
+    }
+
+    window.addEventListener('scroll', handleScroll)
+    return () => window.removeEventListener('scroll', handleScroll)
+  }, [])
+
+  // 드롭다운 외부 클릭시 닫기
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsDropdownOpen(false)
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
+
+  // 연도 클릭시 해당 섹션으로 스크롤
+  const scrollToYear = (year: string) => {
+    const element = yearRefs.current[year]
+    if (element) {
+      const offsetTop = element.offsetTop - 100
+      window.scrollTo({
+        top: offsetTop,
+        behavior: 'smooth'
+      })
+      setIsDropdownOpen(false)
+    }
+  }
+
   return (
     <section className="py-10 px-4 sm:px-6 lg:px-8 bg-white dark:bg-black">
-      <div className="max-w-3xl mx-auto">
+      <div className="max-w-4xl mx-auto">
         <div className="text-center mb-8">
           <h2 className="mt-16 text-3xl sm:text-4xl font-bold text-black dark:text-white mb-4 leading-tight">
             우리의 <span className="text-yellow-400">여정</span>
           </h2>
-          <p className="text-base text-gray-600 dark:text-gray-300 max-w-xl mx-auto leading-normal">
+          <p className="text-base text-gray-600 dark:text-gray-300 max-w-xl mx-auto leading-normal mb-8">
             2020년 작은 시작에서 지금까지, Aurum이 만들어온 의미 있는 순간들
           </p>
+
+          {/* 연도 선택 드롭다운 */}
+          <div className="relative inline-block" ref={dropdownRef}>
+            <button
+              onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+              className="flex items-center space-x-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-lg px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors min-w-[120px] justify-between"
+            >
+              <span className="font-medium">{activeYear}</span>
+              <ChevronDown className={`h-4 w-4 transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`} />
+            </button>
+
+            {isDropdownOpen && (
+              <div className="absolute top-full left-0 mt-1 w-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-lg shadow-lg z-50">
+                {timelineData.map((yearData) => (
+                  <button
+                    key={yearData.year}
+                    onClick={() => scrollToYear(yearData.year)}
+                    className={`w-full text-left px-4 py-2 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors first:rounded-t-lg last:rounded-b-lg ${
+                      activeYear === yearData.year
+                        ? "bg-yellow-50 dark:bg-yellow-900/20 text-yellow-600 dark:text-yellow-400"
+                        : "text-gray-700 dark:text-gray-300"
+                    }`}
+                  >
+                    {yearData.year}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Timeline */}
@@ -239,7 +320,11 @@ export default function HistoryTimeline() {
           <div className="absolute left-8 top-0 bottom-0 w-0.5 bg-gradient-to-b from-yellow-400 to-gray-300 dark:to-gray-600"></div>
 
           {timelineData.map((yearData, yearIndex) => (
-            <div key={yearData.year} className="mb-8">
+            <div 
+              key={yearData.year} 
+              className="mb-12"
+              ref={(el) => { yearRefs.current[yearData.year] = el }}
+            >
               {/* Year Header */}
               <div className="flex items-center mb-8">
                 <div className="relative z-10 bg-yellow-400 text-black px-6 py-3 rounded-full font-bold text-xl shadow-lg">
@@ -249,7 +334,7 @@ export default function HistoryTimeline() {
               </div>
 
               {/* Events */}
-              <div className="space-y-2">
+              <div className="space-y-4">
                 {yearData.events.map((event, eventIndex) => {
                   const IconComponent = event.icon
                   const colorClass = categoryColors[event.category] || "from-gray-500 to-gray-600"
@@ -261,15 +346,15 @@ export default function HistoryTimeline() {
 
                       {/* Content */}
                       <div className="ml-20">
-                        <div className="bg-white dark:bg-gray-900 transition-all duration-300 hover:-translate-y-1 group min-h-[180px] p-6">
+                        <div className="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-lg shadow-sm transition-all duration-300 hover:shadow-md hover:-translate-y-1 group p-6">
                           <div className="flex items-start justify-between mb-4">
                             <div className="flex items-center">
                               <div>
-                                <div className="flex items-center space-x-2 mb-1">
+                                <div className="flex items-center space-x-2 mb-2">
                                   <Calendar className="h-4 w-4 text-yellow-400" />
                                   <span className="text-yellow-400 font-medium text-sm">{event.date}</span>
                                 </div>
-                                <h3 className="text-xl font-bold text-black dark:text-white group-hover:text-yellow-400 transition-colors">
+                                <h3 className="text-xl font-bold text-black dark:text-white group-hover:text-yellow-400 transition-colors leading-tight">
                                   {event.title}
                                 </h3>
                               </div>
@@ -292,6 +377,11 @@ export default function HistoryTimeline() {
             </div>
           </div>
         </div>
+      </div>
+
+      {/* 섹션 구분선 */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="border-b border-gray-200 dark:border-gray-700"></div>
       </div>
     </section>
   )
