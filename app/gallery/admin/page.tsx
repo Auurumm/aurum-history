@@ -177,7 +177,9 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
     size: "normal" as "normal" | "tall"
   })
   
-  const fileInputRef = useRef<HTMLInputElement>(null)
+  // 드래그 앤 드롭 상태
+  const [draggedIndex, setDraggedIndex] = useState<number | null>(null)
+  const [dragOverIndex, setDragOverIndex] = useState<number | null>(null)
 
   // 로컬 스토리지에서 데이터 로드 또는 기본 데이터 설정
   useEffect(() => {
@@ -773,7 +775,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                 {/* 업로드된 이미지 미리보기 */}
                 {newItem.images.length > 0 && (
                   <div className="mt-4">
-                    <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center justify-between mb-3">
                       <p className="text-sm text-gray-600">
                         업로드된 이미지: {newItem.images.length}장
                       </p>
@@ -781,23 +783,78 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                         ✅ 모든 이미지가 웹 최적화 완료
                       </p>
                     </div>
+                    
+                    {/* 드래그 앤 드롭 안내 */}
+                    <div className="mb-3 p-2 bg-blue-50 dark:bg-blue-900/20 rounded text-xs text-blue-700 dark:text-blue-300">
+                      💡 <strong>순서 조정:</strong> 이미지를 드래그해서 순서를 변경할 수 있습니다. 첫 번째 이미지가 대표 이미지가 됩니다.
+                    </div>
+                    
                     <div className="grid grid-cols-4 gap-3">
                       {newItem.images.map((image, index) => (
-                        <div key={index} className="relative">
-                          <img
-                            src={image}
-                            alt={`Preview ${index + 1}`}
-                            className="w-full h-20 object-cover rounded border"
-                          />
-                          <button
-                            type="button"
-                            onClick={() => removeImage(index)}
-                            className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
-                          >
-                            <X className="h-3 w-3" />
-                          </button>
+                        <div
+                          key={index}
+                          draggable
+                          onDragStart={(e) => handleDragStart(e, index)}
+                          onDragEnd={handleDragEnd}
+                          onDragOver={(e) => handleDragOver(e, index)}
+                          onDragLeave={handleDragLeave}
+                          onDrop={(e) => handleDrop(e, index)}
+                          className={`relative cursor-move transition-all duration-200 ${
+                            draggedIndex === index ? 'opacity-50 scale-95' : ''
+                          } ${
+                            dragOverIndex === index ? 'scale-105 ring-2 ring-yellow-400' : ''
+                          }`}
+                        >
+                          {/* 순서 번호 */}
+                          <div className="absolute -top-2 -left-2 bg-yellow-400 text-black text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center z-10">
+                            {index + 1}
+                          </div>
+                          
+                          {/* 대표 이미지 표시 */}
+                          {index === 0 && (
+                            <div className="absolute top-1 left-1 bg-green-500 text-white text-xs px-1 py-0.5 rounded z-10">
+                              대표
+                            </div>
+                          )}
+                          
+                          {/* 드래그 핸들 */}
+                          <div className="absolute top-1 right-8 bg-black/50 text-white rounded px-1 py-0.5 text-xs opacity-0 group-hover:opacity-100 transition-opacity z-10">
+                            ⋮⋮
+                          </div>
+                          
+                          <div className="group relative">
+                            <img
+                              src={image}
+                              alt={`Preview ${index + 1}`}
+                              className="w-full h-20 object-cover rounded border transition-transform duration-200"
+                              draggable={false} // 이미지 자체는 드래그 방지
+                            />
+                            
+                            {/* 삭제 버튼 */}
+                            <button
+                              type="button"
+                              onClick={() => removeImage(index)}
+                              className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 z-20"
+                            >
+                              <X className="h-3 w-3" />
+                            </button>
+                            
+                            {/* 드래그 오버레이 */}
+                            <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity rounded flex items-center justify-center">
+                              <div className="text-white text-xs font-medium bg-black/50 px-2 py-1 rounded">
+                                드래그하여 이동
+                              </div>
+                            </div>
+                          </div>
                         </div>
                       ))}
+                    </div>
+                    
+                    {/* 순서 변경 도움말 */}
+                    <div className="mt-3 text-xs text-gray-500 space-y-1">
+                      <p>• 첫 번째 이미지(①)가 갤러리에서 대표 이미지로 표시됩니다</p>
+                      <p>• 이미지를 드래그해서 원하는 위치로 이동하세요</p>
+                      <p>• 순서는 언제든지 변경 가능합니다</p>
                     </div>
                   </div>
                 )}
@@ -925,7 +982,8 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
           </h3>
           <ul className="text-blue-800 dark:text-blue-200 space-y-1 text-sm">
             <li>• "새 게시글" 버튼으로 갤러리 아이템을 추가하세요</li>
-            <li>• 단일 이미지 또는 여러 장의 이미지를 업로드할 수 있습니다</li>
+            <li>• <span className="bg-purple-100 text-purple-800 px-2 py-1 rounded font-medium">🎯 드래그 정렬:</span> 이미지를 드래그해서 순서를 자유롭게 변경하세요!</li>
+            <li>• 첫 번째 이미지가 갤러리에서 대표 이미지로 표시됩니다</li>
             <li>• <span className="bg-green-100 text-green-800 px-2 py-1 rounded font-medium">🔄 자동 압축:</span> 대용량 이미지도 자동으로 최적화됩니다!</li>
             <li>• 이미지는 최대 1200x800 크기로 자동 리사이징되며, 품질은 80%로 압축됩니다</li>
             <li>• 작성한 게시글은 자동으로 저장되며, 일반 갤러리 페이지에서 바로 확인 가능합니다</li>
