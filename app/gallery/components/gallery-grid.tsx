@@ -97,8 +97,53 @@ export default function GalleryGrid() {
   const [selectedItem, setSelectedItem] = useState<GalleryItem | null>(null)
   const [currentImageIndex, setCurrentImageIndex] = useState(0)
   const [cardImageIndices, setCardImageIndices] = useState<{[key: number]: number}>({})
+  const [items, setItems] = useState<GalleryItem[]>([])
 
-  const filteredItems = galleryItems.filter((item) => activeCategory === "전체" || item.category === activeCategory)
+  // 로컬 스토리지에서 관리자가 작성한 게시글 불러오기
+  useEffect(() => {
+    const savedItems = localStorage.getItem('gallery-items')
+    if (savedItems) {
+      try {
+        const parsedItems = JSON.parse(savedItems)
+        setItems(parsedItems)
+      } catch (error) {
+        console.error('Failed to load gallery items:', error)
+        // 로컬 스토리지에 데이터가 없으면 기본 데이터 사용
+        setItems(galleryItems)
+      }
+    } else {
+      // 로컬 스토리지에 데이터가 없으면 기본 데이터 사용
+      setItems(galleryItems)
+    }
+  }, [])
+
+  // 관리자에서 데이터 변경 감지 (storage 이벤트 리스닝)
+  useEffect(() => {
+    const handleStorageChange = () => {
+      const savedItems = localStorage.getItem('gallery-items')
+      if (savedItems) {
+        try {
+          const parsedItems = JSON.parse(savedItems)
+          setItems(parsedItems)
+        } catch (error) {
+          console.error('Failed to load updated gallery items:', error)
+        }
+      }
+    }
+
+    // storage 이벤트 리스너 추가 (다른 탭에서 변경사항 감지)
+    window.addEventListener('storage', handleStorageChange)
+    
+    // 같은 탭에서도 변경사항 감지하기 위한 커스텀 이벤트
+    window.addEventListener('gallery-updated', handleStorageChange)
+    
+    return () => {
+      window.removeEventListener('storage', handleStorageChange)
+      window.removeEventListener('gallery-updated', handleStorageChange)
+    }
+  }, [])
+
+  const filteredItems = items.filter((item) => activeCategory === "전체" || item.category === activeCategory)
   const displayedItems = filteredItems.slice(0, visibleItems)
 
   const loadMore = () => {
@@ -128,7 +173,7 @@ export default function GalleryGrid() {
 
   // 카드 내 이미지 변경
   const changeCardImage = (itemId: number, direction: 'next' | 'prev') => {
-    const item = galleryItems.find(i => i.id === itemId)
+    const item = items.find(i => i.id === itemId)
     if (!item || item.images.length <= 1) return
 
     const currentIndex = cardImageIndices[itemId] || 0
@@ -144,6 +189,11 @@ export default function GalleryGrid() {
       ...prev,
       [itemId]: newIndex
     }))
+  }
+
+  // 이미지 클릭 핸들러 (모달 열기)
+  const handleImageClick = (item: GalleryItem, imageIndex: number) => {
+    openModal(item, imageIndex)
   }
 
   // 키보드 이벤트 처리
@@ -224,19 +274,19 @@ export default function GalleryGrid() {
                     <img
                       src={currentImage || "/placeholder.svg"}
                       alt={item.title}
-                      className={`w-full object-cover transition-transform duration-300 group-hover:scale-105 ${
+                      className={`w-full object-cover transition-transform duration-300 group-hover:scale-105 cursor-pointer ${
                         item.size === "tall" ? "h-96 md:h-full" : "h-64"
                       } ${
                         item.id === 3 ? "object-[center_20%]" : "object-center"
                       }`}
-                      onClick={() => openModal(item, currentCardImageIndex)}
+                      onClick={() => handleImageClick(item, currentCardImageIndex)}
                     />
 
                     {/* Multi-image UI - 여러 장일 때만 표시 */}
                     {hasMultipleImages && (
                       <>
                         {/* Image counter */}
-                        <div className="absolute top-4 right-4 bg-black/70 text-white px-2 py-1 rounded-full text-xs font-medium">
+                        <div className="absolute top-4 right-4 bg-black/70 text-white px-2 py-1 rounded-full text-xs font-medium pointer-events-none">
                           {currentCardImageIndex + 1}/{item.images.length}
                         </div>
 
@@ -252,7 +302,7 @@ export default function GalleryGrid() {
                                   [item.id]: index
                                 }))
                               }}
-                              className={`w-2 h-2 rounded-full transition-colors ${
+                              className={`w-2 h-2 rounded-full transition-colors z-10 ${
                                 index === currentCardImageIndex 
                                   ? 'bg-yellow-400' 
                                   : 'bg-white/50 hover:bg-white/80'
@@ -262,13 +312,13 @@ export default function GalleryGrid() {
                         </div>
 
                         {/* Navigation arrows (hover) */}
-                        <div className="absolute inset-0 flex items-center justify-between px-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <div className="absolute inset-0 flex items-center justify-between px-2 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
                           <button
                             onClick={(e) => {
                               e.stopPropagation()
                               changeCardImage(item.id, 'prev')
                             }}
-                            className="p-1 rounded-full bg-black/50 text-white hover:bg-black/70 transition-colors"
+                            className="p-1 rounded-full bg-black/50 text-white hover:bg-black/70 transition-colors pointer-events-auto z-10"
                           >
                             <ChevronLeft className="h-4 w-4" />
                           </button>
@@ -277,29 +327,32 @@ export default function GalleryGrid() {
                               e.stopPropagation()
                               changeCardImage(item.id, 'next')
                             }}
-                            className="p-1 rounded-full bg-black/50 text-white hover:bg-black/70 transition-colors"
+                            className="p-1 rounded-full bg-black/50 text-white hover:bg-black/70 transition-colors pointer-events-auto z-10"
                           >
                             <ChevronRight className="h-4 w-4" />
                           </button>
                         </div>
 
                         {/* Multi-photo icon */}
-                        <div className="absolute bottom-4 right-4">
+                        <div className="absolute bottom-4 right-4 pointer-events-none">
                           <MoreHorizontal className="h-5 w-5 text-white drop-shadow-lg" />
                         </div>
                       </>
                     )}
 
                     {/* Category Tag */}
-                    <div className="absolute top-4 left-4">
+                    <div className="absolute top-4 left-4 pointer-events-none">
                       <span className="bg-yellow-400 text-black px-3 py-1 rounded-full text-xs font-medium">
                         #{item.category}
                       </span>
                     </div>
                   </div>
 
-                  {/* Content */}
-                  <div className="p-6">
+                  {/* Content - 클릭 시 모달 열기 */}
+                  <div 
+                    className="p-6 cursor-pointer"
+                    onClick={() => handleImageClick(item, currentCardImageIndex)}
+                  >
                     <h3 className="text-xl font-bold mb-3 text-yellow-600 dark:text-yellow-400">
                       {item.title}
                     </h3>
@@ -429,10 +482,12 @@ export default function GalleryGrid() {
                   </div>
                 )}
 
-                {/* Single/Multi indicator */}
-                <div className="text-sm text-gray-500 dark:text-gray-400">
-                  {selectedItem.images.length === 1 ? '단일 사진' : `${selectedItem.images.length}장의 사진`}
-                </div>
+                {/* Multi-photo indicator - 여러 장일 때만 표시 */}
+                {selectedItem.images.length > 1 && (
+                  <div className="text-sm text-gray-500 dark:text-gray-400">
+                    {selectedItem.images.length}장의 사진
+                  </div>
+                )}
               </div>
             </div>
 

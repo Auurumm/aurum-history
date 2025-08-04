@@ -128,22 +128,38 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
   // 로컬 스토리지에 데이터 저장
   const saveToLocalStorage = (newItems: GalleryItem[]) => {
     localStorage.setItem('gallery-items', JSON.stringify(newItems))
+    // 같은 탭에서 갤러리 페이지에 변경사항을 알리기 위한 커스텀 이벤트 발생
+    window.dispatchEvent(new Event('gallery-updated'))
   }
 
-  // 이미지 업로드 시뮬레이션
-  const handleImageUpload = (files: FileList | null) => {
+  // 이미지를 base64로 변환하는 함수
+  const convertToBase64 = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader()
+      reader.readAsDataURL(file)
+      reader.onload = () => resolve(reader.result as string)
+      reader.onerror = error => reject(error)
+    })
+  }
+
+  // 이미지 업로드 처리
+  const handleImageUpload = async (files: FileList | null) => {
     if (!files) return
     
-    const newImages = Array.from(files).map((file) => {
-      // 실제로는 서버에 업로드하고 URL을 받아옴
-      // 여기서는 임시로 ObjectURL 사용 (실제 구현시에는 서버 업로드 필요)
-      return URL.createObjectURL(file)
-    })
-    
-    setNewItem(prev => ({
-      ...prev,
-      images: [...prev.images, ...newImages]
-    }))
+    try {
+      // 모든 파일을 base64로 변환
+      const base64Images = await Promise.all(
+        Array.from(files).map(file => convertToBase64(file))
+      )
+      
+      setNewItem(prev => ({
+        ...prev,
+        images: [...prev.images, ...base64Images]
+      }))
+    } catch (error) {
+      console.error('이미지 변환 실패:', error)
+      alert('이미지 업로드에 실패했습니다.')
+    }
   }
 
   // 이미지 제거
@@ -154,30 +170,68 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
     }))
   }
 
-  // 새 게시글 저장
+  // 수정 시작
+  const startEdit = (item: GalleryItem) => {
+    setEditingId(item.id)
+    setNewItem({
+      title: item.title,
+      caption: item.caption,
+      category: item.category,
+      images: item.images,
+      size: item.size
+    })
+    setIsCreating(true)
+  }
+
+  // 수정 취소
+  const cancelEdit = () => {
+    setEditingId(null)
+    setIsCreating(false)
+    setNewItem({ title: "", caption: "", category: "", images: [], size: "normal" })
+  }
+  // 새 게시글 저장 또는 수정
   const saveNewItem = () => {
     if (!newItem.title || !newItem.caption || !newItem.category || newItem.images.length === 0) {
       alert("모든 필드를 입력해주세요!")
       return
     }
 
-    const item: GalleryItem = {
-      id: Date.now(),
-      title: newItem.title,
-      caption: newItem.caption,
-      category: newItem.category,
-      images: newItem.images,
-      size: newItem.size
+    if (editingId) {
+      // 수정 모드
+      const updatedItems = items.map(item => 
+        item.id === editingId 
+          ? {
+              ...item,
+              title: newItem.title,
+              caption: newItem.caption,
+              category: newItem.category,
+              images: newItem.images,
+              size: newItem.size
+            }
+          : item
+      )
+      setItems(updatedItems)
+      saveToLocalStorage(updatedItems)
+      alert("게시글이 수정되었습니다!")
+    } else {
+      // 새 게시글 모드
+      const item: GalleryItem = {
+        id: Date.now(),
+        title: newItem.title,
+        caption: newItem.caption,
+        category: newItem.category,
+        images: newItem.images,
+        size: newItem.size
+      }
+      const newItems = [item, ...items]
+      setItems(newItems)
+      saveToLocalStorage(newItems)
+      alert("게시글이 저장되었습니다!")
     }
-
-    const newItems = [item, ...items]
-    setItems(newItems)
-    saveToLocalStorage(newItems)
     
     setNewItem({ title: "", caption: "", category: "", images: [], size: "normal" })
     setIsCreating(false)
-    
-    alert("게시글이 저장되었습니다!")
+    setEditingId(null)
   }
 
   // 게시글 삭제
@@ -202,7 +256,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-4">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-4 pt-24">
       <div className="max-w-6xl mx-auto">
         {/* Header */}
         <div className="flex justify-between items-center mb-8">
@@ -242,9 +296,12 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
 
         {/* 새 게시글 작성 폼 */}
         {isCreating && (
-          <Card className="mb-8 border-yellow-400">
+          <div className="relative z-10">
+            <Card className="mb-8 border-yellow-400 shadow-lg">
             <CardHeader>
-              <CardTitle className="text-yellow-600">새 갤러리 게시글 작성</CardTitle>
+              <CardTitle className="text-yellow-600">
+                {editingId ? '갤러리 게시글 수정' : '새 갤러리 게시글 작성'}
+              </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               {/* 제목 */}
@@ -304,7 +361,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                   <div className="text-center">
                     <Upload className="h-8 w-8 mx-auto mb-2 text-gray-400" />
                     <p className="text-sm text-gray-600">클릭해서 이미지를 선택하세요</p>
-                    <p className="text-xs text-gray-400">여러 장 선택 가능 (단일/멀티 이미지 모두 지원)</p>
+                    <p className="text-xs text-gray-400">여러 장 선택 가능 (JPG, PNG 등 / 각 파일 5MB 이하 권장)</p>
                   </div>
                 </Button>
 
@@ -337,10 +394,10 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                   onClick={saveNewItem} 
                   className="bg-yellow-400 text-black hover:bg-yellow-300"
                 >
-                  게시글 저장
+                  {editingId ? '수정 완료' : '게시글 저장'}
                 </Button>
                 <Button
-                  onClick={() => {
+                  onClick={editingId ? cancelEdit : () => {
                     setIsCreating(false)
                     setNewItem({ title: "", caption: "", category: "", images: [], size: "normal" })
                   }}
@@ -350,7 +407,8 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                 </Button>
               </div>
             </CardContent>
-          </Card>
+                      </Card>
+          </div>
         )}
 
         {/* 기존 게시글 목록 */}
@@ -419,7 +477,12 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
 
                         {/* 액션 버튼 */}
                         <div className="flex gap-2 ml-4">
-                          <Button size="sm" variant="outline" disabled>
+                          <Button 
+                            size="sm" 
+                            variant="outline"
+                            onClick={() => startEdit(item)}
+                            className="text-blue-600 hover:text-blue-700 hover:border-blue-300"
+                          >
                             <Edit className="h-4 w-4" />
                           </Button>
                           <Button 
