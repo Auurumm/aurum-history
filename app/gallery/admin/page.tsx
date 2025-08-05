@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Plus, X, Upload, Edit, Trash2, Save, Lock, LogOut, Cloud } from "lucide-react"
-import { uploadMultipleImages, deleteImageFromFirebase } from "../../../utils/firebaseUtils"
+import { uploadMultipleImages, deleteImageFromFirebase, uploadImageToFirebase } from "../../../utils/firebaseUtils"
 
 // 타입 정의를 컴포넌트 내부에서 정의
 interface UploadResult {
@@ -462,6 +462,119 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
     }
   }
 
+  // 기존 Base64 이미지를 Firebase로 마이그레이션
+  const migrateToFirebase = async () => {
+    if (!confirm('기존 localStorage의 Base64 이미지들을 Firebase로 마이그레이션하시겠습니까?\n이 작업은 시간이 오래 걸릴 수 있습니다.')) {
+      return
+    }
+
+    const base64Items = items.filter(item => 
+      item.images.some(img => img.startsWith('data:image/'))
+    )
+
+    if (base64Items.length === 0) {
+      alert('마이그레이션할 Base64 이미지가 없습니다.')
+      return
+    }
+
+    setUploadProgress(prev => ({ ...prev, isUploading: true }))
+    let totalProcessed = 0
+    const totalImages = base64Items.reduce((sum, item) => sum + item.images.length, 0)
+
+    try {
+      const updatedItems = [...items]
+
+      for (const item of base64Items) {
+        const newImages: string[] = []
+
+        for (let i = 0; i < item.images.length; i++) {
+          const imageUrl = item.images[i]
+          
+          // Base64 이미지인 경우에만 마이그레이션
+          if (imageUrl.startsWith('data:image/')) {
+            try {
+              // Base64를 Blob으로 변환
+              const response = await fetch(imageUrl)
+              const blob = await response.blob()
+              
+              // 임시 File 객체 생성
+              const file = new File([blob], `migrated_${Date.now()}_${i}.jpg`, { type: 'image/jpeg' })
+              
+              // 진행률 업데이트
+              totalProcessed++
+              setUploadProgress(prev => ({
+                ...prev,
+                current: totalProcessed,
+                total: totalImages,
+                fileName: `${item.title} - 이미지 ${i + 1}`,
+                percentage: Math.round((totalProcessed / totalImages) * 100)
+              }))
+
+              // Firebase에 업로드
+              const result = await uploadImageToFirebase(file)
+              
+              if (result.success && result.url) {
+                newImages.push(result.url)
+              } else {
+                console.error('마이그레이션 실패:', result.error)
+                newImages.push(imageUrl) // 실패시 기존 이미지 유지
+              }
+
+              // 요청 제한 방지를 위한 대기
+              await new Promise(resolve => setTimeout(resolve, 500))
+            } catch (error) {
+              console.error('Base64 변환 실패:', error)
+              newImages.push(imageUrl) // 실패시 기존 이미지 유지
+            }
+          } else {
+            // 이미 Firebase 이미지인 경우 그대로 유지
+            newImages.push(imageUrl)
+          }
+        }
+
+        // 아이템 업데이트
+        const itemIndex = updatedItems.findIndex(i => i.id === item.id)
+        if (itemIndex !== -1) {
+          updatedItems[itemIndex] = { ...item, images: newImages }
+        }
+      }
+
+      // 업데이트된 데이터 저장
+      setItems(updatedItems)
+      saveToLocalStorage(updatedItems)
+
+      const migratedCount = totalImages
+      const firebaseCount = updatedItems.reduce((sum, item) => 
+        sum + item.images.filter(img => img.includes('firebasestorage.googleapis.com')).length, 0
+      )
+
+      alert(`✅ 마이그레이션 완료!\n\n📊 결과:\n• 처리된 이미지: ${migratedCount}장\n• Firebase 이미지: ${firebaseCount}장\n• 이제 모든 컴퓨터에서 볼 수 있습니다!`)
+
+    } catch (error: unknown) {
+      console.error('마이그레이션 실패:', error)
+      const errorMessage = error instanceof Error ? error.message : '알 수 없는 오류'
+      alert(`❌ 마이그레이션 중 오류 발생: ${errorMessage}`)
+    } finally {
+      setUploadProgress({
+        isUploading: false,
+        current: 0,
+        total: 0,
+        fileName: '',
+        percentage: 0
+      })
+    }
+  }
+
+  // Base64 이미지 개수 확인
+  const base64ImageCount = items.reduce((sum, item) => 
+    sum + item.images.filter(img => img.startsWith('data:image/')).length, 0
+  )
+
+  // Firebase 이미지 개수 확인
+  const firebaseImageCount = items.reduce((sum, item) => 
+    sum + item.images.filter(img => img.includes('firebasestorage.googleapis.com')).length, 0
+  )
+
   // 기본 데이터 복원
   const resetToDefault = () => {
     if (confirm("모든 데이터를 기본값으로 초기화하시겠습니까? 현재 데이터는 모두 삭제됩니다.")) {
@@ -477,6 +590,32 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
         {/* 업로드 진행률 모달 */}
         <UploadProgressModal progress={uploadProgress} />
         
+        {/* 마이그레이션 안내 메시지 */}
+        {base64ImageCount > 0 && (
+          <div className="mb-8 p-4 bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-lg">
+            <div className="flex items-start gap-3">
+              <div className="text-orange-500 text-xl">⚠️</div>
+              <div>
+                <h3 className="font-semibold text-orange-900 dark:text-orange-100 mb-2">
+                  마이그레이션이 필요합니다
+                </h3>
+                <p className="text-orange-800 dark:text-orange-200 text-sm mb-3">
+                  현재 {base64ImageCount}장의 이미지가 로컬 저장소에만 있어서 다른 컴퓨터에서 볼 수 없습니다. 
+                  Firebase로 마이그레이션하면 모든 컴퓨터에서 접근할 수 있습니다.
+                </p>
+                <Button 
+                  onClick={migrateToFirebase}
+                  className="bg-orange-500 text-white hover:bg-orange-600"
+                  disabled={uploadProgress.isUploading}
+                >
+                  <Cloud className="h-4 w-4 mr-2" />
+                  지금 마이그레이션 시작하기
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
+        
         {/* Header */}
         <div className="flex justify-between items-center mb-8">
           <div>
@@ -486,9 +625,29 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
               <span className="text-sm bg-green-100 text-green-800 px-2 py-1 rounded-full">Firebase 연동</span>
             </h1>
             <p className="text-gray-600 dark:text-gray-300">🌐 클라우드 저장으로 모든 컴퓨터에서 접근 가능</p>
+            
+            {/* 이미지 상태 표시 */}
+            <div className="mt-2 flex gap-4 text-sm">
+              <span className="text-green-600">☁️ Firebase 이미지: {firebaseImageCount}장</span>
+              {base64ImageCount > 0 && (
+                <span className="text-orange-600">💾 로컬 이미지: {base64ImageCount}장 (마이그레이션 필요)</span>
+              )}
+            </div>
           </div>
           
           <div className="flex gap-3">
+            {/* 마이그레이션 버튼 - Base64 이미지가 있을 때만 표시 */}
+            {base64ImageCount > 0 && (
+              <Button 
+                onClick={migrateToFirebase} 
+                className="bg-blue-500 text-white hover:bg-blue-600 flex items-center gap-2"
+                disabled={uploadProgress.isUploading}
+              >
+                <Cloud className="h-4 w-4" />
+                Firebase로 마이그레이션 ({base64ImageCount}장)
+              </Button>
+            )}
+            
             <Button onClick={resetToDefault} variant="outline" className="flex items-center gap-2 text-orange-600 border-orange-300 hover:bg-orange-50">
               <Save className="h-4 w-4" />
               기본값 복원
