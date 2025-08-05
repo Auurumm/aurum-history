@@ -32,14 +32,14 @@ export default function HeroSection() {
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(255,215,0,0.1),transparent_50%)]" />
       </div>
 
-      {/* Content with Magic Circles + Flowing Golden Effect */}
-      <div className="relative z-20 text-center px-4 sm:px-6 lg:px-8 max-w-5xl mx-auto pb-24">
+      {/* Content with Magic Circles + Flowing Golden Effect - 전체적으로 아래로 이동 */}
+      <div className="relative z-20 text-center px-4 sm:px-6 lg:px-8 max-w-5xl mx-auto pb-16 pt-16">
         
-        {/* 마법진 + 흐르는 효과 컨테이너 */}
-        <div className="relative flex items-center justify-center mb-12">
+        {/* 마법진 + 흐르는 효과 컨테이너 - 크기를 줄이고 위치 조정 */}
+        <div className="relative flex items-center justify-center mb-16">
           
-          {/* 외부 큰 원 - 천천히 시계방향 회전 */}
-          <div className="absolute w-[45rem] h-[45rem] max-w-[90vw] max-h-[90vw] animate-spin-slow">
+          {/* 외부 큰 원 - 천천히 시계방향 회전, 크기 축소 */}
+          <div className="absolute w-[38rem] h-[38rem] max-w-[75vw] max-h-[75vw] animate-spin-slow">
             <svg className="w-full h-full" viewBox="0 0 400 400">
               <circle
                 cx="200"
@@ -68,8 +68,8 @@ export default function HeroSection() {
             </svg>
           </div>
 
-          {/* 중간 원 - 반시계방향 회전 */}
-          <div className="absolute w-[35rem] h-[35rem] max-w-[70vw] max-h-[70vw] animate-reverse-spin">
+          {/* 중간 원 - 반시계방향 회전, 크기 축소 */}
+          <div className="absolute w-[28rem] h-[28rem] max-w-[60vw] max-h-[60vw] animate-reverse-spin">
             <svg className="w-full h-full" viewBox="0 0 300 300">
               <circle
                 cx="150"
@@ -99,8 +99,8 @@ export default function HeroSection() {
             </svg>
           </div>
 
-          {/* 내부 작은 원 - 빠른 시계방향 회전 */}
-          <div className="absolute w-[25rem] h-[25rem] max-w-[50vw] max-h-[50vw] animate-spin-fast">
+          {/* 내부 작은 원 - 빠른 시계방향 회전, 크기 축소 */}
+          <div className="absolute w-[20rem] h-[20rem] max-w-[45vw] max-h-[45vw] animate-spin-fast">
             <svg className="w-full h-full" viewBox="0 0 200 200">
               <circle
                 cx="100"
@@ -130,8 +130,8 @@ export default function HeroSection() {
             </svg>
           </div>
 
-          {/* 🌟 새로 추가: 마법진 위로 흐르는 황금 라인 효과 */}
-          <div className="absolute w-[50rem] h-[50rem] max-w-[95vw] max-h-[95vw] pointer-events-none">
+          {/* 🌟 새로 추가: 마법진 위로 흐르는 황금 라인 효과, 크기 축소 */}
+          <div className="absolute w-[42rem] h-[42rem] max-w-[80vw] max-h-[80vw] pointer-events-none">
             {/* 첫 번째 흐르는 라인 - 마법진을 가로지르며 */}
             <div className="absolute inset-0">
               <svg className="w-full h-full" viewBox="0 0 800 800" preserveAspectRatio="none">
@@ -198,8 +198,8 @@ export default function HeroSection() {
             </div>
           </div>
 
-          {/* 🌟 흐르는 파티클 효과 - 마법진 위를 지나감 */}
-          <div className="absolute w-[55rem] h-[55rem] max-w-[98vw] max-h-[98vw] overflow-hidden pointer-events-none">
+          {/* 🌟 흐르는 파티클 효과 - 마법진 위를 지나감, 크기 축소 */}
+          <div className="absolute w-[46rem] h-[46rem] max-w-[85vw] max-h-[85vw] overflow-hidden pointer-events-none">
             <div className="absolute w-3 h-3 bg-[#FFD700] rounded-full animate-particle-1 opacity-90 shadow-lg shadow-yellow-500/60"></div>
             <div className="absolute w-2 h-2 bg-[#FFF700] rounded-full animate-particle-2 opacity-80 shadow-md shadow-yellow-400/50"></div>
             <div className="absolute w-4 h-4 bg-[#FFD700] rounded-full animate-particle-3 opacity-85 shadow-lg shadow-yellow-500/40"></div>
@@ -210,8 +210,8 @@ export default function HeroSection() {
             <div className="absolute w-1 h-1 bg-[#FFD700] rounded-full animate-particle-7 opacity-90"></div>
           </div>
 
-          {/* 반짝이는 파티클들 (기존 고정 파티클) */}
-          <div className="absolute w-[50rem] h-[50rem] max-w-[95vw] max-h-[95vw]">
+          {/* 반짝이는 파티클들 (기존 고정 파티클), 크기 축소 */}
+          <div className="absolute w-[42rem] h-[42rem] max-w-[80vw] max-h-[80vw]">
             <div className="absolute top-10 left-20 w-2 h-2 bg-[#D4AF37] rounded-full animate-ping opacity-70"></div>
             <div className="absolute top-32 right-16 w-1 h-1 bg-[#D4AF37] rounded-full animate-pulse"></div>
             <div className="absolute bottom-20 left-32 w-3 h-3 bg-[#D4AF37] rounded-full animate-bounce opacity-50"></div>
@@ -220,8 +220,8 @@ export default function HeroSection() {
             <div className="absolute top-1/2 right-8 w-1 h-1 bg-[#D4AF37] rounded-full animate-bounce"></div>
           </div>
 
-          {/* 메인 텍스트 */}
-          <h2 className="relative z-30 text-5xl sm:text-6xl lg:text-7xl xl:text-8xl text-[#D4AF37] leading-tight"
+          {/* 메인 텍스트 - 폰트 크기 약간 축소 */}
+          <h2 className="relative z-30 text-4xl sm:text-5xl lg:text-6xl xl:text-7xl text-[#D4AF37] leading-tight"
             style={{
               fontFamily: 'OotmanFont, Black Han Sans, sans-serif',
               letterSpacing: '0.02em',
@@ -232,7 +232,8 @@ export default function HeroSection() {
           </h2>
         </div>
 
-        <p className="text-white text-base leading-relaxed break-keep max-w-xs sm:max-w-md mx-auto text-balance">
+        {/* 설명 텍스트 - 크기 확대 및 위치 조정 */}
+        <p className="text-white text-lg sm:text-xl lg:text-2xl leading-relaxed break-keep max-w-md sm:max-w-lg lg:max-w-xl mx-auto text-balance mt-8">
           모두의 삶에 도움이 되는 기능들, <br />
           언제나 항상 있어야 하는 그러한 서비스를 만듭니다
         </p>

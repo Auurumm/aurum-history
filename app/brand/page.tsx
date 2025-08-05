@@ -9,6 +9,13 @@ import BrandBarracks from "./components/brand-barracks"
 // import BrandGuidelines from "./components/brand-guidelines"
 // import BrandValue from "../components/brand-value"
 
+// 은은한 구분선 컴포넌트
+const SectionDivider = () => (
+  <div className="relative w-full h-px my-8">
+    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-gray-300/60 to-transparent dark:via-gray-600/40"></div>
+  </div>
+)
+
 export default function BrandPage() {
   const [mounted, setMounted] = useState(false)
   const showBrandContent = false
@@ -20,44 +27,57 @@ export default function BrandPage() {
   if (!mounted) return null
 
   return (
-  <div className="min-h-screen bg-white dark:bg-black transition-colors duration-300">
-
-    <div className="snap-y snap-mandatory overflow-y-scroll">
-      <section className="snap-start h-screen">
-        <BrandHero />
-      </section>
-
-      <section className="snap-start">
-        <BrandStory />
-      </section>
-
-      <section className="snap-start">
-        <BrandDalgona />
-      </section>
-
-      <section className="snap-start">
-        <BrandBarracks />
-      </section>
-
-
-      {/* {showBrandContent && (
-        <section className="snap-start min-h-screen">
-          <BrandValue />
+    <div className="min-h-screen bg-white dark:bg-black transition-colors duration-300">
+      <div className="snap-y snap-mandatory overflow-y-scroll">
+        <section className="snap-start h-screen">
+          <BrandHero />
         </section>
-      )} */}
 
-      {/*{showBrandContent && (
-        <section className="snap-start min-h-screen">
-          <BrandIdentity />
+        <SectionDivider />
+
+        <section className="snap-start">
+          <BrandStory />
         </section>
-      )}*/}
 
-      {/* {showBrandContent && (
-        <section className="snap-start min-h-screen">
-          <BrandGuidelines />
+        <SectionDivider />
+
+        <section className="snap-start">
+          <BrandDalgona />
         </section>
-      )} */}
 
+        <SectionDivider />
+
+        <section className="snap-start">
+          <BrandBarracks />
+        </section>
+
+        {/* {showBrandContent && (
+          <>
+            <SectionDivider />
+            <section className="snap-start min-h-screen">
+              <BrandValue />
+            </section>
+          </>
+        )} */}
+
+        {/*{showBrandContent && (
+          <>
+            <SectionDivider />
+            <section className="snap-start min-h-screen">
+              <BrandIdentity />
+            </section>
+          </>
+        )}*/}
+
+        {/* {showBrandContent && (
+          <>
+            <SectionDivider />
+            <section className="snap-start min-h-screen">
+              <BrandGuidelines />
+            </section>
+          </>
+        )} */}
+      </div>
     </div>
-  </div>
-)}
+  )
+}
