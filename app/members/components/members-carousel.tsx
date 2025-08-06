@@ -18,7 +18,7 @@ interface Member {
 const members: Member[] = [
   {
     id: 1,
-    name: "mr.D",
+    name: "Roe",
     department: "종합지원실",
     role: "Captain",
     motto: "결은 흐르되, 중심은 잃지 않는다.",
