@@ -33,10 +33,10 @@ export default function HeroSection() {
       </div>
 
       {/* Content with Magic Circles + Flowing Golden Effect - 전체적으로 아래로 이동 */}
-      <div className="relative z-20 text-center px-4 sm:px-6 lg:px-8 max-w-5xl mx-auto pb-16 pt-16">
+      <div className="relative z-20 text-center px-4 sm:px-6 lg:px-8 max-w-5xl mx-auto pb-16 pt-16 overflow-hidden">
         
         {/* 마법진 + 흐르는 효과 컨테이너 - 크기를 줄이고 위치 조정 */}
-        <div className="relative flex items-center justify-center mb-16">
+        <div className="relative flex items-center justify-center mb-16 overflow-hidden">
           
           {/* 외부 큰 원 - 천천히 시계방향 회전, 크기 축소 */}
           <div className="absolute w-[38rem] h-[38rem] max-w-[75vw] max-h-[75vw] animate-spin-slow">
@@ -130,13 +130,13 @@ export default function HeroSection() {
             </svg>
           </div>
 
-          {/* 🌟 새로 추가: 마법진 위로 흐르는 황금 라인 효과, 크기 축소 */}
+          {/* 🌟 새로 추가: 마법진 위로 흐르는 황금 라인 효과, 크기 축소 - 상단 잘림 방지 */}
           <div className="absolute w-[42rem] h-[42rem] max-w-[80vw] max-h-[80vw] pointer-events-none">
             {/* 첫 번째 흐르는 라인 - 마법진을 가로지르며 */}
             <div className="absolute inset-0">
               <svg className="w-full h-full" viewBox="0 0 800 800" preserveAspectRatio="none">
                 <path
-                  d="M-200,400 Q200,200 400,400 T1000,400"
+                  d="M-200,450 Q200,350 400,450 T1000,450"
                   fill="none"
                   stroke="url(#flowingGradient1)"
                   strokeWidth="4"
@@ -158,7 +158,7 @@ export default function HeroSection() {
             <div className="absolute inset-0">
               <svg className="w-full h-full" viewBox="0 0 800 800" preserveAspectRatio="none">
                 <path
-                  d="M-200,350 Q300,550 500,350 T1000,350"
+                  d="M-200,400 Q300,600 500,400 T1000,400"
                   fill="none"
                   stroke="url(#flowingGradient2)"
                   strokeWidth="3"
@@ -179,7 +179,7 @@ export default function HeroSection() {
             <div className="absolute inset-0">
               <svg className="w-full h-full" viewBox="0 0 800 800" preserveAspectRatio="none">
                 <path
-                  d="M-200,450 Q150,250 450,450 T1000,450"
+                  d="M-200,500 Q150,350 450,500 T1000,500"
                   fill="none"
                   stroke="url(#flowingGradient3)"
                   strokeWidth="3.5"
@@ -198,8 +198,8 @@ export default function HeroSection() {
             </div>
           </div>
 
-          {/* 🌟 흐르는 파티클 효과 - 마법진 위를 지나감, 크기 축소 */}
-          <div className="absolute w-[46rem] h-[46rem] max-w-[85vw] max-h-[85vw] overflow-hidden pointer-events-none">
+          {/* 🌟 흐르는 파티클 효과 - 마법진 위를 지나감, 상단 잘림 방지 */}
+          <div className="absolute w-[40rem] h-[30rem] max-w-[80vw] max-h-[60vw] overflow-hidden pointer-events-none top-8">
             <div className="absolute w-3 h-3 bg-[#FFD700] rounded-full animate-particle-1 opacity-90 shadow-lg shadow-yellow-500/60"></div>
             <div className="absolute w-2 h-2 bg-[#FFF700] rounded-full animate-particle-2 opacity-80 shadow-md shadow-yellow-400/50"></div>
             <div className="absolute w-4 h-4 bg-[#FFD700] rounded-full animate-particle-3 opacity-85 shadow-lg shadow-yellow-500/40"></div>
@@ -212,7 +212,7 @@ export default function HeroSection() {
 
           {/* 반짝이는 파티클들 (기존 고정 파티클), 크기 축소 */}
           <div className="absolute w-[42rem] h-[42rem] max-w-[80vw] max-h-[80vw]">
-            <div className="absolute top-10 left-20 w-2 h-2 bg-[#D4AF37] rounded-full animate-ping opacity-70"></div>
+            <div className="absolute top-20 left-20 w-2 h-2 bg-[#D4AF37] rounded-full animate-ping opacity-70"></div>
             <div className="absolute top-32 right-16 w-1 h-1 bg-[#D4AF37] rounded-full animate-pulse"></div>
             <div className="absolute bottom-20 left-32 w-3 h-3 bg-[#D4AF37] rounded-full animate-bounce opacity-50"></div>
             <div className="absolute bottom-40 right-24 w-1 h-1 bg-[#D4AF37] rounded-full animate-ping"></div>
