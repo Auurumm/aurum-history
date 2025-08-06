@@ -8,10 +8,28 @@ import { useTheme } from "../contexts/theme-context"
 import { useResponsive } from "../contexts/responsive-context"
 import Link from "next/link"
 import { useLanguage } from "@/app/contexts/language-context"
-import LanguageSwitcher from "./language-switcher"
-import { auth, db } from "@/lib/firebase"
-import { onAuthStateChanged, signOut } from "firebase/auth"
-import { doc, getDoc } from "firebase/firestore"
+
+// Firebase imports - optional로 처리
+let auth: any = null;
+let db: any = null;
+let onAuthStateChanged: any = null;
+let signOut: any = null;
+let doc: any = null;
+let getDoc: any = null;
+
+try {
+  const firebase = require("@/lib/firebase");
+  auth = firebase.auth;
+  db = firebase.db;
+  const firebaseAuth = require("firebase/auth");
+  onAuthStateChanged = firebaseAuth.onAuthStateChanged;
+  signOut = firebaseAuth.signOut;
+  const firestore = require("firebase/firestore");
+  doc = firestore.doc;
+  getDoc = firestore.getDoc;
+} catch (error) {
+  console.log("Firebase not configured, authentication features disabled");
+}
 
 interface UserData {
   uid: string;
@@ -24,7 +42,7 @@ interface UserData {
 
 export default function Header() {
   const { theme, toggleTheme } = useTheme()
-  const { isMobile, isTablet, isDesktop, screenSize } = useResponsive()
+  const { isMobile, isTablet, isDesktop } = useResponsive()
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null)
   const [isSearchOpen, setIsSearchOpen] = useState(false)
@@ -36,10 +54,15 @@ export default function Header() {
   const router = useRouter()
   const { t, locale } = useLanguage()
 
-  // 사용자 인증 상태 확인
+  // 사용자 인증 상태 확인 (Firebase가 있는 경우만)
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-      if (firebaseUser) {
+    if (!auth || !onAuthStateChanged) {
+      setLoading(false);
+      return;
+    }
+
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser: any) => {
+      if (firebaseUser && db && doc && getDoc) {
         try {
           const userDoc = await getDoc(doc(db, "users", firebaseUser.uid));
           const userData = userDoc.data();
@@ -72,56 +95,36 @@ export default function Header() {
 
   const menuItems = [
     {
-      title: t("company"),
-      columns: [
-        {
-          category: "",
-          items: [
-            { name: t("culture"), href: getLocalizedPath("/message") },
-            { name: t("history"), href: getLocalizedPath("/history") },
-            { name: t("welcome"), href: getLocalizedPath("/company-info") },
-          ],
-        },
+      title: t("company") || "회사",
+      items: [
+        { name: t("culture") || "문화", href: getLocalizedPath("/message") },
+        { name: t("history") || "연혁", href: getLocalizedPath("/history") },
+        { name: t("welcome") || "오시는 길", href: getLocalizedPath("/company-info") },
       ],
     },
     {
-      title: t("services"),
-      columns: [
-        {
-          category: "",
-          items: [
-            { name: t("brand"), href: getLocalizedPath("/brand") },
-            { name: t("marketing"), href: getLocalizedPath("/marketing") },
-            { name: t("entertainment"), href: getLocalizedPath("/entertainment") },
-            { name: t("life"), href: getLocalizedPath("/life") },
-          ],
-        },
+      title: t("services") || "서비스",
+      items: [
+        { name: t("brand") || "브랜드", href: getLocalizedPath("/brand") },
+        { name: t("marketing") || "마케팅", href: getLocalizedPath("/marketing") },
+        { name: t("entertainment") || "엔터테인먼트", href: getLocalizedPath("/entertainment") },
+        { name: t("life") || "라이프", href: getLocalizedPath("/life") },
       ],
     },
     {
-      title: t("responsibility"),
-      columns: [
-        {
-          category: "",
-          items: [
-            { name: t("gallery"), href: getLocalizedPath("/gallery") },
-            { name: t("members"), href: getLocalizedPath("/members") },
-            { name: t("recruitment"), href: getLocalizedPath("/career") },
-          ],
-        },
+      title: t("responsibility") || "소통",
+      items: [
+        { name: t("gallery") || "갤러리", href: getLocalizedPath("/gallery") },
+        { name: t("members") || "구성원", href: getLocalizedPath("/members") },
+        { name: t("recruitment") || "채용", href: getLocalizedPath("/career") },
       ],
     },
     {
-      title: t("community"),
-      columns: [
-        {
-          category: "",
-          items: [
-            { name: t("announcements"), href: getLocalizedPath("/announcements") },
-            { name: t("traces"), href: getLocalizedPath("/traces") },
-            { name: t("wonders"), href: getLocalizedPath("/wonders") },
-          ],
-        },
+      title: t("community") || "커뮤니티",
+      items: [
+        { name: t("announcements") || "공지사항", href: getLocalizedPath("/announcements") },
+        { name: t("traces") || "흔적들", href: getLocalizedPath("/traces") },
+        { name: t("wonders") || "궁금한 것들", href: getLocalizedPath("/wonders") },
       ],
     },
   ]
@@ -159,6 +162,8 @@ export default function Header() {
 
   // 로그아웃 처리
   const handleLogout = async () => {
+    if (!signOut || !auth) return;
+    
     try {
       await signOut(auth);
       setUserMenuOpen(false);
@@ -172,9 +177,9 @@ export default function Header() {
     <header className="fixed top-0 left-0 right-0 z-50 w-full font-pretendard">
       <div className="absolute inset-0 bg-white/95 dark:bg-black/95 backdrop-blur-sm border-b border-gray-200/20 dark:border-gray-700/20"></div>
 
-      <div className="w-full mx-auto px-4 sm:px-6 lg:px-8 lg:max-w-7xl relative z-10">
+      <div className="w-full px-4 sm:px-6 lg:px-8 lg:max-w-7xl lg:mx-auto relative z-10">
         <div className={`flex items-center justify-between ${isMobile ? 'h-16' : 'h-20'}`}>
-          {/* Logo - 반응형 적용 */}
+          {/* Logo */}
           <div className="flex-shrink-0">
             <Link
               href={getLocalizedPath("/")}
@@ -199,13 +204,13 @@ export default function Header() {
                   onMouseEnter={() => handleMouseEnter(item.title)}
                   onMouseLeave={handleMouseLeave}
                 >
-                  <a
-                    href="#"
+                  <button
+                    type="button"
                     className="flex items-center px-3 py-2 text-sm font-medium transition-colors text-gray-800 hover:text-black dark:text-gray-200 dark:hover:text-white tracking-tight"
                   >
                     {item.title}
                     <ChevronDown className="ml-1 h-3 w-3 transition-transform group-hover:rotate-180" />
-                  </a>
+                  </button>
 
                   {activeDropdown === item.title && (
                     <div
@@ -214,28 +219,19 @@ export default function Header() {
                       onMouseLeave={handleDropdownMouseLeave}
                     >
                       <div className="bg-white dark:bg-gray-900 rounded-lg shadow-lg min-w-[160px] w-auto py-2 space-y-1 text-sm border border-gray-200 dark:border-gray-700 backdrop-blur-sm">
-                        {item.columns.map((column, columnIndex) => (
-                          <div key={columnIndex}>
-                            {column.category && (
-                              <h3 className="px-4 py-2 text-xs font-semibold text-gray-900 dark:text-gray-100 uppercase tracking-wide border-b border-gray-200 dark:border-gray-700">
-                                {column.category}
-                              </h3>
-                            )}
-                            <ul>
-                              {column.items.map((subItem, itemIndex) => (
-                                <li key={itemIndex}>
-                                  <Link
-                                    href={subItem.href}
-                                    className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:text-yellow-600 dark:hover:text-yellow-400 hover:bg-gray-50 dark:hover:bg-gray-800 transition-all duration-200 whitespace-nowrap font-medium tracking-tight"
-                                    onClick={() => setActiveDropdown(null)}
-                                  >
-                                    {subItem.name}
-                                  </Link>
-                                </li>
-                              ))}
-                            </ul>
-                          </div>
-                        ))}
+                        <ul>
+                          {item.items.map((subItem, itemIndex) => (
+                            <li key={itemIndex}>
+                              <Link
+                                href={subItem.href}
+                                className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:text-yellow-600 dark:hover:text-yellow-400 hover:bg-gray-50 dark:hover:bg-gray-800 transition-all duration-200 whitespace-nowrap font-medium tracking-tight"
+                                onClick={() => setActiveDropdown(null)}
+                              >
+                                {subItem.name}
+                              </Link>
+                            </li>
+                          ))}
+                        </ul>
                       </div>
                     </div>
                   )}
@@ -267,7 +263,7 @@ export default function Header() {
                   size="sm"
                   onClick={toggleTheme}
                   className="transition-colors text-gray-800 hover:text-black dark:text-gray-200 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800"
-                  aria-label={theme === "dark" ? t("lightMode") : t("darkMode")}
+                  aria-label={theme === "dark" ? t("lightMode") || "라이트 모드" : t("darkMode") || "다크 모드"}
                 >
                   {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
                 </Button>
@@ -356,8 +352,9 @@ export default function Header() {
               <Button
                 variant="ghost"
                 size="sm"
-                className="p-2 transition-colors text-gray-800 hover:text-black dark:text-gray-200 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800"
+                className="p-1 transition-colors text-gray-800 hover:text-black dark:text-gray-200 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 flex-shrink-0"
                 onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                aria-label="메뉴 토글"
               >
                 {isMobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
               </Button>
@@ -367,12 +364,12 @@ export default function Header() {
 
         {/* 모바일 메뉴 */}
         {isMobile && isMobileMenuOpen && (
-          <div className="absolute top-full left-0 right-0 w-full bg-white/95 dark:bg-black/95 backdrop-blur-sm border-b border-gray-200/20 dark:border-gray-700/20">
-            <div className="px-4 py-6 space-y-6 max-h-96 overflow-y-auto">
+          <div className="absolute top-full left-0 right-0 w-full bg-white/95 dark:bg-black/95 backdrop-blur-sm border-b border-gray-200/20 dark:border-gray-700/20 shadow-lg">
+            <div className="px-4 py-6 space-y-6 max-h-[calc(100vh-4rem)] overflow-y-auto">
               {/* 사용자 정보 (로그인된 경우) */}
               {user && (
                 <div className="flex items-center gap-3 pb-4 border-b border-gray-200 dark:border-gray-700">
-                  <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-yellow-400">
+                  <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-yellow-400 flex-shrink-0">
                     {user.profileImage ? (
                       <img 
                         src={user.profileImage} 
@@ -385,8 +382,8 @@ export default function Header() {
                       </div>
                     )}
                   </div>
-                  <div>
-                    <div className="font-medium text-gray-900 dark:text-white tracking-tight">
+                  <div className="min-w-0 flex-1">
+                    <div className="font-medium text-gray-900 dark:text-white tracking-tight truncate">
                       {user.nickname || user.name || "사용자"}
                     </div>
                     <div className="text-sm text-gray-500 dark:text-gray-400 tracking-tight">
@@ -404,7 +401,7 @@ export default function Header() {
                       {item.title}
                     </div>
                     <div className="pl-4 space-y-1">
-                      {item.columns[0].items.map((subItem, index) => (
+                      {item.items.map((subItem, index) => (
                         <Link
                           key={index}
                           href={subItem.href}
@@ -428,7 +425,7 @@ export default function Header() {
                       onClick={() => setIsMobileMenuOpen(false)}
                       className="flex items-center gap-3 px-2 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md transition-colors font-medium tracking-tight"
                     >
-                      <UserCircle className="h-4 w-4" />
+                      <UserCircle className="h-4 w-4 flex-shrink-0" />
                       마이페이지
                     </Link>
                     
@@ -439,7 +436,7 @@ export default function Header() {
                       }}
                       className="flex items-center gap-3 w-full px-2 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md transition-colors font-medium tracking-tight"
                     >
-                      <LogOut className="h-4 w-4" />
+                      <LogOut className="h-4 w-4 flex-shrink-0" />
                       로그아웃
                     </button>
                   </>
@@ -450,7 +447,7 @@ export default function Header() {
                   onClick={toggleTheme}
                   className="flex items-center gap-3 w-full px-2 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md transition-colors font-medium tracking-tight"
                 >
-                  {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+                  {theme === "dark" ? <Sun className="h-4 w-4 flex-shrink-0" /> : <Moon className="h-4 w-4 flex-shrink-0" />}
                   {theme === "dark" ? (t("lightMode") || "라이트 모드") : (t("darkMode") || "다크 모드")}
                 </button>
 

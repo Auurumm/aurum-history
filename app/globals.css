@@ -1,26 +1,15 @@
-/* ✅ 폰트 로딩: 반드시 맨 위에 있어야 함 */
-@import url('https://fonts.googleapis.com/css2?family=East+Sea+Dokdo&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Black+Han+Sans&display=swap');
-@import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css');
-@import url('https://cdn.jsdelivr.net/gh/sunn-us/SUIT/fonts/static/woff2/SUIT.css');
-
-/* ⭐ 커스텀 폰트 추가 - @import 바로 아래, @tailwind 위에 */
+/* ✅ 커스텀 폰트 정의 - 최우선 적용 */
 @font-face {
   font-family: 'OotmanFont';
-  src: url('/fonts/OKMAN%20FONT.ttf') format('truetype'); /* 공백을 %20으로 인코딩 */
+  src: url('/fonts/OKMAN%20FONT.ttf') format('truetype');
   font-weight: normal;
   font-style: normal;
   font-display: swap;
 }
 
-/* 만약 볼드 버전이 있다면 추가 */
-/* @font-face {
-  font-family: 'OotmanFont';
-  src: url('/fonts/ootman-font-bold.ttf') format('truetype');
-  font-weight: bold;
-  font-style: normal;
-  font-display: swap;
-} */
+/* ✅ 구글 폰트 로딩 최적화 */
+@import url('https://fonts.googleapis.com/css2?family=East+Sea+Dokdo&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Black+Han+Sans&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -53,6 +42,10 @@
     --chart-3: 197 37% 24%;
     --chart-4: 43 74% 66%;
     --chart-5: 27 87% 67%;
+
+    /* ✅ 폰트 변수 - 커스텀 폰트 우선 적용 */
+    --font-pretendard: 'Pretendard Variable', 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+    --font-okman: 'OotmanFont', 'Black Han Sans', sans-serif;
   }
 
   .dark {
@@ -94,10 +87,14 @@
   /* ✅ Pretendard 기본 타이포그래피 설정 */
   body {
     @apply bg-background text-foreground;
-    font-family: "Pretendard Variable", "Pretendard", -apple-system, BlinkMacSystemFont, system-ui, Roboto, "Helvetica Neue", "Segoe UI", "Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic", sans-serif;
+    font-family: var(--font-pretendard);
     font-weight: 400;
     letter-spacing: -0.01em;
     line-height: 1.6;
+    /* 폰트 렌더링 최적화 */
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
   }
 
   /* 🎯 기본 HTML 태그들에 의미 단위 줄바꿈 적용 */
@@ -109,10 +106,8 @@
   /* 모바일에서 의미 단위 줄바꿈 강화 (양쪽 정렬 제거) */
   @media (max-width: 767px) {
     h1, h2, h3, h4, h5, h6, p {
-      word-spacing: 0.1em;  /* 줄임 */
-      line-height: 1.6;     /* 줄임 */
-      /* text-align: justify 제거 */
-      /* text-justify: inter-word 제거 */
+      word-spacing: 0.1em;
+      line-height: 1.6;
     }
   }
 
@@ -210,17 +205,24 @@
   /* 모바일에서 더 적극적인 의미 단위 줄바꿈 (양쪽 정렬 제거) */
   @media (max-width: 767px) {
     .responsive-text {
-      word-spacing: 0.1em;  /* 줄임 */
-      line-height: 1.6;     /* 줄임 */
-      /* text-align: justify 제거 */
-      /* text-justify: inter-word 제거 */
+      word-spacing: 0.1em;
+      line-height: 1.6;
     }
   }
   
   /* ⭐ 히어로 텍스트 자동 스타일 - 커스텀 폰트 적용 */
   .hero {
-    font-family: 'OotmanFont', 'Black Han Sans', sans-serif; /* 커스텀 폰트 추가 */
+    font-family: var(--font-okman) !important; /* !important로 강제 적용 */
     @apply text-6xl sm:text-7xl md:text-8xl lg:text-9xl xl:text-[10rem] text-[#D4AF37] leading-tight tracking-wide responsive-text;
+    font-weight: normal; /* 커스텀 폰트의 기본 weight 사용 */
+  }
+  
+  /* ✅ 커스텀 폰트 테스트 클래스 */
+  .test-okman {
+    font-family: var(--font-okman) !important;
+    font-size: 2rem;
+    color: #D4AF37;
+    font-weight: normal;
   }
   
   /* 제목 자동 스타일 */
@@ -241,10 +243,8 @@
   /* 모바일에서 .body 클래스 특별 처리 (양쪽 정렬 제거) */
   @media (max-width: 767px) {
     .body {
-      word-spacing: 0.1em;   /* 많이 줄임 */
-      line-height: 1.7;      /* 적당히 줄임 */
-      /* text-align: justify 제거 */
-      /* hyphens: auto 제거 */
+      word-spacing: 0.1em;
+      line-height: 1.7;
     }
   }
 
@@ -274,6 +274,7 @@
   }
 }
 
+/* ✅ 테마 관련 스타일 */
 .theme-bg {
   background-color: rgb(var(--theme-bg));
 }
@@ -298,6 +299,7 @@
   border-color: rgb(var(--theme-border));
 }
 
+/* ✅ 스크롤 관련 스타일 */
 .scroll-container {
   scroll-behavior: smooth;
 }
@@ -323,12 +325,42 @@ html {
   background: #ca8a04;
 }
 
+/* ✅ 커서 관련 스타일 - 올바른 커서 설정 */
 @media (hover: hover) {
-  button,
-  a,
-  input,
-  textarea,
-  select {
+  /* 인터랙티브 요소들만 커스텀 커서 적용 */
+  button:not(:disabled),
+  a[href],
+  input[type="button"],
+  input[type="submit"],
+  input[type="reset"],
+  input[type="file"],
+  select,
+  [role="button"],
+  [tabindex]:not([tabindex="-1"]) {
     cursor: none !important;
+  }
+
+  /* 텍스트 입력 필드는 텍스트 커서 유지 */
+  input[type="text"],
+  input[type="email"],
+  input[type="password"],
+  input[type="search"],
+  input[type="url"],
+  input[type="tel"],
+  textarea,
+  [contenteditable="true"] {
+    cursor: text !important;
+  }
+
+  /* 일반 텍스트는 기본 커서 */
+  p, span, div, h1, h2, h3, h4, h5, h6,
+  li, td, th, label:not([for]) {
+    cursor: default !important;
+  }
+
+  /* 선택 가능한 텍스트는 텍스트 커서 */
+  [user-select="text"],
+  .selectable-text {
+    cursor: text !important;
   }
 }

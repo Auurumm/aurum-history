@@ -65,17 +65,32 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="ko" className="scroll-smooth">
       <head>
-        {/* Pretendard 폰트 CDN - 가장 최신 버전 */}
+        {/* CDN 폰트 최적화 로딩 */}
+        <link 
+          rel="preconnect" 
+          href="https://cdn.jsdelivr.net" 
+          crossOrigin=""
+        />
+        <link 
+          rel="preload" 
+          href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" 
+          as="style"
+        />
         <link 
           rel="stylesheet" 
-          as="style"
-          crossOrigin=""
           href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" 
         />
+        
+        {/* 커스텀 폰트 preload (URL 인코딩 적용) */}
+        <link
+          rel="preload"
+          href="/fonts/OKMAN%20FONT.ttf"
+          as="font"
+          type="font/ttf"
+          crossOrigin=""
+        />
       </head>
-      <body
-        className="font-pretendard bg-white dark:bg-black text-black dark:text-white transition-colors duration-300 min-h-screen flex flex-col antialiased"
-      >
+      <body className="font-pretendard bg-white dark:bg-black text-black dark:text-white transition-colors duration-300 min-h-screen flex flex-col antialiased">
         <Providers>
           <ResponsiveProvider>
             <CustomCursor />
