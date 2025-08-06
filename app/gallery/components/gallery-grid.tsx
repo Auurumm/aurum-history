@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Filter, X, ChevronLeft, ChevronRight, MoreHorizontal, RefreshCw, Cloud } from "lucide-react"
+import { Filter, X, ChevronLeft, ChevronRight, MoreHorizontal, RefreshCw } from "lucide-react"
 import { getAllGalleryItems, FirestoreGalleryItem } from "../../../utils/firestoreUtils"
 
 interface GalleryItem {
@@ -25,7 +25,6 @@ export default function GalleryGrid() {
   const [cardImageIndices, setCardImageIndices] = useState<{[key: string]: number}>({})
   const [items, setItems] = useState<GalleryItem[]>([])
   const [isLoading, setIsLoading] = useState(true)
-  const [lastUpdate, setLastUpdate] = useState<Date>(new Date())
 
   // Firestore에서 데이터 로드
   const loadGalleryData = async () => {
@@ -35,15 +34,13 @@ export default function GalleryGrid() {
       const firestoreItems = await getAllGalleryItems()
       
       if (firestoreItems.length > 0) {
-        console.log(`✅ Firestore에서 ${firestoreItems.length}개 갤러리 아이템 로드됨`)
         setItems(firestoreItems)
-        setLastUpdate(new Date())
         
         // Firestore 데이터를 localStorage에도 백업 저장
         try {
           localStorage.setItem('gallery-items', JSON.stringify(firestoreItems))
         } catch (error) {
-          console.warn('localStorage 백업 실패:', error)
+          // 조용히 실패 처리
         }
       } else {
         // Firestore에 데이터가 없으면 localStorage 폴백
@@ -51,32 +48,25 @@ export default function GalleryGrid() {
         if (savedItems) {
           try {
             const parsedItems = JSON.parse(savedItems)
-            console.log(`📦 localStorage에서 ${parsedItems.length}개 아이템 로드됨 (폴백)`)
             setItems(parsedItems)
           } catch (error) {
-            console.error('localStorage 파싱 실패:', error)
             setItems([])
           }
         } else {
-          console.log('📭 갤러리 데이터가 없습니다.')
           setItems([])
         }
       }
     } catch (error: unknown) {
-      console.error('갤러리 데이터 로드 실패:', error)
-      
       // 오류 발생시 localStorage 폴백
       try {
         const savedItems = localStorage.getItem('gallery-items')
         if (savedItems) {
           const parsedItems = JSON.parse(savedItems)
-          console.log(`🔄 오류 폴백: localStorage에서 ${parsedItems.length}개 아이템 로드됨`)
           setItems(parsedItems)
         } else {
           setItems([])
         }
       } catch (localError) {
-        console.error('localStorage 폴백도 실패:', localError)
         setItems([])
       }
     } finally {
@@ -94,13 +84,11 @@ export default function GalleryGrid() {
     const handleStorageChange = (e?: StorageEvent) => {
       // 다른 탭에서 localStorage가 변경된 경우에만 반응
       if (e && e.key === 'gallery-items') {
-        console.log('🔄 다른 탭에서 갤러리 데이터 변경 감지됨')
         loadGalleryData()
       }
     }
 
     const handleGalleryUpdate = () => {
-      console.log('🔄 갤러리 업데이트 이벤트 감지됨')
       loadGalleryData()
     }
 
@@ -119,7 +107,6 @@ export default function GalleryGrid() {
   // 주기적 데이터 새로고침 (5분마다)
   useEffect(() => {
     const interval = setInterval(() => {
-      console.log('🔄 주기적 갤러리 데이터 새로고침')
       loadGalleryData()
     }, 5 * 60 * 1000) // 5분
 
@@ -210,43 +197,16 @@ export default function GalleryGrid() {
     }
   }, [selectedItem, currentImageIndex])
 
-  // 수동 새로고침
-  const handleRefresh = () => {
-    loadGalleryData()
-  }
-
   return (
     <section className="py-20 px-4 sm:px-6 lg:px-8 bg-white dark:bg-black text-gray-900 dark:text-gray-100">
       <div className="max-w-7xl mx-auto">
-        {/* 상태 표시 헤더 */}
-        <div className="text-center mb-8">
-          <div className="flex justify-center items-center gap-4 mb-4">
-            <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
-              <Cloud className="h-4 w-4 text-green-500" />
-              <span>Firestore 연동</span>
-            </div>
-            <div className="text-sm text-gray-500">
-              마지막 업데이트: {lastUpdate.toLocaleTimeString()}
-            </div>
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={handleRefresh}
-              disabled={isLoading}
-              className="flex items-center gap-1"
-            >
-              <RefreshCw className={`h-3 w-3 ${isLoading ? 'animate-spin' : ''}`} />
-              새로고침
-            </Button>
+        {/* 로딩 상태만 표시 */}
+        {isLoading && (
+          <div className="text-center py-8 mb-8">
+            <RefreshCw className="h-8 w-8 animate-spin text-yellow-400 mx-auto mb-4" />
+            <p className="text-gray-600 dark:text-gray-400">갤러리를 불러오는 중...</p>
           </div>
-          
-          {isLoading && (
-            <div className="text-center py-4">
-              <RefreshCw className="h-6 w-6 animate-spin text-yellow-400 mx-auto mb-2" />
-              <p className="text-sm text-gray-600 dark:text-gray-400">갤러리 데이터를 불러오는 중...</p>
-            </div>
-          )}
-        </div>
+        )}
 
         {/* Filter Buttons */}
         <div className="flex flex-wrap justify-center gap-3 mb-12">
@@ -358,15 +318,6 @@ export default function GalleryGrid() {
                         #{item.category}
                       </span>
                     </div>
-
-                    {/* Firebase 표시 */}
-                    {currentImage?.includes('firebasestorage.googleapis.com') && (
-                      <div className="absolute top-4 left-20 pointer-events-none">
-                        <span className="bg-blue-500 text-white px-2 py-1 rounded-full text-xs font-medium">
-                          ☁️ Firebase
-                        </span>
-                      </div>
-                    )}
                   </div>
 
                   {/* Content */}
@@ -382,14 +333,9 @@ export default function GalleryGrid() {
                       {item.caption}
                     </p>
 
-                    {/* 이미지 저장소 정보 */}
-                    <div className="flex items-center gap-2 text-xs text-gray-500">
+                    {/* 간단한 사진 수 정보만 표시 */}
+                    <div className="text-xs text-gray-500">
                       <span>{item.images.length}장의 사진</span>
-                      {item.images.filter(img => img.includes('firebasestorage.googleapis.com')).length > 0 && (
-                        <span className="text-blue-500">
-                          ☁️ {item.images.filter(img => img.includes('firebasestorage.googleapis.com')).length}장 클라우드
-                        </span>
-                      )}
                     </div>
                   </div>
                 </CardContent>
@@ -420,26 +366,9 @@ export default function GalleryGrid() {
           <div className="text-center py-20">
             <div className="text-6xl mb-4">📸</div>
             <h3 className="text-2xl font-bold text-gray-400 mb-2">아직 사진이 없어요</h3>
-            <p className="text-gray-500 mb-4">선택하신 카테고리의 사진을 준비 중입니다.</p>
-            <Button
-              onClick={handleRefresh}
-              variant="outline"
-              className="flex items-center gap-2 mx-auto"
-            >
-              <RefreshCw className="h-4 w-4" />
-              다시 불러오기
-            </Button>
+            <p className="text-gray-500">선택하신 카테고리의 사진을 준비 중입니다.</p>
           </div>
         )}
-
-        {/* 연결 상태 정보 */}
-        <div className="mt-12 text-center">
-          <div className="inline-flex items-center gap-2 px-4 py-2 bg-green-50 dark:bg-green-900/20 rounded-full text-sm text-green-700 dark:text-green-300">
-            <Cloud className="h-4 w-4" />
-            <span>Firebase Firestore 연결됨</span>
-            <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
-          </div>
-        </div>
 
         {/* Image Modal */}
         {selectedItem && (
@@ -481,13 +410,6 @@ export default function GalleryGrid() {
                     {currentImageIndex + 1} / {selectedItem.images.length}
                   </div>
                 )}
-
-                {/* Firebase 표시 */}
-                {selectedItem.images[currentImageIndex]?.includes('firebasestorage.googleapis.com') && (
-                  <div className="absolute bottom-4 right-4 bg-blue-500 text-white px-3 py-1 rounded-full text-sm">
-                    ☁️ Firebase
-                  </div>
-                )}
               </div>
 
               <div className="lg:w-80 p-6 bg-white dark:bg-gray-900">
@@ -524,24 +446,14 @@ export default function GalleryGrid() {
                             alt={`Thumbnail ${index + 1}`}
                             className="w-full h-full object-cover"
                           />
-                          {image.includes('firebasestorage.googleapis.com') && (
-                            <div className="absolute top-0 right-0 w-3 h-3 bg-blue-500 rounded-bl text-xs flex items-center justify-center">
-                              <span className="text-white text-[8px]">☁</span>
-                            </div>
-                          )}
                         </button>
                       ))}
                     </div>
                   </div>
                 )}
 
-                <div className="text-sm text-gray-500 dark:text-gray-400 space-y-1">
+                <div className="text-sm text-gray-500 dark:text-gray-400">
                   <div>{selectedItem.images.length}장의 사진</div>
-                  {selectedItem.images.filter(img => img.includes('firebasestorage.googleapis.com')).length > 0 && (
-                    <div className="text-blue-500">
-                      ☁️ {selectedItem.images.filter(img => img.includes('firebasestorage.googleapis.com')).length}장이 Firebase에 저장됨
-                    </div>
-                  )}
                 </div>
               </div>
             </div>
