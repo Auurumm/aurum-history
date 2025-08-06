@@ -178,9 +178,9 @@ export default function Header() {
       <div className="absolute inset-0 bg-white/95 dark:bg-black/95 backdrop-blur-sm border-b border-gray-200/20 dark:border-gray-700/20"></div>
 
       <div className="w-full px-4 sm:px-6 lg:px-8 lg:max-w-7xl lg:mx-auto relative z-10">
-        <div className={`flex items-center justify-between ${isMobile ? 'h-16' : 'h-20'}`}>
+        <div className={`flex items-center justify-between w-full ${isMobile ? 'h-16' : 'h-20'}`}>
           {/* Logo */}
-          <div className="flex-shrink-0">
+          <div className="flex-shrink-0 min-w-0">
             <Link
               href={getLocalizedPath("/")}
               className="flex items-center space-x-2 font-bold transition-opacity hover:opacity-80 text-black dark:text-white"
@@ -240,8 +240,8 @@ export default function Header() {
             </nav>
           )}
 
-          {/* Right Side */}
-          <div className="flex items-center space-x-2">
+          {/* Right Side - 모바일에서 확실하게 보이도록 수정 */}
+          <div className={`flex items-center ${isMobile ? 'flex-shrink-0' : 'space-x-2'}`}>
             {/* Desktop only items */}
             {!isMobile && (
               <div className="flex items-center space-x-4">
@@ -347,16 +347,16 @@ export default function Header() {
               </div>
             )}
 
-            {/* 모바일 햄버거 메뉴 */}
+            {/* 🔧 모바일 햄버거 메뉴 - 확실하게 보이도록 수정 */}
             {isMobile && (
               <Button
                 variant="ghost"
                 size="sm"
-                className="p-1 transition-colors text-gray-800 hover:text-black dark:text-gray-200 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 flex-shrink-0"
+                className="p-2 ml-2 transition-colors text-gray-800 hover:text-black dark:text-gray-200 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 flex-shrink-0 min-w-[44px] min-h-[44px] flex items-center justify-center"
                 onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
                 aria-label="메뉴 토글"
               >
-                {isMobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+                {isMobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
               </Button>
             )}
           </div>
