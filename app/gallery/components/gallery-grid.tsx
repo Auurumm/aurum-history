@@ -3,18 +3,17 @@
 import { useState, useEffect } from "react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Filter, X, ChevronLeft, ChevronRight, MoreHorizontal } from "lucide-react"
+import { Filter, X, ChevronLeft, ChevronRight, MoreHorizontal, RefreshCw, Cloud } from "lucide-react"
+import { getAllGalleryItems, FirestoreGalleryItem } from "../../../utils/firestoreUtils"
 
 interface GalleryItem {
-  id: number
-  images: string[] // 배열로 변경 (단일 이미지는 배열에 하나만)
+  id?: string
+  images: string[]
   title: string
   caption: string
   category: string
   size: "normal" | "tall"
 }
-
-
 
 const categories = ["전체", "사무실", "구성원", "일상", "워크숍", "이벤트", "외관"]
 
@@ -23,52 +22,113 @@ export default function GalleryGrid() {
   const [visibleItems, setVisibleItems] = useState(6)
   const [selectedItem, setSelectedItem] = useState<GalleryItem | null>(null)
   const [currentImageIndex, setCurrentImageIndex] = useState(0)
-  const [cardImageIndices, setCardImageIndices] = useState<{[key: number]: number}>({})
+  const [cardImageIndices, setCardImageIndices] = useState<{[key: string]: number}>({})
   const [items, setItems] = useState<GalleryItem[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [lastUpdate, setLastUpdate] = useState<Date>(new Date())
 
-  // 로컬 스토리지에서 관리자가 작성한 게시글 불러오기
-  useEffect(() => {
-    const savedItems = localStorage.getItem('gallery-items')
-    if (savedItems) {
-      try {
-        const parsedItems = JSON.parse(savedItems)
-        setItems(parsedItems)
-      } catch (error) {
-        console.error('Failed to load gallery items:', error)
-        setItems([]) // 기본값은 빈 배열
-      }
-    } else {
-      setItems([]) // 로컬 스토리지에 데이터가 없으면 빈 배열
-    }
-  }, [])
-
-  // 관리자에서 데이터 변경 감지 (storage 이벤트 리스닝)
-  useEffect(() => {
-    const handleStorageChange = () => {
-      const savedItems = localStorage.getItem('gallery-items')
-      if (savedItems) {
+  // Firestore에서 데이터 로드
+  const loadGalleryData = async () => {
+    setIsLoading(true)
+    try {
+      // Firestore에서 최신 데이터 가져오기
+      const firestoreItems = await getAllGalleryItems()
+      
+      if (firestoreItems.length > 0) {
+        console.log(`✅ Firestore에서 ${firestoreItems.length}개 갤러리 아이템 로드됨`)
+        setItems(firestoreItems)
+        setLastUpdate(new Date())
+        
+        // Firestore 데이터를 localStorage에도 백업 저장
         try {
-          const parsedItems = JSON.parse(savedItems)
-          setItems(parsedItems)
+          localStorage.setItem('gallery-items', JSON.stringify(firestoreItems))
         } catch (error) {
-          console.error('Failed to load updated gallery items:', error)
+          console.warn('localStorage 백업 실패:', error)
+        }
+      } else {
+        // Firestore에 데이터가 없으면 localStorage 폴백
+        const savedItems = localStorage.getItem('gallery-items')
+        if (savedItems) {
+          try {
+            const parsedItems = JSON.parse(savedItems)
+            console.log(`📦 localStorage에서 ${parsedItems.length}개 아이템 로드됨 (폴백)`)
+            setItems(parsedItems)
+          } catch (error) {
+            console.error('localStorage 파싱 실패:', error)
+            setItems([])
+          }
+        } else {
+          console.log('📭 갤러리 데이터가 없습니다.')
+          setItems([])
         }
       }
+    } catch (error: unknown) {
+      console.error('갤러리 데이터 로드 실패:', error)
+      
+      // 오류 발생시 localStorage 폴백
+      try {
+        const savedItems = localStorage.getItem('gallery-items')
+        if (savedItems) {
+          const parsedItems = JSON.parse(savedItems)
+          console.log(`🔄 오류 폴백: localStorage에서 ${parsedItems.length}개 아이템 로드됨`)
+          setItems(parsedItems)
+        } else {
+          setItems([])
+        }
+      } catch (localError) {
+        console.error('localStorage 폴백도 실패:', localError)
+        setItems([])
+      }
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  // 초기 데이터 로드
+  useEffect(() => {
+    loadGalleryData()
+  }, [])
+
+  // 관리자에서 데이터 변경 감지
+  useEffect(() => {
+    const handleStorageChange = (e?: StorageEvent) => {
+      // 다른 탭에서 localStorage가 변경된 경우에만 반응
+      if (e && e.key === 'gallery-items') {
+        console.log('🔄 다른 탭에서 갤러리 데이터 변경 감지됨')
+        loadGalleryData()
+      }
     }
 
-    // storage 이벤트 리스너 추가 (다른 탭에서 변경사항 감지)
+    const handleGalleryUpdate = () => {
+      console.log('🔄 갤러리 업데이트 이벤트 감지됨')
+      loadGalleryData()
+    }
+
+    // 다른 탭에서 localStorage 변경 감지
     window.addEventListener('storage', handleStorageChange)
     
-    // 같은 탭에서도 변경사항 감지하기 위한 커스텀 이벤트
-    window.addEventListener('gallery-updated', handleStorageChange)
+    // 같은 탭에서 갤러리 업데이트 감지
+    window.addEventListener('gallery-updated', handleGalleryUpdate)
     
     return () => {
       window.removeEventListener('storage', handleStorageChange)
-      window.removeEventListener('gallery-updated', handleStorageChange)
+      window.removeEventListener('gallery-updated', handleGalleryUpdate)
     }
   }, [])
 
-  const filteredItems = items.filter((item) => activeCategory === "전체" || item.category === activeCategory)
+  // 주기적 데이터 새로고침 (5분마다)
+  useEffect(() => {
+    const interval = setInterval(() => {
+      console.log('🔄 주기적 갤러리 데이터 새로고침')
+      loadGalleryData()
+    }, 5 * 60 * 1000) // 5분
+
+    return () => clearInterval(interval)
+  }, [])
+
+  const filteredItems = items.filter((item) => 
+    activeCategory === "전체" || item.category === activeCategory
+  )
   const displayedItems = filteredItems.slice(0, visibleItems)
 
   const loadMore = () => {
@@ -97,7 +157,9 @@ export default function GalleryGrid() {
   }
 
   // 카드 내 이미지 변경
-  const changeCardImage = (itemId: number, direction: 'next' | 'prev') => {
+  const changeCardImage = (itemId: string | undefined, direction: 'next' | 'prev') => {
+    if (!itemId) return
+    
     const item = items.find(i => i.id === itemId)
     if (!item || item.images.length <= 1) return
 
@@ -114,11 +176,6 @@ export default function GalleryGrid() {
       ...prev,
       [itemId]: newIndex
     }))
-  }
-
-  // 이미지 클릭 핸들러 (모달 열기)
-  const handleImageClick = (item: GalleryItem, imageIndex: number) => {
-    openModal(item, imageIndex)
   }
 
   // 키보드 이벤트 처리
@@ -153,9 +210,44 @@ export default function GalleryGrid() {
     }
   }, [selectedItem, currentImageIndex])
 
+  // 수동 새로고침
+  const handleRefresh = () => {
+    loadGalleryData()
+  }
+
   return (
     <section className="py-20 px-4 sm:px-6 lg:px-8 bg-white dark:bg-black text-gray-900 dark:text-gray-100">
       <div className="max-w-7xl mx-auto">
+        {/* 상태 표시 헤더 */}
+        <div className="text-center mb-8">
+          <div className="flex justify-center items-center gap-4 mb-4">
+            <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+              <Cloud className="h-4 w-4 text-green-500" />
+              <span>Firestore 연동</span>
+            </div>
+            <div className="text-sm text-gray-500">
+              마지막 업데이트: {lastUpdate.toLocaleTimeString()}
+            </div>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={handleRefresh}
+              disabled={isLoading}
+              className="flex items-center gap-1"
+            >
+              <RefreshCw className={`h-3 w-3 ${isLoading ? 'animate-spin' : ''}`} />
+              새로고침
+            </Button>
+          </div>
+          
+          {isLoading && (
+            <div className="text-center py-4">
+              <RefreshCw className="h-6 w-6 animate-spin text-yellow-400 mx-auto mb-2" />
+              <p className="text-sm text-gray-600 dark:text-gray-400">갤러리 데이터를 불러오는 중...</p>
+            </div>
+          )}
+        </div>
+
         {/* Filter Buttons */}
         <div className="flex flex-wrap justify-center gap-3 mb-12">
           <Filter className="h-5 w-5 text-yellow-400 mr-2 mt-1" />
@@ -182,13 +274,14 @@ export default function GalleryGrid() {
         {/* Gallery Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
           {displayedItems.map((item) => {
-            const currentCardImageIndex = cardImageIndices[item.id] || 0
+            const itemId = item.id || `temp-${Math.random()}`
+            const currentCardImageIndex = cardImageIndices[itemId] || 0
             const currentImage = item.images[currentCardImageIndex]
             const hasMultipleImages = item.images.length > 1
             
             return (
               <Card
-                key={item.id}
+                key={itemId}
                 className={`bg-white/80 dark:bg-gray-900/30 border-gray-300 dark:border-gray-800 hover:border-yellow-400/50 transition-all duration-300 hover:-translate-y-2 group overflow-hidden cursor-pointer ${
                   item.size === "tall" ? "md:row-span-2" : ""
                 }`}
@@ -201,21 +294,17 @@ export default function GalleryGrid() {
                       alt={item.title}
                       className={`w-full object-cover transition-transform duration-300 group-hover:scale-105 cursor-pointer ${
                         item.size === "tall" ? "h-96 md:h-full" : "h-64"
-                      } ${
-                        item.id === 3 ? "object-[center_20%]" : "object-center"
-                      }`}
-                      onClick={() => handleImageClick(item, currentCardImageIndex)}
+                      } object-center`}
+                      onClick={() => openModal(item, currentCardImageIndex)}
                     />
 
-                    {/* Multi-image UI - 여러 장일 때만 표시 */}
+                    {/* Multi-image UI */}
                     {hasMultipleImages && (
                       <>
-                        {/* Image counter */}
                         <div className="absolute top-4 right-4 bg-black/70 text-white px-2 py-1 rounded-full text-xs font-medium pointer-events-none">
                           {currentCardImageIndex + 1}/{item.images.length}
                         </div>
 
-                        {/* Navigation dots */}
                         <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex space-x-1">
                           {item.images.map((_, index) => (
                             <button
@@ -224,7 +313,7 @@ export default function GalleryGrid() {
                                 e.stopPropagation()
                                 setCardImageIndices(prev => ({
                                   ...prev,
-                                  [item.id]: index
+                                  [itemId]: index
                                 }))
                               }}
                               className={`w-2 h-2 rounded-full transition-colors z-10 ${
@@ -236,12 +325,11 @@ export default function GalleryGrid() {
                           ))}
                         </div>
 
-                        {/* Navigation arrows (hover) */}
                         <div className="absolute inset-0 flex items-center justify-between px-2 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
                           <button
                             onClick={(e) => {
                               e.stopPropagation()
-                              changeCardImage(item.id, 'prev')
+                              changeCardImage(itemId, 'prev')
                             }}
                             className="p-1 rounded-full bg-black/50 text-white hover:bg-black/70 transition-colors pointer-events-auto z-10"
                           >
@@ -250,7 +338,7 @@ export default function GalleryGrid() {
                           <button
                             onClick={(e) => {
                               e.stopPropagation()
-                              changeCardImage(item.id, 'next')
+                              changeCardImage(itemId, 'next')
                             }}
                             className="p-1 rounded-full bg-black/50 text-white hover:bg-black/70 transition-colors pointer-events-auto z-10"
                           >
@@ -258,7 +346,6 @@ export default function GalleryGrid() {
                           </button>
                         </div>
 
-                        {/* Multi-photo icon */}
                         <div className="absolute bottom-4 right-4 pointer-events-none">
                           <MoreHorizontal className="h-5 w-5 text-white drop-shadow-lg" />
                         </div>
@@ -271,12 +358,21 @@ export default function GalleryGrid() {
                         #{item.category}
                       </span>
                     </div>
+
+                    {/* Firebase 표시 */}
+                    {currentImage?.includes('firebasestorage.googleapis.com') && (
+                      <div className="absolute top-4 left-20 pointer-events-none">
+                        <span className="bg-blue-500 text-white px-2 py-1 rounded-full text-xs font-medium">
+                          ☁️ Firebase
+                        </span>
+                      </div>
+                    )}
                   </div>
 
-                  {/* Content - 클릭 시 모달 열기 */}
+                  {/* Content */}
                   <div 
                     className="p-6 cursor-pointer"
-                    onClick={() => handleImageClick(item, currentCardImageIndex)}
+                    onClick={() => openModal(item, currentCardImageIndex)}
                   >
                     <h3 className="text-xl font-bold mb-3 text-yellow-600 dark:text-yellow-400">
                       {item.title}
@@ -285,6 +381,16 @@ export default function GalleryGrid() {
                     <p className="text-gray-700 dark:text-gray-300 text-sm leading-relaxed mb-4">
                       {item.caption}
                     </p>
+
+                    {/* 이미지 저장소 정보 */}
+                    <div className="flex items-center gap-2 text-xs text-gray-500">
+                      <span>{item.images.length}장의 사진</span>
+                      {item.images.filter(img => img.includes('firebasestorage.googleapis.com')).length > 0 && (
+                        <span className="text-blue-500">
+                          ☁️ {item.images.filter(img => img.includes('firebasestorage.googleapis.com')).length}장 클라우드
+                        </span>
+                      )}
+                    </div>
                   </div>
                 </CardContent>
               </Card>
@@ -310,18 +416,34 @@ export default function GalleryGrid() {
         )}
 
         {/* Empty State */}
-        {filteredItems.length === 0 && (
+        {!isLoading && filteredItems.length === 0 && (
           <div className="text-center py-20">
             <div className="text-6xl mb-4">📸</div>
             <h3 className="text-2xl font-bold text-gray-400 mb-2">아직 사진이 없어요</h3>
-            <p className="text-gray-500">선택하신 카테고리의 사진을 준비 중입니다.</p>
+            <p className="text-gray-500 mb-4">선택하신 카테고리의 사진을 준비 중입니다.</p>
+            <Button
+              onClick={handleRefresh}
+              variant="outline"
+              className="flex items-center gap-2 mx-auto"
+            >
+              <RefreshCw className="h-4 w-4" />
+              다시 불러오기
+            </Button>
           </div>
         )}
+
+        {/* 연결 상태 정보 */}
+        <div className="mt-12 text-center">
+          <div className="inline-flex items-center gap-2 px-4 py-2 bg-green-50 dark:bg-green-900/20 rounded-full text-sm text-green-700 dark:text-green-300">
+            <Cloud className="h-4 w-4" />
+            <span>Firebase Firestore 연결됨</span>
+            <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+          </div>
+        </div>
 
         {/* Image Modal */}
         {selectedItem && (
           <div className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4">
-            {/* Close Button */}
             <button
               onClick={closeModal}
               className="absolute top-4 right-4 z-10 p-2 rounded-full bg-black/50 text-white hover:bg-black/70 transition-colors"
@@ -329,7 +451,6 @@ export default function GalleryGrid() {
               <X className="h-6 w-6" />
             </button>
 
-            {/* Navigation Buttons - 여러 장일 때만 표시 */}
             {selectedItem.images.length > 1 && (
               <>
                 <button
@@ -347,9 +468,7 @@ export default function GalleryGrid() {
               </>
             )}
 
-            {/* Modal Content */}
             <div className="max-w-6xl max-h-full w-full flex flex-col lg:flex-row bg-white dark:bg-gray-900 rounded-lg overflow-hidden">
-              {/* Image Section */}
               <div className="flex-1 relative bg-black flex items-center justify-center">
                 <img
                   src={selectedItem.images[currentImageIndex]}
@@ -357,15 +476,20 @@ export default function GalleryGrid() {
                   className="max-w-full max-h-full object-contain"
                 />
                 
-                {/* Image counter in modal - 여러 장일 때만 표시 */}
                 {selectedItem.images.length > 1 && (
                   <div className="absolute bottom-4 left-4 bg-black/70 text-white px-3 py-1 rounded-full text-sm">
                     {currentImageIndex + 1} / {selectedItem.images.length}
                   </div>
                 )}
+
+                {/* Firebase 표시 */}
+                {selectedItem.images[currentImageIndex]?.includes('firebasestorage.googleapis.com') && (
+                  <div className="absolute bottom-4 right-4 bg-blue-500 text-white px-3 py-1 rounded-full text-sm">
+                    ☁️ Firebase
+                  </div>
+                )}
               </div>
 
-              {/* Info Section */}
               <div className="lg:w-80 p-6 bg-white dark:bg-gray-900">
                 <div className="mb-4">
                   <span className="bg-yellow-400 text-black px-3 py-1 rounded-full text-xs font-medium">
@@ -381,7 +505,6 @@ export default function GalleryGrid() {
                   {selectedItem.caption}
                 </p>
 
-                {/* Thumbnail Navigation - 여러 장일 때만 표시 */}
                 {selectedItem.images.length > 1 && (
                   <div className="mb-4">
                     <h4 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">모든 사진</h4>
@@ -401,22 +524,28 @@ export default function GalleryGrid() {
                             alt={`Thumbnail ${index + 1}`}
                             className="w-full h-full object-cover"
                           />
+                          {image.includes('firebasestorage.googleapis.com') && (
+                            <div className="absolute top-0 right-0 w-3 h-3 bg-blue-500 rounded-bl text-xs flex items-center justify-center">
+                              <span className="text-white text-[8px]">☁</span>
+                            </div>
+                          )}
                         </button>
                       ))}
                     </div>
                   </div>
                 )}
 
-                {/* Multi-photo indicator - 여러 장일 때만 표시 */}
-                {selectedItem.images.length > 1 && (
-                  <div className="text-sm text-gray-500 dark:text-gray-400">
-                    {selectedItem.images.length}장의 사진
-                  </div>
-                )}
+                <div className="text-sm text-gray-500 dark:text-gray-400 space-y-1">
+                  <div>{selectedItem.images.length}장의 사진</div>
+                  {selectedItem.images.filter(img => img.includes('firebasestorage.googleapis.com')).length > 0 && (
+                    <div className="text-blue-500">
+                      ☁️ {selectedItem.images.filter(img => img.includes('firebasestorage.googleapis.com')).length}장이 Firebase에 저장됨
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
 
-            {/* Click outside to close */}
             <div 
               className="absolute inset-0 -z-10" 
               onClick={closeModal}

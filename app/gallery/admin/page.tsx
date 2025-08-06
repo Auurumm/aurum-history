@@ -6,28 +6,37 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Plus, X, Upload, Edit, Trash2, Save, Lock, LogOut, Cloud } from "lucide-react"
-import { uploadMultipleImages, deleteImageFromFirebase, uploadImageToFirebase } from "../../../utils/firebaseUtils"
+import { Plus, X, Upload, Edit, Trash2, Save, Lock, LogOut, Cloud, RefreshCw, Download } from "lucide-react"
 
-// 타입 정의를 컴포넌트 내부에서 정의
-interface UploadResult {
-  success: boolean
-  url?: string
-  fileName?: string
-  originalName?: string
-  path?: string
-  error?: string
-}
+// Firebase imports
+import { storage, db } from "../../../lib/firebase"
+import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage'
+import { collection, addDoc, getDoc, deleteDoc, doc } from 'firebase/firestore'
 
-interface UploadProgress {
-  current: number
-  total: number
-  fileName: string
-  percentage: number
-}
+// Utils imports - 타입 충돌 해결
+import { 
+  uploadMultipleImages, 
+  deleteImageFromFirebase, 
+  uploadBase64ToFirebase,
+  type UploadResult,
+  type UploadProgress
+} from "../../../utils/firebaseUtils"
 
+import { 
+  saveGalleryItem, 
+  updateGalleryItem, 
+  deleteGalleryItem, 
+  getAllGalleryItems, 
+  migrateFromLocalStorage,
+  backupToLocalStorage,
+  type FirestoreGalleryItem,
+  testFirestoreConnection,
+  getGalleryItem
+} from "../../../utils/firestoreUtils"
+
+// 로컬 타입 정의 (중복 제거)
 interface GalleryItem {
-  id: number
+  id?: string
   images: string[]
   title: string
   caption: string
@@ -36,19 +45,6 @@ interface GalleryItem {
 }
 
 const categories = ["사무실", "구성원", "일상", "워크숍", "이벤트", "외관"]
-
-// 기본 갤러리 데이터 (Firebase URL로 변경된 예시)
-const defaultGalleryItems: GalleryItem[] = [
-  {
-    id: 1,
-    images: ["/images/gallery/aurum2.webp"], // 기존 로컬 이미지는 그대로 유지
-    title: "따뜻한 회의 공간",
-    caption: "아이디어가 모이는 우리의 회의실, 벽돌과 따뜻한 조명이 만드는 아늑한 분위기",
-    category: "사무실",
-    size: "normal",
-  },
-  // ... 나머지 기본 데이터
-]
 
 // 로그인 컴포넌트
 function LoginForm({ onLogin }: { onLogin: (username: string, password: string) => void }) {
@@ -169,7 +165,8 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
   // 상태 변수들
   const [items, setItems] = useState<GalleryItem[]>([])
   const [isCreating, setIsCreating] = useState(false)
-  const [editingId, setEditingId] = useState<number | null>(null)
+  const [editingId, setEditingId] = useState<string | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
   
   const [newItem, setNewItem] = useState({
     title: "",
@@ -179,7 +176,6 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
     size: "normal" as "normal" | "tall"
   })
   
-  // Firebase 업로드 진행률 타입 정의
   const [uploadProgress, setUploadProgress] = useState<{
     isUploading: boolean
     current: number
@@ -197,41 +193,124 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
   // Refs
   const fileInputRef = useRef<HTMLInputElement>(null)
 
-  useEffect(() => {
-    const loadData = () => {
-      try {
-        const savedItems = localStorage.getItem('gallery-items')
-        if (savedItems) {
-          const parsedItems = JSON.parse(savedItems)
-          setItems(parsedItems)
-        } else {
-          setItems(defaultGalleryItems)
-          localStorage.setItem('gallery-items', JSON.stringify(defaultGalleryItems))
-        }
-      } catch (error: unknown) {
-        console.error('데이터 로드 실패:', error)
-        setItems(defaultGalleryItems)
-        localStorage.setItem('gallery-items', JSON.stringify(defaultGalleryItems))
-      }
+  // Firebase 디버깅 함수들 (필요 시 사용)
+  const debugFirebaseConfig = () => {
+    console.group('🔥 Firebase 설정 확인')
+    console.log('API Key:', process.env.NEXT_PUBLIC_FIREBASE_API_KEY?.substring(0, 10) + '...')
+    console.log('Project ID:', process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID)
+    console.log('Storage Bucket:', process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET)
+    console.log('Auth Domain:', process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN)
+    
+    const hasRealConfig = 
+      process.env.NEXT_PUBLIC_FIREBASE_API_KEY?.startsWith('AIzaSy') &&
+      process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID &&
+      !process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID.includes('dummy')
+      
+    if (hasRealConfig) {
+      console.log('✅ Firebase 설정이 실제 값으로 보입니다')
+    } else {
+      console.error('❌ Firebase 설정에 더미 값이 포함되어 있습니다!')
+      console.error('📝 .env.local 파일에 실제 Firebase 설정값을 추가해주세요!')
     }
-    loadData()
-  }, [])
+    console.groupEnd()
+    
+    alert(hasRealConfig ? '✅ Firebase 설정 정상 (콘솔 확인)' : '❌ Firebase 설정에 더미 값 포함 (콘솔 확인)')
+  }
 
-  const saveToLocalStorage = (newItems: GalleryItem[]) => {
+  const testStorageConnection = async () => {
     try {
-      localStorage.setItem('gallery-items', JSON.stringify(newItems))
-      window.dispatchEvent(new Event('gallery-updated'))
-    } catch (error: unknown) {
-      console.error("로컬 스토리지 저장 실패:", error)
-      throw error
+      console.group('📡 Firebase Storage 연결 테스트')
+      console.log('Storage 인스턴스:', !!storage)
+      
+      const testData = new Blob(['Firebase Storage connection test'], { type: 'text/plain' })
+      const testRef = ref(storage, 'debug/storage-test.txt')
+      
+      console.log('테스트 파일 경로:', 'debug/storage-test.txt')
+      console.log('업로드 시작...')
+      
+      const snapshot = await uploadBytes(testRef, testData)
+      console.log('✅ 업로드 성공:', snapshot.metadata.name)
+      
+      const downloadURL = await getDownloadURL(snapshot.ref)
+      console.log('✅ 다운로드 URL 생성:', downloadURL)
+      
+      await deleteObject(testRef)
+      console.log('✅ 파일 삭제 성공')
+      
+      console.groupEnd()
+      alert('✅ Firebase Storage 연결 테스트 성공!')
+      
+    } catch (error: any) {
+      console.group('❌ Firebase Storage 연결 실패')
+      console.error('오류 코드:', error.code)
+      console.error('오류 메시지:', error.message)
+      console.error('전체 오류:', error)
+      console.groupEnd()
+      
+      alert(`❌ Storage 연결 실패!\n오류: ${error.code}\n메시지: ${error.message}`)
     }
   }
 
-  // Firebase를 사용한 이미지 업로드 처리
+  // 초기 데이터 로드
+  useEffect(() => {
+    const loadData = async () => {
+      setIsLoading(true)
+      try {
+        console.log('📖 갤러리 데이터 로드 시작...')
+        const firestoreItems = await getAllGalleryItems()
+        
+        if (firestoreItems.length > 0) {
+          console.log(`✅ Firestore에서 ${firestoreItems.length}개 아이템 로드됨`)
+          setItems(firestoreItems)
+          await backupToLocalStorage()
+        } else {
+          const savedItems = localStorage.getItem('gallery-items')
+          if (savedItems) {
+            try {
+              const parsedItems = JSON.parse(savedItems)
+              console.log(`📦 localStorage에서 ${parsedItems.length}개 아이템 로드됨`)
+              setItems(parsedItems)
+            } catch (error) {
+              console.error('localStorage 파싱 실패:', error)
+              setItems([])
+            }
+          } else {
+            console.log('📭 데이터가 없습니다.')
+            setItems([])
+          }
+        }
+      } catch (error: unknown) {
+        console.error('데이터 로드 실패:', error)
+        setItems([])
+      } finally {
+        setIsLoading(false)
+      }
+    }
+    
+    loadData()
+  }, [])
+
+  // 데이터 새로고침
+  const refreshData = async () => {
+    setIsLoading(true)
+    try {
+      const firestoreItems = await getAllGalleryItems()
+      setItems(firestoreItems)
+      await backupToLocalStorage()
+      alert(`✅ 데이터 새로고침 완료! (${firestoreItems.length}개 아이템)`)
+    } catch (error) {
+      console.error('새로고침 실패:', error)
+      const errorMessage = error instanceof Error ? error.message : '알 수 없는 오류'
+      alert(`❌ 새로고침 실패: ${errorMessage}`)
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  // 이미지 업로드 처리
   const handleImageUpload = async (files: FileList | null) => {
     if (!files || files.length === 0) return
     
-    // 파일 검증
     const validFiles = Array.from(files).filter(file => {
       if (!file.type.startsWith('image/')) {
         alert(`${file.name}은(는) 이미지 파일이 아닙니다.`)
@@ -249,10 +328,9 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
     try {
       setUploadProgress(prev => ({ ...prev, isUploading: true }))
       
-      // Firebase에 업로드
       const results: UploadResult[] = await uploadMultipleImages(
         validFiles,
-        (progress: UploadProgress) => {
+        (progress) => {
           setUploadProgress(prev => ({
             ...prev,
             current: progress.current,
@@ -263,7 +341,6 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
         }
       )
       
-      // 성공한 업로드들만 필터링
       const successfulUploads = results.filter(result => result.success)
       const failedUploads = results.filter(result => !result.success)
       
@@ -275,7 +352,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
           images: [...prev.images, ...imageUrls]
         }))
         
-        alert(`✅ ${successfulUploads.length}장의 이미지가 Firebase에 업로드되었습니다!\n🌐 이제 모든 컴퓨터에서 볼 수 있습니다!`)
+        alert(`✅ ${successfulUploads.length}장의 이미지가 Firebase에 업로드되었습니다!`)
       }
       
       if (failedUploads.length > 0) {
@@ -285,7 +362,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
       
     } catch (error: unknown) {
       console.error('업로드 실패:', error)
-      const errorMessage = error instanceof Error ? error.message : '알 수 없는 오류가 발생했습니다.'
+      const errorMessage = error instanceof Error ? error.message : '알 수 없는 오류'
       alert(`업로드 중 오류가 발생했습니다: ${errorMessage}`)
     } finally {
       setUploadProgress({
@@ -296,20 +373,17 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
         percentage: 0
       })
       
-      // 파일 입력 초기화
-      const fileInput = fileInputRef.current
-      if (fileInput) {
-        fileInput.value = ''
+      if (fileInputRef.current) {
+        fileInputRef.current.value = ''
       }
     }
   }
 
-  // 이미지 제거 (Firebase에서도 삭제)
+  // 이미지 제거
   const removeImage = async (index: number) => {
     const imageUrl = newItem.images[index]
     
     if (confirm('이미지를 삭제하시겠습니까? Firebase에서도 완전히 삭제됩니다.')) {
-      // Firebase에서 이미지 삭제 시도
       if (imageUrl && imageUrl.includes('firebasestorage.googleapis.com')) {
         const deleteResult = await deleteImageFromFirebase(imageUrl)
         if (!deleteResult.success) {
@@ -317,7 +391,6 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
         }
       }
       
-      // 로컬 상태에서 제거
       setNewItem(prev => ({
         ...prev,
         images: prev.images.filter((_, i) => i !== index)
@@ -325,19 +398,9 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
     }
   }
 
-  // 이미지 순서 변경
-  const moveImage = (fromIndex: number, toIndex: number) => {
-    setNewItem(prev => {
-      const newImages = [...prev.images]
-      const [movedImage] = newImages.splice(fromIndex, 1)
-      newImages.splice(toIndex, 0, movedImage)
-      return { ...prev, images: newImages }
-    })
-  }
-
   // 수정 시작
   const startEdit = (item: GalleryItem) => {
-    setEditingId(item.id)
+    setEditingId(item.id || '')
     setNewItem({
       title: item.title,
       caption: item.caption,
@@ -354,9 +417,8 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
     setIsCreating(false)
     setNewItem({ title: "", caption: "", category: "", images: [], size: "normal" })
     
-    const fileInput = fileInputRef.current
-    if (fileInput) {
-      fileInput.value = ''
+    if (fileInputRef.current) {
+      fileInputRef.current.value = ''
     }
   }
 
@@ -379,7 +441,18 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
     }
 
     try {
+      console.log('💾 게시글 저장 시작:', newItem.title)
+      
       if (editingId) {
+        // 수정
+        await updateGalleryItem(editingId, {
+          title: newItem.title.trim(),
+          caption: newItem.caption.trim(),
+          category: newItem.category.trim(),
+          images: [...newItem.images],
+          size: newItem.size
+        })
+        
         const updatedItems = items.map(item => 
           item.id === editingId 
             ? {
@@ -393,11 +466,20 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
             : item
         )
         setItems(updatedItems)
-        saveToLocalStorage(updatedItems)
-        alert("✅ 게시글이 수정되었습니다!")
+        console.log('✅ 게시글 수정 완료')
+        alert("✅ 게시글이 성공적으로 수정되었습니다!")
       } else {
+        // 새 게시글 생성
+        const docId = await saveGalleryItem({
+          title: newItem.title.trim(),
+          caption: newItem.caption.trim(),
+          category: newItem.category.trim(),
+          images: [...newItem.images],
+          size: newItem.size
+        })
+        
         const newItemData: GalleryItem = {
-          id: Date.now() + Math.random(),
+          id: docId,
           title: newItem.title.trim(),
           caption: newItem.caption.trim(),
           category: newItem.category.trim(),
@@ -407,46 +489,71 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
         
         const newItems = [newItemData, ...items]
         setItems(newItems)
-        saveToLocalStorage(newItems)
-        alert("✅ 게시글이 저장되었습니다! 🌐 모든 컴퓨터에서 볼 수 있습니다!")
+        console.log('✅ 새 게시글 저장 완료:', docId)
+        alert("✅ 게시글이 성공적으로 저장되었습니다!")
       }
       
+      // localStorage 백업
+      await backupToLocalStorage()
+      
+      // 폼 초기화
       setNewItem({ title: "", caption: "", category: "", images: [], size: "normal" })
       setIsCreating(false)
       setEditingId(null)
       
-      const fileInput = fileInputRef.current
-      if (fileInput) {
-        fileInput.value = ''
+      if (fileInputRef.current) {
+        fileInputRef.current.value = ''
       }
       
     } catch (error: unknown) {
-      console.error("저장 중 오류:", error)
-      const errorMessage = error instanceof Error ? error.message : '알 수 없는 오류가 발생했습니다.'
-      alert(`저장 중 오류가 발생했습니다: ${errorMessage}`)
+      console.error("❌ 게시글 저장 실패:", error)
+      const errorMessage = error instanceof Error ? error.message : '알 수 없는 오류'
+      
+      if (error instanceof Error) {
+        if (error.message.includes('permission-denied')) {
+          alert(`❌ 권한이 거부되었습니다!\n\nFirestore 보안 규칙을 확인하세요:\n\nFirebase Console → Firestore Database → 규칙\n\n다음 규칙을 설정하세요:\nmatch /{document=**} {\n  allow read, write: if true;\n}`)
+        } else {
+          alert(`❌ 게시글 저장 실패!\n\n오류: ${errorMessage}\n\n콘솔에서 자세한 오류를 확인하세요.`)
+        }
+      }
     }
   }
 
   // 게시글 삭제
-  const deleteItem = async (id: number) => {
+  const deleteItem = async (id: string | undefined) => {
+    if (!id) return
+    
     const item = items.find(i => i.id === id)
     if (!item) return
     
     if (confirm(`"${item.title}" 게시글을 삭제하시겠습니까?\nFirebase의 이미지들도 함께 삭제됩니다.`)) {
-      // Firebase 이미지들 삭제
-      for (const imageUrl of item.images) {
-        if (imageUrl.includes('firebasestorage.googleapis.com')) {
-          await deleteImageFromFirebase(imageUrl)
+      try {
+        // Firebase Storage에서 이미지들 삭제
+        for (const imageUrl of item.images) {
+          if (imageUrl.includes('firebasestorage.googleapis.com')) {
+            await deleteImageFromFirebase(imageUrl)
+          }
         }
+        
+        // Firestore에서 삭제
+        await deleteGalleryItem(id)
+        
+        // 로컬 상태 업데이트
+        const newItems = items.filter(item => item.id !== id)
+        setItems(newItems)
+        
+        await backupToLocalStorage()
+        
+        alert("✅ 게시글과 이미지가 성공적으로 삭제되었습니다!")
+      } catch (error: unknown) {
+        console.error("삭제 중 오류:", error)
+        const errorMessage = error instanceof Error ? error.message : '알 수 없는 오류'
+        alert(`삭제 중 오류가 발생했습니다: ${errorMessage}`)
       }
-      
-      const newItems = items.filter(item => item.id !== id)
-      setItems(newItems)
-      saveToLocalStorage(newItems)
-      alert("✅ 게시글과 이미지가 삭제되었습니다!")
     }
   }
 
+  // JSON 다운로드
   const downloadJSON = () => {
     try {
       const dataStr = JSON.stringify(items, null, 2)
@@ -454,7 +561,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
       
       const linkElement = document.createElement('a')
       linkElement.setAttribute('href', dataUri)
-      linkElement.setAttribute('download', 'gallery-data.json')
+      linkElement.setAttribute('download', `gallery-backup-${new Date().toISOString().split('T')[0]}.json`)
       linkElement.click()
     } catch (error: unknown) {
       console.error("JSON 다운로드 실패:", error)
@@ -462,12 +569,38 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
     }
   }
 
-  // 기존 Base64 이미지를 Firebase로 마이그레이션
-  const migrateToFirebase = async () => {
-    if (!confirm('기존 localStorage의 Base64 이미지들을 Firebase로 마이그레이션하시겠습니까?\n이 작업은 시간이 오래 걸릴 수 있습니다.')) {
+  // localStorage에서 Firestore로 마이그레이션
+  const migrateToFirestore = async () => {
+    if (!confirm('localStorage의 데이터를 Firestore로 마이그레이션하시겠습니까?\n이미 Firestore에 있는 데이터와 중복될 수 있습니다.')) {
       return
     }
 
+    try {
+      setUploadProgress(prev => ({ ...prev, isUploading: true }))
+      
+      const result = await migrateFromLocalStorage()
+      
+      alert(`✅ 마이그레이션 완료!\n\n성공: ${result.success}개\n실패: ${result.failed}개`)
+      
+      await refreshData()
+      
+    } catch (error: unknown) {
+      console.error('마이그레이션 실패:', error)
+      const errorMessage = error instanceof Error ? error.message : '알 수 없는 오류'
+      alert(`❌ 마이그레이션 중 오류 발생: ${errorMessage}`)
+    } finally {
+      setUploadProgress({
+        isUploading: false,
+        current: 0,
+        total: 0,
+        fileName: '',
+        percentage: 0
+      })
+    }
+  }
+
+  // Base64 이미지 마이그레이션
+  const migrateBase64Images = async () => {
     const base64Items = items.filter(item => 
       item.images.some(img => img.startsWith('data:image/'))
     )
@@ -477,9 +610,15 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
       return
     }
 
+    if (!confirm(`${base64Items.length}개 아이템의 Base64 이미지를 Firebase로 마이그레이션하시겠습니까?`)) {
+      return
+    }
+
     setUploadProgress(prev => ({ ...prev, isUploading: true }))
     let totalProcessed = 0
-    const totalImages = base64Items.reduce((sum, item) => sum + item.images.length, 0)
+    const totalImages = base64Items.reduce((sum, item) => 
+      sum + item.images.filter(img => img.startsWith('data:image/')).length, 0
+    )
 
     try {
       const updatedItems = [...items]
@@ -490,17 +629,8 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
         for (let i = 0; i < item.images.length; i++) {
           const imageUrl = item.images[i]
           
-          // Base64 이미지인 경우에만 마이그레이션
           if (imageUrl.startsWith('data:image/')) {
             try {
-              // Base64를 Blob으로 변환
-              const response = await fetch(imageUrl)
-              const blob = await response.blob()
-              
-              // 임시 File 객체 생성
-              const file = new File([blob], `migrated_${Date.now()}_${i}.jpg`, { type: 'image/jpeg' })
-              
-              // 진행률 업데이트
               totalProcessed++
               setUploadProgress(prev => ({
                 ...prev,
@@ -510,45 +640,41 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                 percentage: Math.round((totalProcessed / totalImages) * 100)
               }))
 
-              // Firebase에 업로드
-              const result = await uploadImageToFirebase(file)
+              const result = await uploadBase64ToFirebase(imageUrl, `${item.title}_${i}.jpg`)
               
               if (result.success && result.url) {
                 newImages.push(result.url)
               } else {
                 console.error('마이그레이션 실패:', result.error)
-                newImages.push(imageUrl) // 실패시 기존 이미지 유지
+                newImages.push(imageUrl)
               }
 
-              // 요청 제한 방지를 위한 대기
               await new Promise(resolve => setTimeout(resolve, 500))
             } catch (error) {
               console.error('Base64 변환 실패:', error)
-              newImages.push(imageUrl) // 실패시 기존 이미지 유지
+              newImages.push(imageUrl)
             }
           } else {
-            // 이미 Firebase 이미지인 경우 그대로 유지
             newImages.push(imageUrl)
           }
         }
 
-        // 아이템 업데이트
+        // Firestore 업데이트
+        if (item.id) {
+          await updateGalleryItem(item.id, { images: newImages })
+        }
+
+        // 로컬 상태 업데이트
         const itemIndex = updatedItems.findIndex(i => i.id === item.id)
         if (itemIndex !== -1) {
           updatedItems[itemIndex] = { ...item, images: newImages }
         }
       }
 
-      // 업데이트된 데이터 저장
       setItems(updatedItems)
-      saveToLocalStorage(updatedItems)
+      await backupToLocalStorage()
 
-      const migratedCount = totalImages
-      const firebaseCount = updatedItems.reduce((sum, item) => 
-        sum + item.images.filter(img => img.includes('firebasestorage.googleapis.com')).length, 0
-      )
-
-      alert(`✅ 마이그레이션 완료!\n\n📊 결과:\n• 처리된 이미지: ${migratedCount}장\n• Firebase 이미지: ${firebaseCount}장\n• 이제 모든 컴퓨터에서 볼 수 있습니다!`)
+      alert(`✅ Base64 이미지 마이그레이션 완료!\n\n처리된 이미지: ${totalImages}장`)
 
     } catch (error: unknown) {
       console.error('마이그레이션 실패:', error)
@@ -565,23 +691,24 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
     }
   }
 
-  // Base64 이미지 개수 확인
+  // 통계 계산
   const base64ImageCount = items.reduce((sum, item) => 
     sum + item.images.filter(img => img.startsWith('data:image/')).length, 0
   )
 
-  // Firebase 이미지 개수 확인
   const firebaseImageCount = items.reduce((sum, item) => 
     sum + item.images.filter(img => img.includes('firebasestorage.googleapis.com')).length, 0
   )
 
-  // 기본 데이터 복원
-  const resetToDefault = () => {
-    if (confirm("모든 데이터를 기본값으로 초기화하시겠습니까? 현재 데이터는 모두 삭제됩니다.")) {
-      setItems(defaultGalleryItems)
-      saveToLocalStorage(defaultGalleryItems)
-      alert("기본 데이터로 복원되었습니다!")
-    }
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+        <div className="text-center">
+          <RefreshCw className="h-8 w-8 animate-spin text-yellow-400 mx-auto mb-4" />
+          <p className="text-gray-600 dark:text-gray-300">데이터를 불러오는 중...</p>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -590,26 +717,26 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
         {/* 업로드 진행률 모달 */}
         <UploadProgressModal progress={uploadProgress} />
         
-        {/* 마이그레이션 안내 메시지 */}
+        {/* Base64 마이그레이션 안내 */}
         {base64ImageCount > 0 && (
           <div className="mb-8 p-4 bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-lg">
             <div className="flex items-start gap-3">
               <div className="text-orange-500 text-xl">⚠️</div>
               <div>
                 <h3 className="font-semibold text-orange-900 dark:text-orange-100 mb-2">
-                  마이그레이션이 필요합니다
+                  Base64 이미지 마이그레이션 필요
                 </h3>
                 <p className="text-orange-800 dark:text-orange-200 text-sm mb-3">
-                  현재 {base64ImageCount}장의 이미지가 로컬 저장소에만 있어서 다른 컴퓨터에서 볼 수 없습니다. 
+                  현재 {base64ImageCount}장의 이미지가 Base64 형태로 저장되어 있어서 다른 컴퓨터에서 볼 수 없습니다. 
                   Firebase로 마이그레이션하면 모든 컴퓨터에서 접근할 수 있습니다.
                 </p>
                 <Button 
-                  onClick={migrateToFirebase}
+                  onClick={migrateBase64Images}
                   className="bg-orange-500 text-white hover:bg-orange-600"
                   disabled={uploadProgress.isUploading}
                 >
                   <Cloud className="h-4 w-4 mr-2" />
-                  지금 마이그레이션 시작하기
+                  Base64 이미지 마이그레이션 ({base64ImageCount}장)
                 </Button>
               </div>
             </div>
@@ -622,48 +749,61 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
             <h1 className="text-3xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
               <Cloud className="h-8 w-8 text-yellow-400" />
               갤러리 관리자
-              <span className="text-sm bg-green-100 text-green-800 px-2 py-1 rounded-full">Firebase 연동</span>
+              <span className="text-sm bg-green-100 text-green-800 px-2 py-1 rounded-full">Firebase & Firestore</span>
             </h1>
-            <p className="text-gray-600 dark:text-gray-300">🌐 클라우드 저장으로 모든 컴퓨터에서 접근 가능</p>
+            <p className="text-gray-600 dark:text-gray-300">🌐 클라우드 동기화로 모든 컴퓨터에서 동일한 데이터</p>
             
-            {/* 이미지 상태 표시 */}
             <div className="mt-2 flex gap-4 text-sm">
               <span className="text-green-600">☁️ Firebase 이미지: {firebaseImageCount}장</span>
               {base64ImageCount > 0 && (
-                <span className="text-orange-600">💾 로컬 이미지: {base64ImageCount}장 (마이그레이션 필요)</span>
+                <span className="text-orange-600">💾 Base64 이미지: {base64ImageCount}장 (마이그레이션 필요)</span>
               )}
+              <span className="text-blue-600">📊 총 게시글: {items.length}개</span>
             </div>
           </div>
           
           <div className="flex gap-3">
-            {/* 마이그레이션 버튼 - Base64 이미지가 있을 때만 표시 */}
-            {base64ImageCount > 0 && (
-              <Button 
-                onClick={migrateToFirebase} 
-                className="bg-blue-500 text-white hover:bg-blue-600 flex items-center gap-2"
-                disabled={uploadProgress.isUploading}
-              >
-                <Cloud className="h-4 w-4" />
-                Firebase로 마이그레이션 ({base64ImageCount}장)
-              </Button>
-            )}
-            
-            <Button onClick={resetToDefault} variant="outline" className="flex items-center gap-2 text-orange-600 border-orange-300 hover:bg-orange-50">
-              <Save className="h-4 w-4" />
-              기본값 복원
+            <Button 
+              onClick={refreshData} 
+              variant="outline" 
+              className="flex items-center gap-2"
+              disabled={isLoading}
+            >
+              <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
+              새로고침
             </Button>
             
-            <Button onClick={downloadJSON} variant="outline" className="flex items-center gap-2">
-              <Save className="h-4 w-4" />
-              데이터 저장 ({items.length}개)
+            <Button 
+              onClick={migrateToFirestore} 
+              variant="outline" 
+              className="flex items-center gap-2 text-blue-600 border-blue-300 hover:bg-blue-50"
+            >
+              <Upload className="h-4 w-4" />
+              localStorage → Firestore
             </Button>
             
-            <Button onClick={() => setIsCreating(true)} className="bg-yellow-400 text-black hover:bg-yellow-300 flex items-center gap-2">
+            <Button 
+              onClick={downloadJSON} 
+              variant="outline" 
+              className="flex items-center gap-2"
+            >
+              <Download className="h-4 w-4" />
+              백업 다운로드
+            </Button>
+            
+            <Button 
+              onClick={() => setIsCreating(true)} 
+              className="bg-yellow-400 text-black hover:bg-yellow-300 flex items-center gap-2"
+            >
               <Plus className="h-4 w-4" />
               새 게시글
             </Button>
 
-            <Button onClick={onLogout} variant="outline" className="flex items-center gap-2 text-red-600 border-red-300 hover:bg-red-50">
+            <Button 
+              onClick={onLogout} 
+              variant="outline" 
+              className="flex items-center gap-2 text-red-600 border-red-300 hover:bg-red-50"
+            >
               <LogOut className="h-4 w-4" />
               로그아웃
             </Button>
@@ -677,11 +817,10 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
               <CardTitle className="text-yellow-600 flex items-center gap-2">
                 <Cloud className="h-5 w-5" />
                 {editingId ? '갤러리 게시글 수정' : '새 갤러리 게시글 작성'}
-                <span className="text-sm bg-blue-100 text-blue-800 px-2 py-1 rounded">Firebase 클라우드 저장</span>
+                <span className="text-sm bg-blue-100 text-blue-800 px-2 py-1 rounded">Firestore 저장</span>
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              {/* 제목 */}
               <div>
                 <label className="block text-sm font-medium mb-2">제목 *</label>
                 <Input
@@ -691,7 +830,6 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                 />
               </div>
 
-              {/* 설명 */}
               <div>
                 <label className="block text-sm font-medium mb-2">설명 *</label>
                 <Textarea
@@ -702,7 +840,6 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                 />
               </div>
 
-              {/* 카테고리 */}
               <div>
                 <label className="block text-sm font-medium mb-2">카테고리 *</label>
                 <Select value={newItem.category} onValueChange={(value) => setNewItem(prev => ({ ...prev, category: value }))}>
@@ -717,7 +854,19 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                 </Select>
               </div>
 
-              {/* 이미지 업로드 */}
+              <div>
+                <label className="block text-sm font-medium mb-2">크기</label>
+                <Select value={newItem.size} onValueChange={(value: "normal" | "tall") => setNewItem(prev => ({ ...prev, size: value }))}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="normal">일반 크기</SelectItem>
+                    <SelectItem value="tall">세로 크기 (2배)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
               <div>
                 <label className="block text-sm font-medium mb-2">이미지 * (1장 이상)</label>
                 <input
@@ -731,78 +880,39 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                 
                 <Button
                   type="button"
-                  onClick={() => {
-                    const fileInput = fileInputRef.current
-                    if (fileInput) {
-                      fileInput.click()
-                    }
-                  }}
+                  onClick={() => fileInputRef.current?.click()}
                   variant="outline"
                   className="w-full h-32 border-dashed border-2 hover:border-yellow-400"
                   disabled={uploadProgress.isUploading}
                 >
                   <div className="text-center">
                     <Cloud className="h-8 w-8 mx-auto mb-2 text-yellow-400" />
-                    <p className="text-sm text-gray-600">🔥 Firebase에 업로드하기</p>
+                    <p className="text-sm text-gray-600">🔥 Firebase Storage에 업로드</p>
                     <p className="text-xs text-gray-400">
-                      여러 장 선택 가능 (JPG, PNG 등)<br/>
-                      <span className="text-blue-600 font-medium">🌐 클라우드 저장으로 모든 컴퓨터에서 접근!</span><br/>
-                      대용량 이미지도 자동으로 최적화됩니다
+                      여러 장 선택 가능 • 자동 압축 • CDN 지원
                     </p>
                   </div>
                 </Button>
 
-                {/* Firebase 업로드 안내 */}
-                <div className="mt-2 p-3 bg-blue-50 dark:bg-blue-900/20 rounded text-xs text-blue-700 dark:text-blue-300">
-                  ☁️ <strong>Firebase Storage 사용 중:</strong> 
-                  <ul className="mt-1 space-y-1 list-disc list-inside">
-                    <li>이미지가 Google 클라우드에 안전하게 저장됩니다</li>
-                    <li>모든 컴퓨터, 모든 브라우저에서 동일하게 보입니다</li>
-                    <li>자동으로 CDN을 통해 빠르게 로딩됩니다</li>
-                  </ul>
-                </div>
-
-                {/* 업로드된 이미지 미리보기 */}
                 {newItem.images.length > 0 && (
                   <div className="mt-4">
-                    <div className="flex items-center justify-between mb-3">
-                      <p className="text-sm text-gray-600">
-                        업로드된 이미지: {newItem.images.length}장
-                      </p>
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded">
-                          ☁️ Firebase 저장완료
-                        </span>
-                        <span className="text-xs text-green-600">
-                          🌐 모든 기기에서 접근 가능
-                        </span>
-                      </div>
-                    </div>
-                    
-                    {/* 드래그 앤 드롭 안내 */}
-                    <div className="mb-3 p-2 bg-purple-50 dark:bg-purple-900/20 rounded text-xs text-purple-700 dark:text-purple-300">
-                      💡 <strong>순서 조정:</strong> 이미지를 드래그해서 순서를 변경할 수 있습니다. 첫 번째 이미지가 대표 이미지가 됩니다.
-                    </div>
+                    <p className="text-sm text-gray-600 mb-3">
+                      업로드된 이미지: {newItem.images.length}장
+                    </p>
                     
                     <div className="grid grid-cols-4 gap-3">
                       {newItem.images.map((image, index) => (
-                        <div
-                          key={index}
-                          className="relative cursor-move transition-all duration-200"
-                        >
-                          {/* 순서 번호 */}
+                        <div key={index} className="relative">
                           <div className="absolute -top-2 -left-2 bg-yellow-400 text-black text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center z-10">
                             {index + 1}
                           </div>
                           
-                          {/* 대표 이미지 표시 */}
                           {index === 0 && (
                             <div className="absolute top-1 left-1 bg-green-500 text-white text-xs px-1 py-0.5 rounded z-10">
                               대표
                             </div>
                           )}
 
-                          {/* Firebase 표시 */}
                           {image.includes('firebasestorage.googleapis.com') && (
                             <div className="absolute top-1 right-1 bg-blue-500 text-white text-xs px-1 py-0.5 rounded z-10">
                               ☁️
@@ -813,11 +923,9 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                             <img
                               src={image}
                               alt={`Preview ${index + 1}`}
-                              className="w-full h-20 object-cover rounded border transition-transform duration-200"
-                              draggable={false}
+                              className="w-full h-20 object-cover rounded border"
                             />
                             
-                            {/* 삭제 버튼 */}
                             <button
                               type="button"
                               onClick={() => removeImage(index)}
@@ -825,36 +933,21 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                             >
                               <X className="h-3 w-3" />
                             </button>
-                            
-                            {/* 드래그 오버레이 */}
-                            <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity rounded flex items-center justify-center">
-                              <div className="text-white text-xs font-medium bg-black/50 px-2 py-1 rounded">
-                                드래그하여 이동
-                              </div>
-                            </div>
                           </div>
                         </div>
                       ))}
-                    </div>
-                    
-                    {/* 순서 변경 도움말 */}
-                    <div className="mt-3 text-xs text-gray-500 space-y-1">
-                      <p>• 첫 번째 이미지(①)가 갤러리에서 대표 이미지로 표시됩니다</p>
-                      <p>• ☁️ 마크가 있는 이미지는 Firebase에 저장된 클라우드 이미지입니다</p>
-                      <p>• 순서는 언제든지 변경 가능합니다</p>
                     </div>
                   </div>
                 )}
               </div>
 
-              {/* 버튼 */}
               <div className="flex gap-3 pt-4">
                 <Button 
                   onClick={saveNewItem} 
                   className="bg-yellow-400 text-black hover:bg-yellow-300"
                   disabled={uploadProgress.isUploading}
                 >
-                  {uploadProgress.isUploading ? '업로드 중...' : (editingId ? '수정 완료' : '게시글 저장')}
+                  {uploadProgress.isUploading ? '처리 중...' : (editingId ? '수정 완료' : '게시글 저장')}
                 </Button>
                 <Button 
                   onClick={cancelEdit} 
@@ -868,7 +961,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
           </Card>
         )}
 
-        {/* 기존 게시글 목록 */}
+        {/* 게시글 목록 */}
         <div className="space-y-4">
           <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
             게시글 목록 ({items.length}개)
@@ -885,7 +978,6 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
               <Card key={item.id} className="overflow-hidden hover:shadow-md transition-shadow">
                 <CardContent className="p-0">
                   <div className="flex">
-                    {/* 이미지 섹션 */}
                     <div className="w-48 h-32 relative bg-gray-100">
                       {item.images.length > 0 ? (
                         <>
@@ -899,10 +991,9 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                               +{item.images.length - 1}
                             </div>
                           )}
-                          {/* Firebase 이미지 표시 */}
                           {item.images[0].includes('firebasestorage.googleapis.com') && (
                             <div className="absolute top-2 left-2 bg-blue-500 text-white px-2 py-1 rounded text-xs">
-                              ☁️ Firebase
+                              ☁️
                             </div>
                           )}
                         </>
@@ -913,7 +1004,6 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                       )}
                     </div>
 
-                    {/* 콘텐츠 섹션 */}
                     <div className="flex-1 p-6">
                       <div className="flex justify-between items-start">
                         <div className="flex-1">
@@ -922,17 +1012,18 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                               #{item.category}
                             </span>
                             <span className="text-gray-400 text-sm">
-                              {item.images.length}장의 사진
+                              {item.images.length}장
                             </span>
-                            {/* Firebase 이미지 개수 표시 */}
                             {item.images.filter(img => img.includes('firebasestorage.googleapis.com')).length > 0 && (
                               <span className="text-blue-500 text-sm">
-                                ☁️ {item.images.filter(img => img.includes('firebasestorage.googleapis.com')).length}장 클라우드
+                                ☁️ {item.images.filter(img => img.includes('firebasestorage.googleapis.com')).length}장
                               </span>
                             )}
-                            <span className="text-gray-400 text-sm">
-                              ID: {item.id}
-                            </span>
+                            {item.images.filter(img => img.startsWith('data:image/')).length > 0 && (
+                              <span className="text-orange-500 text-sm">
+                                💾 {item.images.filter(img => img.startsWith('data:image/')).length}장
+                              </span>
+                            )}
                           </div>
                           
                           <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
@@ -944,7 +1035,6 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                           </p>
                         </div>
 
-                        {/* 액션 버튼 */}
                         <div className="flex gap-2 ml-4">
                           <Button 
                             size="sm" 
@@ -970,37 +1060,6 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
               </Card>
             ))
           )}
-        </div>
-
-        {/* 안내 메시지 */}
-        <div className="mt-12 p-6 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
-          <h3 className="font-semibold text-blue-900 dark:text-blue-100 mb-2 flex items-center gap-2">
-            <Cloud className="h-5 w-5" />
-            🔥 Firebase Storage 연동 완료!
-          </h3>
-          <ul className="text-blue-800 dark:text-blue-200 space-y-1 text-sm">
-            <li>• <span className="bg-green-100 text-green-800 px-2 py-1 rounded font-medium">✅ 해결완료:</span> 이제 모든 컴퓨터에서 이미지를 볼 수 있습니다!</li>
-            <li>• <span className="bg-purple-100 text-purple-800 px-2 py-1 rounded font-medium">☁️ 클라우드 저장:</span> Google Firebase에 안전하게 저장됩니다</li>
-            <li>• <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded font-medium">🌐 CDN 지원:</span> 전세계 어디서든 빠른 로딩</li>
-            <li>• <span className="bg-yellow-100 text-yellow-800 px-2 py-1 rounded font-medium">🔄 자동 압축:</span> 대용량 이미지도 자동으로 최적화됩니다!</li>
-            <li>• 이미지는 최대 1200x800 크기로 자동 리사이징되며, 품질은 80%로 압축됩니다</li>
-            <li>• ☁️ 마크가 있는 이미지는 Firebase에 저장된 클라우드 이미지입니다</li>
-            <li>• "데이터 저장" 버튼으로 백업용 JSON 파일을 다운로드할 수 있습니다</li>
-          </ul>
-          
-          <div className="mt-4 p-3 bg-green-50 dark:bg-green-900/20 rounded border-l-4 border-green-400">
-            <h4 className="font-medium text-green-900 dark:text-green-100 mb-1 flex items-center gap-2">
-              <Cloud className="h-4 w-4" />
-              🎯 Firebase Storage 장점
-            </h4>
-            <p className="text-green-800 dark:text-green-200 text-xs">
-              • <strong>무료 티어:</strong> 1GB 저장공간, 월 20,000회 다운로드 무료<br/>
-              • <strong>글로벌 CDN:</strong> 전세계 어디서든 빠른 이미지 로딩<br/>
-              • <strong>99.95% 가동률:</strong> Google 인프라로 안정성 보장<br/>
-              • <strong>자동 스케일링:</strong> 사용량에 따라 자동 확장<br/>
-              • <strong>실시간 동기화:</strong> 모든 기기에서 즉시 업데이트 반영
-            </p>
-          </div>
         </div>
       </div>
     </div>

@@ -1,4 +1,4 @@
-// utils/firebaseUtils.ts (확장자를 .ts로 변경)
+// utils/firebaseUtils.ts
 import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage'
 import { storage } from '../lib/firebase'
 
@@ -19,89 +19,34 @@ export interface UploadProgress {
   percentage: number
 }
 
-// 이미지 압축 함수
-export const compressImage = (file: File, maxWidth: number = 1200, maxHeight: number = 800, quality: number = 0.8): Promise<Blob> => {
-  return new Promise((resolve, reject) => {
-    const canvas = document.createElement('canvas')
-    const ctx = canvas.getContext('2d')
-    const img = new Image()
-    
-    img.onload = () => {
-      let { width, height } = img
-      
-      // 비율 유지하면서 크기 조정
-      if (width > maxWidth) {
-        height = (height * maxWidth) / width
-        width = maxWidth
-      }
-      
-      if (height > maxHeight) {
-        width = (width * maxHeight) / height
-        height = maxHeight
-      }
-      
-      canvas.width = width
-      canvas.height = height
-      ctx?.drawImage(img, 0, 0, width, height)
-      
-      // Blob으로 변환
-      canvas.toBlob(
-        (blob) => {
-          if (blob) {
-            resolve(blob)
-          } else {
-            reject(new Error('이미지 압축 실패'))
-          }
-        },
-        'image/jpeg',
-        quality
-      )
-    }
-    
-    img.onerror = () => reject(new Error(`이미지 로드 실패: ${file.name}`))
-    img.src = URL.createObjectURL(file)
-  })
-}
-
-// Firebase Storage에 단일 이미지 업로드
+// 단일 이미지 업로드
 export const uploadImageToFirebase = async (file: File): Promise<UploadResult> => {
   try {
-    // 파일 타입 검증
+    console.log('📤 업로드 시작:', file.name)
+    
     if (!file.type.startsWith('image/')) {
-      throw new Error(`${file.name}은(는) 이미지 파일이 아닙니다.`)
-    }
-
-    // 파일 크기 검증 (10MB)
-    if (file.size > 10 * 1024 * 1024) {
-      throw new Error(`${file.name}의 크기가 10MB를 초과합니다.`)
-    }
-
-    // 파일 압축
-    const compressedFile = await compressImage(file)
-    
-    // 고유한 파일명 생성
-    const timestamp = Date.now()
-    const randomString = Math.random().toString(36).substring(2, 8)
-    const extension = file.name.split('.').pop() || 'jpg'
-    const fileName = `${timestamp}_${randomString}.${extension}`
-    
-    // Firebase Storage 참조 생성 (gallery/ 폴더에 저장)
-    const storageRef = ref(storage, `gallery/${fileName}`)
-    
-    // 메타데이터 설정
-    const metadata = {
-      contentType: 'image/jpeg',
-      customMetadata: {
-        originalName: file.name,
-        uploadedAt: new Date().toISOString()
+      return {
+        success: false,
+        error: '이미지 파일만 업로드 가능합니다.',
+        fileName: file.name
       }
     }
+
+    if (file.size > 10 * 1024 * 1024) {
+      return {
+        success: false,
+        error: '파일 크기는 10MB 이하만 가능합니다.',
+        fileName: file.name
+      }
+    }
+
+    const fileName = `gallery_${Date.now()}_${Math.random().toString(36).substring(2, 15)}.jpg`
+    const storageRef = ref(storage, `gallery/${fileName}`)
     
-    // 파일 업로드
-    const snapshot = await uploadBytes(storageRef, compressedFile, metadata)
-    
-    // 다운로드 URL 가져오기
+    const snapshot = await uploadBytes(storageRef, file)
     const downloadURL = await getDownloadURL(snapshot.ref)
+    
+    console.log('✅ 업로드 성공:', downloadURL)
     
     return {
       success: true,
@@ -110,80 +55,114 @@ export const uploadImageToFirebase = async (file: File): Promise<UploadResult> =
       originalName: file.name,
       path: `gallery/${fileName}`
     }
-  } catch (error) {
-    console.error('Firebase 업로드 실패:', error)
+    
+  } catch (error: any) {
+    console.error('❌ 업로드 실패:', error)
     return {
       success: false,
-      error: error instanceof Error ? error.message : '알 수 없는 오류',
+      error: error.message || '업로드 중 오류가 발생했습니다.',
       fileName: file.name
     }
   }
 }
 
-// 여러 이미지 동시 업로드
+// 다중 이미지 업로드
 export const uploadMultipleImages = async (
-  files: File[], 
+  files: File[],
   onProgress?: (progress: UploadProgress) => void
 ): Promise<UploadResult[]> => {
   const results: UploadResult[] = []
-  const totalFiles = files.length
   
   for (let i = 0; i < files.length; i++) {
     const file = files[i]
     
-    // 진행률 콜백
     if (onProgress) {
       onProgress({
         current: i + 1,
-        total: totalFiles,
+        total: files.length,
         fileName: file.name,
-        percentage: Math.round(((i + 1) / totalFiles) * 100)
+        percentage: Math.round(((i + 1) / files.length) * 100)
       })
     }
     
     const result = await uploadImageToFirebase(file)
     results.push(result)
     
-    // 잠깐 대기 (Firebase 요청 제한 방지)
-    await new Promise(resolve => setTimeout(resolve, 100))
+    if (i < files.length - 1) {
+      await new Promise(resolve => setTimeout(resolve, 300))
+    }
   }
   
   return results
 }
 
-// Firebase Storage에서 이미지 삭제
-export const deleteImageFromFirebase = async (imageUrl: string): Promise<{ success: boolean; message?: string; error?: string }> => {
+// Firebase에서 이미지 삭제
+export const deleteImageFromFirebase = async (imageUrl: string): Promise<UploadResult> => {
   try {
-    // Firebase Storage URL인지 검증
-    if (!imageUrl || !imageUrl.includes('firebasestorage.googleapis.com')) {
-      return { success: true, message: 'Firebase 이미지가 아닙니다.' }
+    if (!imageUrl.includes('firebasestorage.googleapis.com')) {
+      return {
+        success: false,
+        error: 'Firebase Storage 이미지가 아닙니다.',
+        url: imageUrl
+      }
     }
     
-    // URL에서 파일 경로 추출
-    const decodedUrl = decodeURIComponent(imageUrl)
-    const pathMatch = decodedUrl.match(/\/o\/(.*?)\?/)
+    const url = new URL(imageUrl)
+    const pathMatch = url.pathname.match(/\/o\/(.+?)\?/)
     
     if (!pathMatch) {
-      throw new Error('유효하지 않은 Firebase URL 형식')
+      return {
+        success: false,
+        error: '이미지 경로를 찾을 수 없습니다.',
+        url: imageUrl
+      }
     }
     
-    const filePath = pathMatch[1]
+    const filePath = decodeURIComponent(pathMatch[1])
+    const storageRef = ref(storage, filePath)
     
-    // 파일 참조 생성
-    const imageRef = ref(storage, filePath)
+    await deleteObject(storageRef)
     
-    // 파일 삭제
-    await deleteObject(imageRef)
+    console.log('✅ 삭제 성공:', filePath)
     
-    return { 
-      success: true, 
-      message: '이미지가 Firebase에서 삭제되었습니다.' 
+    return {
+      success: true,
+      url: imageUrl,
+      path: filePath
     }
-  } catch (error) {
-    console.error('Firebase 삭제 실패:', error)
-    return { 
-      success: false, 
-      error: error instanceof Error ? error.message : '알 수 없는 오류'
+    
+  } catch (error: any) {
+    console.error('❌ 삭제 실패:', error)
+    
+    if (error.code === 'storage/object-not-found') {
+      return {
+        success: true,
+        url: imageUrl,
+        error: '파일이 이미 삭제되었습니다.'
+      }
+    }
+    
+    return {
+      success: false,
+      error: error.message || '삭제 중 오류가 발생했습니다.',
+      url: imageUrl
+    }
+  }
+}
+
+// Base64 업로드 (단순화)
+export const uploadBase64ToFirebase = async (base64Data: string, fileName?: string): Promise<UploadResult> => {
+  try {
+    const response = await fetch(base64Data)
+    const blob = await response.blob()
+    const file = new File([blob], fileName || `migrated_${Date.now()}.jpg`, { type: 'image/jpeg' })
+    
+    return await uploadImageToFirebase(file)
+  } catch (error: any) {
+    return {
+      success: false,
+      error: error.message || 'Base64 변환 실패',
+      fileName: fileName
     }
   }
 }

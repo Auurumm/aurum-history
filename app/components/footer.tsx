@@ -38,7 +38,7 @@ export default function Footer() {
 
       {/* ✅ 데스크탑/태블릿 전용 푸터 */}
       <footer className="hidden sm:block bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white transition-colors duration-300 border-t border-gray-200 dark:border-gray-700">
-        <div className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-14 py-20">
+        <div className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-14 py-40">
           {/* 사이트 선택 드롭다운 영역 (오른쪽 상단) */}
           <div className="flex justify-end mb-4">
             <select className="text-base bg-transparent border border-gray-300 dark:border-gray-600 rounded px-4 py-2 text-gray-600 dark:text-gray-400">
