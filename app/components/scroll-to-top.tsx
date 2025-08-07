@@ -8,11 +8,27 @@ export default function ScrollToTop() {
   const [isVisible, setIsVisible] = useState(false)
   const [scrollProgress, setScrollProgress] = useState(0)
   const [mounted, setMounted] = useState(false)
+  const [isMobile, setIsMobile] = useState(false)
   const pathname = usePathname()
 
-  // 마운트 상태 관리
+  // 마운트 상태 및 모바일 감지
   useEffect(() => {
+    const checkIsMobile = () => {
+      // 화면 크기와 터치 지원 여부로 모바일 감지
+      const screenWidth = window.innerWidth
+      const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0
+      return screenWidth < 768 || isTouchDevice
+    }
+
+    setIsMobile(checkIsMobile())
     setMounted(true)
+
+    const handleResize = () => {
+      setIsMobile(checkIsMobile())
+    }
+
+    window.addEventListener('resize', handleResize, { passive: true })
+    return () => window.removeEventListener('resize', handleResize)
   }, [])
 
   // 페이지 이동 시 스크롤 맨 위로
@@ -29,7 +45,8 @@ export default function ScrollToTop() {
           const docHeight = document.documentElement.scrollHeight - window.innerHeight
           const scrollPercent = docHeight > 0 ? (scrollTop / docHeight) * 100 : 0
           setScrollProgress(scrollPercent)
-          setIsVisible(scrollTop > 300)
+          // 데스크톱에서만 표시 (스크롤이 300px 이상일 때)
+          setIsVisible(!isMobile && scrollTop > 300)
           ticking = false
         })
         ticking = true
@@ -38,7 +55,7 @@ export default function ScrollToTop() {
 
     window.addEventListener("scroll", onScroll, { passive: true })
     return () => window.removeEventListener("scroll", onScroll)
-  }, [])
+  }, [isMobile])
 
   const scrollToTop = () => {
     window.scrollTo({ top: 0, behavior: "smooth" })
@@ -48,8 +65,8 @@ export default function ScrollToTop() {
   const circumference = 2 * Math.PI * radius
   const strokeDashoffset = circumference - (scrollProgress / 100) * circumference
 
-  // 마운트되지 않았거나 보이지 않는 경우 렌더링하지 않음
-  if (!mounted || !isVisible) return null
+  // 모바일이거나 마운트되지 않았거나 보이지 않는 경우 렌더링하지 않음
+  if (!mounted || isMobile || !isVisible) return null
 
   return (
     <button
@@ -57,25 +74,22 @@ export default function ScrollToTop() {
       className="group transition-transform duration-300 hover:scale-110"
       aria-label="Scroll to top"
       style={{
-        // 삼성 브라우저 호환 고정 위치
+        // 데스크톱 전용 고정 위치
         position: 'fixed',
-        bottom: 'max(16px, env(safe-area-inset-bottom, 16px))',
-        right: 'max(16px, env(safe-area-inset-right, 16px))',
+        bottom: 'max(24px, env(safe-area-inset-bottom, 24px))',
+        right: 'max(24px, env(safe-area-inset-right, 24px))',
         zIndex: 40,
-        // 뷰포트 경계 안에 확실히 위치
+        // 렌더링 최적화
         transform: 'translateZ(0)',
         backfaceVisibility: 'hidden',
         WebkitTransform: 'translateZ(0)',
         WebkitBackfaceVisibility: 'hidden',
-        // 터치 최적화
-        WebkitTapHighlightColor: 'transparent',
-        touchAction: 'manipulation',
         // 최소 크기 보장
         minWidth: '48px',
         minHeight: '48px',
         maxWidth: '48px',
         maxHeight: '48px',
-        // 삼성 브라우저 렌더링 안정화
+        // 렌더링 안정화
         contain: 'layout style paint',
         willChange: 'transform'
       }}
@@ -84,7 +98,6 @@ export default function ScrollToTop() {
       <div 
         className="relative w-12 h-12"
         style={{
-          // 컨테이너 크기 명시적 지정
           width: '48px',
           height: '48px',
           display: 'flex',
