@@ -51,16 +51,63 @@ export default function Header() {
   const [userMenuOpen, setUserMenuOpen] = useState(false)
   const [loading, setLoading] = useState(true)
   const [mounted, setMounted] = useState(false)
-  const timeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const [headerHeight, setHeaderHeight] = useState(0)
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const headerRef = useRef<HTMLDivElement>(null)
   const router = useRouter()
   const { t, locale } = useLanguage()
 
-  // 초기 마운트 상태 관리 (깜빡임 방지)
+  // 헤더 높이 측정 및 뷰포트 보정 (모든 기기 호환)
+  useEffect(() => {
+    const updateHeaderDimensions = () => {
+      if (headerRef.current) {
+        const rect = headerRef.current.getBoundingClientRect()
+        setHeaderHeight(rect.height)
+      }
+    }
+
+    const handleResize = () => {
+      // 디바운싱으로 성능 최적화
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current)
+      }
+      timeoutRef.current = setTimeout(updateHeaderDimensions, 16)
+    }
+
+    // 초기 측정
+    updateHeaderDimensions()
+    
+    // 모든 기기 대응 이벤트 리스너
+    window.addEventListener('resize', handleResize, { passive: true })
+    window.addEventListener('orientationchange', () => {
+      // iOS, Android 모두 대응
+      setTimeout(updateHeaderDimensions, 100)
+      setTimeout(updateHeaderDimensions, 300) // 삼성폰 추가 보정
+    }, { passive: true })
+    
+    // 일부 Android 기기의 뷰포트 변경 감지
+    if ('visualViewport' in window) {
+      window.visualViewport?.addEventListener('resize', handleResize, { passive: true })
+    }
+
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current)
+      }
+      window.removeEventListener('resize', handleResize)
+      window.removeEventListener('orientationchange', handleResize)
+      if ('visualViewport' in window) {
+        window.visualViewport?.removeEventListener('resize', handleResize)
+      }
+    }
+  }, [mounted])
+
+  // 초기 마운트 상태 관리
   useEffect(() => {
     setMounted(true);
   }, [])
 
-  // 사용자 인증 상태 확인 (Firebase가 있는 경우만)
+  // 사용자 인증 상태 확인
   useEffect(() => {
     if (!auth || !onAuthStateChanged) {
       setLoading(false);
@@ -166,7 +213,6 @@ export default function Header() {
     }
   }
 
-  // 로그아웃 처리
   const handleLogout = async () => {
     if (!signOut || !auth) return;
     
@@ -180,13 +226,30 @@ export default function Header() {
   };
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 w-full font-pretendard">
+    <header 
+      ref={headerRef}
+      className="fixed top-0 left-0 right-0 z-50 w-full font-pretendard"
+      style={{ 
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        width: '100vw',
+        maxWidth: '100vw',
+        // 모든 기기에서 안전한 하드웨어 가속
+        transform: 'translateZ(0)',
+        backfaceVisibility: 'hidden',
+        // 브라우저별 렌더링 최적화
+        WebkitTransform: 'translateZ(0)',
+        WebkitBackfaceVisibility: 'hidden'
+      }}
+    >
       <div className="absolute inset-0 bg-white/95 dark:bg-black/95 backdrop-blur-sm border-b border-gray-200/20 dark:border-gray-700/20"></div>
 
       {!mounted ? (
         // 깜빡임 방지를 위한 초기 로딩 상태
-        <div className="w-full px-4 relative z-10" style={{ maxWidth: '100vw', overflow: 'hidden' }}>
-          <div className="flex items-center h-16" style={{ position: 'relative', width: '100%' }}>
+        <div className="w-full px-4 relative z-10">
+          <div className="flex items-center justify-between h-16">
             {/* 로고 */}
             <div className="flex-shrink-0">
               <Link
@@ -198,30 +261,20 @@ export default function Header() {
               </Link>
             </div>
             
-            {/* 햄버거 메뉴 - 삼성폰 대응 강화 */}
-            <button
-              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              aria-label="메뉴 토글"
-              className="text-gray-800 dark:text-gray-200 hover:text-black dark:hover:text-white transition-colors"
-              style={{
-                position: 'fixed',
-                right: '12px',
-                top: '20px',
-                width: '44px',
-                height: '44px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                background: 'none',
-                border: 'none',
-                padding: '0',
-                margin: '0',
-                zIndex: 9999,
-                cursor: 'pointer'
-              }}
-            >
-              {isMobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
-            </button>
+            {/* 햄버거 메뉴 - 삼성폰 대응 */}
+            <div className="flex-shrink-0">
+              <button
+                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                aria-label="메뉴 토글"
+                className="w-11 h-11 flex items-center justify-center text-gray-800 dark:text-gray-200 hover:text-black dark:hover:text-white transition-colors border-none bg-transparent"
+                style={{
+                  padding: 0,
+                  margin: 0,
+                }}
+              >
+                {isMobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+              </button>
+            </div>
           </div>
         </div>
       ) : (
@@ -290,7 +343,7 @@ export default function Header() {
             )}
 
             {/* Right Side */}
-            <div className={`flex items-center ${isMobile ? 'relative' : 'space-x-2'}`}>
+            <div className={`flex items-center ${isMobile ? 'flex-shrink-0' : 'space-x-2'}`}>
               {/* Desktop only items */}
               {!isMobile && (
                 <div className="flex items-center space-x-4">
@@ -396,31 +449,27 @@ export default function Header() {
                 </div>
               )}
 
-              {/* 모바일 햄버거 메뉴 - 삼성폰 뷰포트 문제 해결 */}
+              {/* 모바일 햄버거 메뉴 - 모든 기기 호환 */}
               {isMobile && (
-                <button
-                  onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                  aria-label="메뉴 토글"
-                  className="text-gray-800 dark:text-gray-200 hover:text-black dark:hover:text-white transition-colors"
-                  style={{
-                    position: 'fixed',
-                    right: '12px',
-                    top: '20px',
-                    width: '44px',
-                    height: '44px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    background: 'none',
-                    border: 'none',
-                    padding: '0',
-                    margin: '0',
-                    zIndex: 9999,
-                    cursor: 'pointer'
-                  }}
-                >
-                  {isMobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
-                </button>
+                <div className="flex-shrink-0" style={{ minWidth: '44px' }}>
+                  <button
+                    onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                    aria-label="메뉴 토글"
+                    className="w-11 h-11 flex items-center justify-center text-gray-800 dark:text-gray-200 hover:text-black dark:hover:text-white transition-colors border-none bg-transparent touch-manipulation"
+                    style={{
+                      padding: 0,
+                      margin: 0,
+                      // 터치 대상 크기 보장 (iOS, Android 모두)
+                      minWidth: '44px',
+                      minHeight: '44px',
+                      // 모든 브라우저에서 일관된 클릭 영역
+                      WebkitTapHighlightColor: 'transparent',
+                      outline: 'none'
+                    }}
+                  >
+                    {isMobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+                  </button>
+                </div>
               )}
             </div>
           </div>
@@ -429,8 +478,15 @@ export default function Header() {
 
       {/* 모바일 메뉴 */}
       {isMobile && isMobileMenuOpen && (
-        <div className="absolute top-full left-0 right-0 w-full bg-white/95 dark:bg-black/95 backdrop-blur-sm border-b border-gray-200/20 dark:border-gray-700/20 shadow-lg">
-          <div className="px-4 py-6 space-y-6 max-h-[calc(100vh-4rem)] overflow-y-auto">
+        <div 
+          className="absolute left-0 right-0 w-full bg-white/95 dark:bg-black/95 backdrop-blur-sm border-b border-gray-200/20 dark:border-gray-700/20 shadow-lg"
+          style={{
+            top: `${headerHeight || 64}px`,
+            maxHeight: `calc(100vh - ${headerHeight || 64}px)`,
+            overflowY: 'auto'
+          }}
+        >
+          <div className="px-4 py-6 space-y-6">
             {/* 사용자 정보 (로그인된 경우) */}
             {user && (
               <div className="flex items-center gap-3 pb-4 border-b border-gray-200 dark:border-gray-700">
