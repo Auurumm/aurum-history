@@ -185,10 +185,10 @@ export default function Header() {
 
       {!mounted ? (
         // 깜빡임 방지를 위한 초기 로딩 상태
-        <div className="w-full max-w-none px-4 relative z-10" style={{ margin: '0 auto' }}>
-          <div className="flex items-center justify-between h-16" style={{ width: '100%', maxWidth: 'none' }}>
-            {/* 로고만 먼저 표시 */}
-            <div className="flex-shrink-0 min-w-0">
+        <div className="w-full px-4 relative z-10" style={{ maxWidth: '100vw', overflow: 'hidden' }}>
+          <div className="flex items-center h-16" style={{ position: 'relative', width: '100%' }}>
+            {/* 로고 */}
+            <div className="flex-shrink-0">
               <Link
                 href={getLocalizedPath("/")}
                 className="flex items-center space-x-2 font-bold transition-opacity hover:opacity-80 text-black dark:text-white"
@@ -197,37 +197,32 @@ export default function Header() {
                 <span className="text-xl font-bold tracking-tight">Aurum</span>
               </Link>
             </div>
-            {/* 햄버거 메뉴는 항상 표시 (삼성 브라우저 대응 강화) */}
-            <div 
-              className="flex-shrink-0" 
-              style={{ 
+            
+            {/* 햄버거 메뉴 - 절대 위치로 우측 고정 */}
+            <button
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              aria-label="메뉴 토글"
+              className="text-gray-800 dark:text-gray-200 hover:text-black dark:hover:text-white transition-colors"
+              style={{
                 position: 'absolute',
                 right: '16px',
                 top: '50%',
                 transform: 'translateY(-50%)',
-                zIndex: 100
+                width: '44px',
+                height: '44px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                background: 'none',
+                border: 'none',
+                padding: '0',
+                margin: '0',
+                zIndex: 999,
+                cursor: 'pointer'
               }}
             >
-              <Button
-                variant="ghost"
-                size="sm"
-                className="flex-shrink-0 border border-gray-300 dark:border-gray-600"
-                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                aria-label="메뉴 토글"
-                style={{
-                  width: '44px',
-                  height: '44px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  padding: '8px',
-                  margin: '0',
-                  position: 'relative'
-                }}
-              >
-                {isMobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
-              </Button>
-            </div>
+              {isMobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+            </button>
           </div>
         </div>
       ) : (
@@ -296,7 +291,7 @@ export default function Header() {
             )}
 
             {/* Right Side */}
-            <div className={`flex items-center ${isMobile ? 'flex-shrink-0' : 'space-x-2'}`}>
+            <div className={`flex items-center ${isMobile ? 'relative' : 'space-x-2'}`}>
               {/* Desktop only items */}
               {!isMobile && (
                 <div className="flex items-center space-x-4">
@@ -402,39 +397,32 @@ export default function Header() {
                 </div>
               )}
 
-              {/* 모바일 햄버거 메뉴 - 삼성 브라우저 대응 강화 */}
+              {/* 모바일 햄버거 메뉴 - 깔끔한 스타일, 박스 제거 */}
               {isMobile && (
-                <div 
-                  className="flex-shrink-0"
-                  style={{ 
+                <button
+                  onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                  aria-label="메뉴 토글"
+                  className="text-gray-800 dark:text-gray-200 hover:text-black dark:hover:text-white transition-colors"
+                  style={{
                     position: 'absolute',
-                    right: '16px',
+                    right: '0px',
                     top: '50%',
                     transform: 'translateY(-50%)',
-                    zIndex: 100
+                    width: '44px',
+                    height: '44px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    background: 'none',
+                    border: 'none',
+                    padding: '0',
+                    margin: '0',
+                    zIndex: 999,
+                    cursor: 'pointer'
                   }}
                 >
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="flex-shrink-0 border border-gray-300 dark:border-gray-600 hover:border-yellow-400"
-                    onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                    aria-label="메뉴 토글"
-                    style={{
-                      width: '44px',
-                      height: '44px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      padding: '8px',
-                      margin: '0',
-                      position: 'relative',
-                      backgroundColor: isMobileMenuOpen ? 'rgba(250, 204, 21, 0.1)' : 'transparent'
-                    }}
-                  >
-                    {isMobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
-                  </Button>
-                </div>
+                  {isMobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+                </button>
               )}
             </div>
           </div>
