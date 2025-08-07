@@ -8,10 +8,14 @@ import CustomCursor from "./components/custom-cursor"
 import ScrollToTop from "./components/scroll-to-top"
 import { ResponsiveProvider } from "./contexts/responsive-context"
 
-// ✅ 뷰포트 설정만 추가
+// ✅ 뷰포트 설정 - 확대/축소 완전 비활성화
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
+  maximumScale: 1, // 최대 확대 1배로 제한
+  minimumScale: 1, // 최소 축소 1배로 제한
+  userScalable: false, // 사용자 확대/축소 완전 차단
+  viewportFit: 'cover', // iPhone 노치 대응
 }
 
 export const metadata: Metadata = {
