@@ -84,7 +84,18 @@
     --theme-border: 229 231 235;
   }
 
-  /* ✅ Pretendard 기본 타이포그래피 설정 */
+  /* 🔧 모바일 여백 방지 - 전역 overflow 설정 */
+  html {
+    scroll-behavior: smooth;
+    width: 100%;
+    max-width: 100%;
+    overflow-x: hidden;
+    /* iOS Safari 안정화 */
+    -webkit-text-size-adjust: 100%;
+    -ms-text-size-adjust: 100%;
+  }
+
+  /* ✅ Pretendard 기본 타이포그래피 설정 + 모바일 여백 방지 */
   body {
     @apply bg-background text-foreground;
     font-family: var(--font-pretendard);
@@ -95,12 +106,50 @@
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     text-rendering: optimizeLegibility;
+    
+    /* 🔧 모바일 여백 방지 핵심 설정 */
+    width: 100%;
+    max-width: 100%;
+    overflow-x: hidden;
+    position: relative;
+    margin: 0;
+    padding: 0;
+    
+    /* 모바일 브라우저 최적화 */
+    -webkit-overflow-scrolling: touch;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* 🔧 모든 요소의 overflow 방지 */
+  *, *::before, *::after {
+    box-sizing: border-box;
+    max-width: 100%;
+  }
+
+  /* 🔧 주요 컨테이너 요소들의 overflow 방지 */
+  div, section, article, main, footer, nav {
+    max-width: 100%;
+    overflow-x: hidden;
+  }
+
+  /* 🔧 헤더는 드롭다운을 위해 예외 처리 */
+  header {
+    overflow: visible;
+  }
+
+  /* 🔧 이미지와 미디어 요소 반응형 강제 적용 */
+  img, video, iframe, embed, object, canvas, svg {
+    max-width: 100% !important;
+    height: auto !important;
+    display: block;
   }
 
   /* 🎯 기본 HTML 태그들에 의미 단위 줄바꿈 적용 */
   h1, h2, h3, h4, h5, h6, p {
     word-break: keep-all;
     overflow-wrap: break-word;
+    max-width: 100%;
+    overflow-x: hidden;
   }
 
   /* 모바일에서 의미 단위 줄바꿈 강화 (양쪽 정렬 제거) */
@@ -200,6 +249,8 @@
     word-break: keep-all;
     overflow-wrap: break-word;
     line-break: strict;
+    max-width: 100%;
+    overflow-x: hidden;
   }
   
   /* 모바일에서 더 적극적인 의미 단위 줄바꿈 (양쪽 정렬 제거) */
@@ -212,9 +263,9 @@
   
   /* ⭐ 히어로 텍스트 자동 스타일 - 커스텀 폰트 적용 */
   .hero {
-    font-family: var(--font-okman) !important; /* !important로 강제 적용 */
+    font-family: var(--font-okman) !important;
     @apply text-6xl sm:text-7xl md:text-8xl lg:text-9xl xl:text-[10rem] text-[#D4AF37] leading-tight tracking-wide responsive-text;
-    font-weight: normal; /* 커스텀 폰트의 기본 weight 사용 */
+    font-weight: normal;
   }
   
   /* ✅ 커스텀 폰트 테스트 클래스 */
@@ -258,6 +309,8 @@
     word-break: keep-all !important;
     overflow-wrap: break-word !important;
     word-spacing: 0.1em;
+    max-width: 100% !important;
+    overflow-x: hidden !important;
   }
 
   @media (max-width: 767px) {
@@ -272,6 +325,14 @@
   * {
     @apply border-border;
   }
+}
+
+/* 🔧 모바일 여백 방지 유틸리티 클래스 */
+.prevent-mobile-overflow {
+  width: 100% !important;
+  max-width: 100% !important;
+  overflow-x: hidden !important;
+  box-sizing: border-box !important;
 }
 
 /* ✅ 테마 관련 스타일 */
@@ -301,10 +362,6 @@
 
 /* ✅ 스크롤 관련 스타일 */
 .scroll-container {
-  scroll-behavior: smooth;
-}
-
-html {
   scroll-behavior: smooth;
 }
 

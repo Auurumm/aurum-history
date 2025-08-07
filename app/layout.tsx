@@ -6,6 +6,7 @@ import Footer from "./components/footer"
 import Providers from "./providers"
 import CustomCursor from "./components/custom-cursor"
 import ScrollToTop from "./components/scroll-to-top"
+import ZoomPrevention from "./components/zoom-prevention"
 import { ResponsiveProvider } from "./contexts/responsive-context"
 
 // ✅ 뷰포트 설정 - 확대/축소 완전 비활성화
@@ -100,14 +101,15 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           crossOrigin=""
         />
       </head>
-      <body className="font-pretendard bg-white dark:bg-black text-black dark:text-white transition-colors duration-300 min-h-screen flex flex-col antialiased">
+      <body className="font-pretendard bg-white dark:bg-black text-black dark:text-white transition-colors duration-300 min-h-screen flex flex-col antialiased prevent-mobile-overflow">
         <Providers>
           <ResponsiveProvider>
+            <ZoomPrevention />
             <CustomCursor />
             <ScrollToTop />
             <Header />
-            <main className="flex-grow flex flex-col">
-              <div className="flex-grow">{children}</div>
+            <main className="flex-grow flex flex-col prevent-mobile-overflow">
+              <div className="flex-grow prevent-mobile-overflow">{children}</div>
             </main>
             <Footer />
           </ResponsiveProvider>
