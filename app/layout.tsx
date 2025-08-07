@@ -101,15 +101,15 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           crossOrigin=""
         />
       </head>
-      <body className="font-pretendard bg-white dark:bg-black text-black dark:text-white transition-colors duration-300 min-h-screen flex flex-col antialiased prevent-mobile-overflow">
+      <body className="font-pretendard bg-white dark:bg-black text-black dark:text-white transition-colors duration-300 min-h-screen flex flex-col antialiased">
         <Providers>
           <ResponsiveProvider>
             <ZoomPrevention />
             <CustomCursor />
             <ScrollToTop />
             <Header />
-            <main className="flex-grow flex flex-col prevent-mobile-overflow">
-              <div className="flex-grow prevent-mobile-overflow">{children}</div>
+            <main className="flex-grow flex flex-col">
+              <div className="flex-grow">{children}</div>
             </main>
             <Footer />
           </ResponsiveProvider>
