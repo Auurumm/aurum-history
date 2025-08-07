@@ -72,7 +72,7 @@ const members: Member[] = [
   },
   {
     id: 7,
-    name: "One",
+    name: "Won",
     department: "종합지원실",
     role: "Maker",
     motto: "한 번 해보는 게 열 번 고민보다 낫다.",
