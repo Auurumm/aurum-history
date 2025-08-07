@@ -185,8 +185,8 @@ export default function Header() {
 
       {!mounted ? (
         // 깜빡임 방지를 위한 초기 로딩 상태
-        <div className="w-full px-4 sm:px-6 lg:px-8 lg:max-w-7xl lg:mx-auto relative z-10">
-          <div className="flex items-center justify-between h-16">
+        <div className="w-full max-w-none px-4 relative z-10" style={{ margin: '0 auto' }}>
+          <div className="flex items-center justify-between h-16" style={{ width: '100%', maxWidth: 'none' }}>
             {/* 로고만 먼저 표시 */}
             <div className="flex-shrink-0 min-w-0">
               <Link
@@ -197,14 +197,33 @@ export default function Header() {
                 <span className="text-xl font-bold tracking-tight">Aurum</span>
               </Link>
             </div>
-            {/* 햄버거 메뉴는 항상 표시 (안드로이드 대응) */}
-            <div className="relative">
+            {/* 햄버거 메뉴는 항상 표시 (삼성 브라우저 대응 강화) */}
+            <div 
+              className="flex-shrink-0" 
+              style={{ 
+                position: 'absolute',
+                right: '16px',
+                top: '50%',
+                transform: 'translateY(-50%)',
+                zIndex: 100
+              }}
+            >
               <Button
                 variant="ghost"
                 size="sm"
-                className="p-2 ml-2 transition-colors text-gray-800 hover:text-black dark:text-gray-200 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 flex-shrink-0 w-[44px] h-[44px] flex items-center justify-center border border-transparent"
+                className="flex-shrink-0 border border-gray-300 dark:border-gray-600"
                 onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
                 aria-label="메뉴 토글"
+                style={{
+                  width: '44px',
+                  height: '44px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  padding: '8px',
+                  margin: '0',
+                  position: 'relative'
+                }}
               >
                 {isMobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
               </Button>
@@ -383,15 +402,35 @@ export default function Header() {
                 </div>
               )}
 
-              {/* 모바일 햄버거 메뉴 - 안드로이드 대응 강화 */}
+              {/* 모바일 햄버거 메뉴 - 삼성 브라우저 대응 강화 */}
               {isMobile && (
-                <div className="relative">
+                <div 
+                  className="flex-shrink-0"
+                  style={{ 
+                    position: 'absolute',
+                    right: '16px',
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    zIndex: 100
+                  }}
+                >
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="p-2 ml-2 transition-colors text-gray-800 hover:text-black dark:text-gray-200 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 flex-shrink-0 w-[44px] h-[44px] flex items-center justify-center border border-transparent"
+                    className="flex-shrink-0 border border-gray-300 dark:border-gray-600 hover:border-yellow-400"
                     onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
                     aria-label="메뉴 토글"
+                    style={{
+                      width: '44px',
+                      height: '44px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      padding: '8px',
+                      margin: '0',
+                      position: 'relative',
+                      backgroundColor: isMobileMenuOpen ? 'rgba(250, 204, 21, 0.1)' : 'transparent'
+                    }}
                   >
                     {isMobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
                   </Button>
