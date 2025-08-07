@@ -198,16 +198,15 @@ export default function Header() {
               </Link>
             </div>
             
-            {/* 햄버거 메뉴 - 절대 위치로 우측 고정 */}
+            {/* 햄버거 메뉴 - 삼성폰 대응 강화 */}
             <button
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
               aria-label="메뉴 토글"
               className="text-gray-800 dark:text-gray-200 hover:text-black dark:hover:text-white transition-colors"
               style={{
-                position: 'absolute',
-                right: '16px',
-                top: '50%',
-                transform: 'translateY(-50%)',
+                position: 'fixed',
+                right: '12px',
+                top: '20px',
                 width: '44px',
                 height: '44px',
                 display: 'flex',
@@ -217,7 +216,7 @@ export default function Header() {
                 border: 'none',
                 padding: '0',
                 margin: '0',
-                zIndex: 999,
+                zIndex: 9999,
                 cursor: 'pointer'
               }}
             >
@@ -397,17 +396,16 @@ export default function Header() {
                 </div>
               )}
 
-              {/* 모바일 햄버거 메뉴 - 깔끔한 스타일, 박스 제거 */}
+              {/* 모바일 햄버거 메뉴 - 삼성폰 뷰포트 문제 해결 */}
               {isMobile && (
                 <button
                   onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
                   aria-label="메뉴 토글"
                   className="text-gray-800 dark:text-gray-200 hover:text-black dark:hover:text-white transition-colors"
                   style={{
-                    position: 'absolute',
-                    right: '0px',
-                    top: '50%',
-                    transform: 'translateY(-50%)',
+                    position: 'fixed',
+                    right: '12px',
+                    top: '20px',
                     width: '44px',
                     height: '44px',
                     display: 'flex',
@@ -417,7 +415,7 @@ export default function Header() {
                     border: 'none',
                     padding: '0',
                     margin: '0',
-                    zIndex: 999,
+                    zIndex: 9999,
                     cursor: 'pointer'
                   }}
                 >
