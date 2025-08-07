@@ -8,15 +8,12 @@ import CustomCursor from "./components/custom-cursor"
 import ScrollToTop from "./components/scroll-to-top"
 import { ResponsiveProvider } from "./contexts/responsive-context"
 
-// ✅ 뷰포트 설정 추가 - Next.js 14 방식
+// ✅ 뷰포트 설정만 추가
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
-  maximumScale: 5,
-  userScalable: true,
 }
 
-// 기존 메타데이터 그대로 유지
 export const metadata: Metadata = {
   title: {
     default: "Aurum, 오럼",
@@ -99,14 +96,14 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           crossOrigin=""
         />
       </head>
-      <body className="font-pretendard bg-white dark:bg-black text-black dark:text-white transition-colors duration-300 min-h-screen flex flex-col antialiased prevent-overflow">
+      <body className="font-pretendard bg-white dark:bg-black text-black dark:text-white transition-colors duration-300 min-h-screen flex flex-col antialiased">
         <Providers>
           <ResponsiveProvider>
             <CustomCursor />
             <ScrollToTop />
             <Header />
-            <main className="flex-grow flex flex-col prevent-overflow">
-              <div className="flex-grow prevent-overflow">{children}</div>
+            <main className="flex-grow flex flex-col">
+              <div className="flex-grow">{children}</div>
             </main>
             <Footer />
           </ResponsiveProvider>

@@ -84,18 +84,7 @@
     --theme-border: 229 231 235;
   }
 
-  /* 🔧 모바일 뷰포트 오버플로우 방지 - 전역 설정 */
-  html {
-    width: 100vw;
-    max-width: 100vw;
-    overflow-x: hidden;
-    scroll-behavior: smooth;
-    /* 삼성 브라우저 안정화 */
-    -webkit-text-size-adjust: 100%;
-    -ms-text-size-adjust: 100%;
-  }
-
-  /* ✅ Pretendard 기본 타이포그래피 설정 + 뷰포트 오버플로우 방지 */
+  /* ✅ Pretendard 기본 타이포그래피 설정 */
   body {
     @apply bg-background text-foreground;
     font-family: var(--font-pretendard);
@@ -106,43 +95,12 @@
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     text-rendering: optimizeLegibility;
-    
-    /* 🔧 모바일 뷰포트 오버플로우 방지 */
-    width: 100vw;
-    max-width: 100vw;
-    overflow-x: hidden;
-    position: relative;
-    
-    /* 모바일 브라우저 최적화 */
-    -webkit-overflow-scrolling: touch;
-    -webkit-tap-highlight-color: transparent;
-  }
-
-  /* 🔧 모든 컨테이너 요소에 오버플로우 방지 적용 */
-  *, *::before, *::after {
-    box-sizing: border-box;
-    /* 요소가 뷰포트를 벗어나지 않도록 */
-    max-width: 100%;
-  }
-
-  /* 🔧 특정 요소들의 뷰포트 오버플로우 방지 */
-  div, section, article, main, header, footer, nav {
-    max-width: 100vw;
-    overflow-x: hidden;
-  }
-
-  /* 🔧 이미지와 미디어 요소 반응형 처리 */
-  img, video, iframe, embed, object {
-    max-width: 100%;
-    height: auto;
   }
 
   /* 🎯 기본 HTML 태그들에 의미 단위 줄바꿈 적용 */
   h1, h2, h3, h4, h5, h6, p {
     word-break: keep-all;
     overflow-wrap: break-word;
-    /* 텍스트도 뷰포트를 벗어나지 않도록 */
-    max-width: 100%;
   }
 
   /* 모바일에서 의미 단위 줄바꿈 강화 (양쪽 정렬 제거) */
@@ -242,7 +200,6 @@
     word-break: keep-all;
     overflow-wrap: break-word;
     line-break: strict;
-    max-width: 100%;
   }
   
   /* 모바일에서 더 적극적인 의미 단위 줄바꿈 (양쪽 정렬 제거) */
@@ -301,7 +258,6 @@
     word-break: keep-all !important;
     overflow-wrap: break-word !important;
     word-spacing: 0.1em;
-    max-width: 100% !important;
   }
 
   @media (max-width: 767px) {
@@ -316,24 +272,6 @@
   * {
     @apply border-border;
   }
-}
-
-/* 🔧 뷰포트 오버플로우 방지 유틸리티 클래스 */
-.prevent-overflow {
-  width: 100%;
-  max-width: 100vw;
-  overflow-x: hidden;
-  box-sizing: border-box;
-}
-
-/* 🔧 컨테이너 안전 여백 (모바일) */
-.safe-container {
-  width: 100%;
-  max-width: 100vw;
-  padding-left: max(16px, env(safe-area-inset-left));
-  padding-right: max(16px, env(safe-area-inset-right));
-  overflow-x: hidden;
-  box-sizing: border-box;
 }
 
 /* ✅ 테마 관련 스타일 */
@@ -363,6 +301,10 @@
 
 /* ✅ 스크롤 관련 스타일 */
 .scroll-container {
+  scroll-behavior: smooth;
+}
+
+html {
   scroll-behavior: smooth;
 }
 
