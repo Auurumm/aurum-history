@@ -274,6 +274,45 @@
   }
 }
 
+/* 🔑 우아한형제들 방식: Site Wrapper로 모바일 overflow 완전 제어 */
+.site-wrapper {
+  /* 모바일에서만 overflow 제어 */
+  width: 100%;
+  overflow-x: hidden;
+  position: relative;
+  /* 데스크톱에서는 드롭다운이 밖으로 나갈 수 있도록 */
+  min-height: 100vh;
+}
+
+/* 모바일에서만 적용 */
+@media (max-width: 768px) {
+  .site-wrapper {
+    /* 모바일에서 완전한 overflow 제어 */
+    overflow-x: hidden !important;
+    max-width: 100vw;
+    position: relative;
+  }
+  
+  /* 모바일에서 body도 보조 제어 */
+  body {
+    overflow-x: hidden;
+    max-width: 100vw;
+    position: relative;
+  }
+  
+  html {
+    overflow-x: hidden;
+    max-width: 100vw;
+  }
+}
+
+/* 데스크톱에서는 드롭다운을 위해 overflow visible 유지 */
+@media (min-width: 769px) {
+  .site-wrapper {
+    overflow: visible;
+  }
+}
+
 /* ✅ 테마 관련 스타일 */
 .theme-bg {
   background-color: rgb(var(--theme-bg));

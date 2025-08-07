@@ -102,18 +102,21 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         />
       </head>
       <body className="font-pretendard bg-white dark:bg-black text-black dark:text-white transition-colors duration-300 min-h-screen flex flex-col antialiased">
-        <Providers>
-          <ResponsiveProvider>
-            <ZoomPrevention />
-            <CustomCursor />
-            <ScrollToTop />
-            <Header />
-            <main className="flex-grow flex flex-col">
-              <div className="flex-grow">{children}</div>
-            </main>
-            <Footer />
-          </ResponsiveProvider>
-        </Providers>
+        {/* 🔑 핵심: Site Wrapper로 모바일 overflow 제어 */}
+        <div className="site-wrapper">
+          <Providers>
+            <ResponsiveProvider>
+              <ZoomPrevention />
+              <CustomCursor />
+              <ScrollToTop />
+              <Header />
+              <main className="flex-grow flex flex-col">
+                <div className="flex-grow">{children}</div>
+              </main>
+              <Footer />
+            </ResponsiveProvider>
+          </Providers>
+        </div>
       </body>
     </html>
   )
