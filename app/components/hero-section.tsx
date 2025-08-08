@@ -250,10 +250,10 @@ export default function HeroSection() {
             {/* 반짝이는 테두리 효과 */}
             <div className="absolute inset-0 rounded-full bg-gradient-to-r from-transparent via-amber-400/50 to-transparent animate-pulse opacity-60"></div>
             
-            {/* 버튼 텍스트 */}
+            { /*버튼 텍스트 
             <span className="relative text-base sm:text-lg font-medium text-amber-100 group-hover:text-white transition-colors duration-300">
               모두를 행복하게 할 수는 없지만
-            </span>
+            </span>*/}
             
             {/* 우측 화살표 아이콘 */}
             <svg 
