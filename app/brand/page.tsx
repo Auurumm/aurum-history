@@ -33,8 +33,6 @@ export default function BrandPage() {
           <BrandHero />
         </section>
 
-        <SectionDivider />
-
         <section className="snap-start">
           <BrandStory />
         </section>
