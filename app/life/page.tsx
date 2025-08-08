@@ -28,8 +28,6 @@ export default function LifePage() {
         <LifeHero />
       </section>
 
-      <SectionDivider />
-
       {/* Product Features (snap scroll 대상) */}
       <section id="product-feature-1" className="snap-start h-screen w-full flex-shrink-0">
         <LifeFeature

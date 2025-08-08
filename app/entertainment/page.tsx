@@ -29,8 +29,6 @@ export default function EntertainmentPage() {
           <EntertainmentHero />
         </section>
 
-        <SectionDivider />
-
         {/* ✅ Features - 구분선 추가 */}
         <section id="seasoning" className="bg-white dark:bg-black">
           <EntertainmentFeature 

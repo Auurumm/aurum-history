@@ -31,8 +31,6 @@ export default function MarketingPage() {
           <MarketingHero />
         </section>
 
-        <SectionDivider />
-
         {/* 상품 섹션들 - 스크롤 스냅 적용 */}
         <div className="snap-y snap-mandatory overflow-y-auto">
           <section id="hexar" className="h-auto py-40 snap-start">
