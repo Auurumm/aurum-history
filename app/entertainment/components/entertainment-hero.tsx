@@ -17,20 +17,13 @@ export default function EntertainmentHero() {
 
       {/* 텍스트 콘텐츠 */}
       <div className="relative z-10 text-center px-6 sm:px-8 lg:px-12 max-w-4xl mx-auto space-y-4">
-        {/* 모바일 요약 문장 */}
-        <div className="sm:hidden space-y-3">
-          <p className="text-white text-base leading-relaxed">계속 맛보고 싶은 즐거움,</p>
-          <p className="text-amber-300 text-lg font-semibold">우리의 엔터테인먼트</p>
-        </div>
-
-        {/* PC 전용 전체 문장 */}
-        <div className="hidden sm:block space-y-4">
-          <p className="text-white text-xl leading-relaxed">너무 재미있는,</p>
-          <p className="text-gray-300 text-lg leading-relaxed">페인 킬러가 아닌 비타민?</p>
-          <p className="text-gray-400 text-base italic leading-relaxed">아니아니..</p>
-          <p className="text-2xl font-bold text-amber-300 mt-6 leading-relaxed">우리는, 캔디와 초콜렛</p>
-          <p className="text-white text-lg mt-6 leading-relaxed">계속 맛보고 싶은,</p>
-          <p className="text-white text-base tracking-wide leading-relaxed">우리의 엔터테인먼트</p>
+        <div className="space-y-3 sm:space-y-4">
+          <p className="text-white text-base sm:text-xl leading-relaxed">너무 재미있는,</p>
+          <p className="text-gray-300 text-sm sm:text-lg leading-relaxed">페인 킬러가 아닌 비타민?</p>
+          <p className="text-gray-400 text-xs sm:text-base italic leading-relaxed">아니아니..</p>
+          <p className="text-lg sm:text-2xl font-bold text-amber-300 mt-4 sm:mt-6 leading-relaxed">우리는, 캔디와 초콜렛</p>
+          <p className="text-white text-base sm:text-lg mt-4 sm:mt-6 leading-relaxed">계속 맛보고 싶은,</p>
+          <p className="text-white text-sm sm:text-base tracking-wide leading-relaxed">우리의 엔터테인먼트</p>
         </div>
 
         <h1 className="text-2xl sm:text-5xl lg:text-6xl font-bold mt-8 text-white leading-tight">
@@ -38,7 +31,7 @@ export default function EntertainmentHero() {
         </h1>
 
         <p className="text-sm sm:text-lg italic text-gray-500 mb-10 leading-relaxed mt-6">
-          Aurum,<br />– entertainment department representative, chief
+          Aurum,<br />– Entertainment department representative, chief
         </p>
 
         <button

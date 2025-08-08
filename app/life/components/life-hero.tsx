@@ -16,18 +16,13 @@ export default function LifeHero() {
       </div>
 
       {/* Content */}
-      <div className="relative z-10 text-center px-4 sm:px-6 lg:px-8 max-w-5xl mx-auto space-y-6">
-        {/* 모바일 문장 요약 */}
-        <p className="text-base sm:hidden text-gray-400 leading-relaxed">
-          느리더라도, 삶을 바꿔가는 것.
-        </p>
-
-        {/* PC 전용 문장 */}
-        <p className="hidden sm:block text-xl sm:text-2xl text-gray-400 mb-12 tracking-wide leading-relaxed">
+      <div className="relative z-10 text-center px-4 sm:px-6 lg:px-8 max-w-5xl mx-auto space-y-4 sm:space-y-6">
+        
+        <p className="text-lg sm:text-xl md:text-2xl text-gray-400 mb-8 sm:mb-12 tracking-wide leading-relaxed">
           나 어릴 때, <br /> 충북 옥천 우리 할아버지는 <br /> 스마트폰은 안쓰시는데, 에어컨은 쓰셔
         </p>
 
-        <p className="hidden sm:block text-xl sm:text-2xl text-gray-400 mb-12 tracking-wide leading-relaxed">
+        <p className="text-lg sm:text-xl md:text-2xl text-gray-400 mb-8 sm:mb-12 tracking-wide leading-relaxed">
           우리의 행동이 바뀌고, 문화가 바뀌는 것. <br /> 그리고 삶이 바뀌는 것. 때로는 느리더라도,
         </p>
 

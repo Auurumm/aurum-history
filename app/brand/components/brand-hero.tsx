@@ -17,13 +17,11 @@ export default function BrandHero() {
       {/* Content */}
       <div className="relative z-10 text-center px-4 sm:px-6 lg:px-8 max-w-4xl mx-auto py-12">
         <p className="text-base sm:text-lg text-amber-200 mb-4 tracking-wide drop-shadow-lg">
-          <span className="sm:hidden">브랜드는, 만드는 것이 아니에요</span>
-          <span className="hidden sm:inline">브랜드는, 만드는 것이 아니에요</span>
+          브랜드는, 만드는 것이 아니에요
         </p>
 
         <p className="text-base sm:text-xl text-amber-100 mb-4 drop-shadow-lg leading-relaxed">
-          <span className="sm:hidden">빚어내는 것</span>
-          <span className="hidden sm:inline">빚어내는 것</span>
+          빚어내는 것
         </p>
 
         <h1 className="text-4xl sm:text-7xl lg:text-8xl font-bold mb-8 leading-snug sm:leading-tight text-white drop-shadow-2xl">
@@ -31,11 +29,8 @@ export default function BrandHero() {
         </h1>
 
         <p className="text-sm sm:text-lg text-amber-50 mb-10 leading-relaxed sm:leading-loose drop-shadow-lg">
-          <span className="sm:hidden">브랜드는 하루아침에 만들어지지 않아.<br />장인의 손길처럼.</span>
-          <span className="hidden sm:inline">
-            브랜드는 하루아침에 만들어지지 않아.<br />
-            장인의 손길처럼, 시간과 정성으로 빚어내는 것
-          </span>
+          브랜드는 하루아침에 만들어지지 않아.<br />
+          장인의 손길처럼, 시간과 정성으로 빚어내는 것
         </p>
 
         <p className="text-xs sm:text-base italic text-amber-200 mb-10 drop-shadow-lg leading-relaxed">

@@ -6,6 +6,13 @@ import MarketingHero from "./components/marketing-hero"
 import MarketingContact from "./components/marketing-contact"
 import ProductFeature from "./components/marketing-feature"
 
+// 은은한 구분선 컴포넌트
+const SectionDivider = () => (
+  <div className="relative w-full h-px my-8">
+    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-gray-300/60 to-transparent dark:via-gray-600/40"></div>
+  </div>
+)
+
 export default function MarketingPage() {
   const [mounted, setMounted] = useState(false)
 
@@ -24,6 +31,8 @@ export default function MarketingPage() {
           <MarketingHero />
         </section>
 
+        <SectionDivider />
+
         {/* 상품 섹션들 - 스크롤 스냅 적용 */}
         <div className="snap-y snap-mandatory overflow-y-auto">
           <section id="hexar" className="h-auto py-40 snap-start">
@@ -35,6 +44,8 @@ export default function MarketingPage() {
             />
           </section>
 
+          <SectionDivider />
+
           <section className="h-auto py-40 snap-start">
             <ProductFeature
               color="green"
@@ -43,6 +54,8 @@ export default function MarketingPage() {
               image="/images/marketing2.png"
             />
           </section>
+
+          <SectionDivider />
 
           <section className="h-auto py-40 snap-start">
             <ProductFeature
@@ -53,6 +66,8 @@ export default function MarketingPage() {
             />
           </section>
         </div>
+
+        <SectionDivider />
 
         {/* 연락처 섹션 - 일반 스크롤 */}
         <section className="min-h-screen">

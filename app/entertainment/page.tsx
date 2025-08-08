@@ -5,6 +5,13 @@ import EntertainmentHero from "./components/entertainment-hero"
 import EntertainmentContact from "./components/entertainment-contact"
 import EntertainmentFeature from "./components/entertainment-feature"
 
+// 은은한 구분선 컴포넌트
+const SectionDivider = () => (
+  <div className="relative w-full h-px my-8">
+    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-gray-300/60 to-transparent dark:via-gray-600/40"></div>
+  </div>
+)
+
 export default function EntertainmentPage() {
   const [mounted, setMounted] = useState(false)
 
@@ -22,7 +29,9 @@ export default function EntertainmentPage() {
           <EntertainmentHero />
         </section>
 
-        {/* ✅ Features - 구분선 제거 */}
+        <SectionDivider />
+
+        {/* ✅ Features - 구분선 추가 */}
         <section id="seasoning" className="bg-white dark:bg-black">
           <EntertainmentFeature 
             color="red"
@@ -31,6 +40,8 @@ export default function EntertainmentPage() {
             image="/images/Entertainment1.webp"
           />
         </section>
+
+        <SectionDivider />
 
         <section className="bg-white dark:bg-black">
           <EntertainmentFeature 
@@ -41,6 +52,8 @@ export default function EntertainmentPage() {
           />
         </section>
 
+        <SectionDivider />
+
         <section className="bg-white dark:bg-black">
           <EntertainmentFeature 
             color="blue"
@@ -49,6 +62,8 @@ export default function EntertainmentPage() {
             image="/images/Entertainment3.webp"
           />
         </section>
+
+        <SectionDivider />
 
         {/* ✅ Contact */}
         <section className="min-h-screen">

@@ -5,6 +5,13 @@ import LifeHero from "./components/life-hero"
 import LifeFeature from "./components/life-feature"
 import LifeContact from "./components/life-contact"
 
+// 은은한 구분선 컴포넌트
+const SectionDivider = () => (
+  <div className="relative w-full h-px my-8">
+    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-gray-300/60 to-transparent dark:via-gray-600/40"></div>
+  </div>
+)
+
 export default function LifePage() {
   const [mounted, setMounted] = useState(false)
 
@@ -21,6 +28,8 @@ export default function LifePage() {
         <LifeHero />
       </section>
 
+      <SectionDivider />
+
       {/* Product Features (snap scroll 대상) */}
       <section id="product-feature-1" className="snap-start h-screen w-full flex-shrink-0">
         <LifeFeature
@@ -32,6 +41,8 @@ export default function LifePage() {
         />
       </section>
 
+      <SectionDivider />
+
       <section className="snap-start h-screen w-full flex-shrink-0">
         <LifeFeature
           color="green"
@@ -42,6 +53,8 @@ export default function LifePage() {
         />
       </section>
 
+      <SectionDivider />
+
       <section className="snap-start h-screen w-full flex-shrink-0">
         <LifeFeature
           color="blue"
@@ -51,6 +64,8 @@ export default function LifePage() {
           tags={["연결", "상호작용", "방향", "긴밀함"]}
         />
       </section>
+
+      <SectionDivider />
 
       {/* Contact Section (scroll snap 제외) */}
       <section className="min-h-screen w-full">

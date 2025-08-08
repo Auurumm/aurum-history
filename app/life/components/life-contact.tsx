@@ -159,7 +159,7 @@ export default function LifeContact() {
                 <p className="text-gray-600 dark:text-gray-300 mb-6">
                   전화로 직접 상담받으시면 <br/> 더욱 빠르고 정확한 답변을 드릴 수 있습니다.
                 </p>
-                <a href="tel:0212345678" className="block">
+                <a href="tel:024177009" className="block">
                   <Button
                     size="lg"
                     variant="outline"

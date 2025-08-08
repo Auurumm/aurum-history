@@ -14,25 +14,25 @@ export default function MarketingHero() {
       </div>
 
       <div className="relative z-10 text-center px-4 sm:px-6 lg:px-8 max-w-4xl mx-auto">
-        <p className="text-base text-gray-400 mb-3 tracking-wide">
+        <p className="text-sm sm:text-base text-gray-400 mb-3 tracking-wide">
           마케팅은, 다가가는 것이 아니에요
         </p>
 
-        <p className="text-xl text-gray-300 mb-4 leading-relaxed">
+        <p className="text-lg sm:text-xl text-gray-300 mb-4 leading-relaxed">
           다가 '오는' 것
         </p>
 
-        <h1 className="text-5xl sm:text-7xl lg:text-8xl font-bold mb-8 leading-tight text-white">
-          “<span className="text-[#D4AF37]">스며드는 것</span>”
+        <h1 className="text-4xl sm:text-5xl md:text-7xl lg:text-8xl font-bold mb-8 leading-tight text-white">
+          "<span className="text-[#D4AF37]">스며드는 것</span>"
         </h1>
 
-        <p className="text-lg sm:text-xl text-gray-300 mb-12 leading-loose">
+        <p className="text-base sm:text-lg md:text-xl text-gray-300 mb-12 leading-loose">
           아니, 마케팅이 아니야.
           <br />
           고객과 함께 살게 되는 것
         </p>
 
-        <p className="text-base italic text-gray-500 mb-8">
+        <p className="text-sm sm:text-base italic text-gray-500 mb-8">
           Aurum,
           <br />– Marketing department representative, chief
         </p>
