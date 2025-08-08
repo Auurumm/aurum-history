@@ -237,49 +237,15 @@ export default function HeroSection() {
           모두의 삶에 도움이 되는 기능들, <br />
           언제나 항상 있어야 하는 그러한 서비스를 만듭니다
         </p>
-
-        {/* 🆕 클릭 유도 버튼 - 모바일에서 특히 눈에 띄게 */}
-        <div className="mt-12 sm:mt-16">
-          <button
-            onClick={() => {
-              const nextSection = document.getElementById("next-section")
-              nextSection?.scrollIntoView({ behavior: "smooth" })
-            }}
-            className="group relative bg-gradient-to-r from-amber-500/20 to-yellow-500/20 backdrop-blur-sm border border-amber-400/30 rounded-full px-6 py-3 sm:px-8 sm:py-4 text-white hover:bg-gradient-to-r hover:from-amber-500/30 hover:to-yellow-500/30 transition-all duration-300 transform hover:scale-105 active:scale-95"
-          >
-            {/* 반짝이는 테두리 효과 */}
-            <div className="absolute inset-0 rounded-full bg-gradient-to-r from-transparent via-amber-400/50 to-transparent animate-pulse opacity-60"></div>
-            
-            { /*버튼 텍스트 
-            <span className="relative text-base sm:text-lg font-medium text-amber-100 group-hover:text-white transition-colors duration-300">
-              모두를 행복하게 할 수는 없지만
-            </span>*/}
-            
-            {/* 우측 화살표 아이콘 */}
-            <svg 
-              className="inline-block ml-2 w-4 h-4 sm:w-5 sm:h-5 text-amber-300 group-hover:text-white group-hover:translate-x-1 transition-all duration-300" 
-              fill="none" 
-              viewBox="0 0 24 24" 
-              stroke="currentColor"
-            >
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-            </svg>
-          </button>
-          
-          {/* 🆕 모바일 전용 추가 힌트 텍스트 */}
-          <p className="block sm:hidden text-amber-200/70 text-sm mt-3 animate-pulse">
-            탭하여 자세히 알아보기 ↑
-          </p>
-        </div>
       </div>
 
-      {/* Scroll Down Button - 기존 위치 유지 */}
+      {/* Scroll Down Button */}
       <button
         onClick={() => {
           const nextSection = document.getElementById("next-section")
           nextSection?.scrollIntoView({ behavior: "smooth" })
         }}
-        className="absolute bottom-8 left-1/2 transform -translate-x-1/2 z-20 animate-bounce opacity-60"
+        className="absolute bottom-8 left-1/2 transform -translate-x-1/2 z-20 animate-bounce"
         aria-label="Scroll down"
       >
         <svg
