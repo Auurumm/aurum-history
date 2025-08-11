@@ -21,39 +21,38 @@ export const viewport: Viewport = {
 
 export const metadata: Metadata = {
   title: {
-    default: "(주)오럼 | 주식회사 오럼 | Aurum Inc.",
-    template: "%s | (주)오럼 | Aurum Inc.",
+    default: "오럼 | Aurum",
+    template: "%s | 오럼 | Aurum",
   },
-  description: "주식회사 오럼(Aurum Inc.) - 사람이 행복한 라이프 스타일을 만듭니다. (주)오럼은 브랜드, 마케팅, 엔터테인먼트 분야의 전문 기업입니다.",
+  description: "주식회사 오럼(Aurum Inc.) - 사람이 행복한 라이프 스타일을 만듭니다.",
   keywords: [
-    "(주)오럼", "주식회사 오럼", "오럼", "Aurum Inc", "Aurum", 
-    "브랜드", "마케팅", "엔터테인먼트", "라이프스타일",
-    "주식회사오럼", "오럼회사", "아우럼"
+    "오럼", "Aurum", "(주)오럼", "주식회사 오럼", "Aurum Inc", 
+    "브랜드", "마케팅", "엔터테인먼트", "라이프스타일"
   ],
   
   // Open Graph (Facebook, 카카오톡, 링크드인 등)
   openGraph: {
     type: 'website',
     url: 'https://www.aurum.nexus',
-    title: '(주)오럼 | 주식회사 오럼 | Aurum Inc. - 사람이 행복한 라이프 스타일',
-    description: '주식회사 오럼(Aurum Inc.)은 세상 모두가 더 행복해질 수 있도록, 오럼이 함께 합니다.',
+    title: '오럼 | Aurum - 사람이 행복한 라이프 스타일',
+    description: '주식회사 오럼(Aurum)은 세상 모두가 더 행복해질 수 있도록, 함께 합니다.',
     images: [
       {
         url: 'https://www.aurum.nexus/images/og-image.png',
         width: 1200,
         height: 630,
-        alt: '(주)오럼 | Aurum Inc. 미리보기 이미지',
+        alt: '오럼 | Aurum 미리보기 이미지',
       }
     ],
-    siteName: '(주)오럼 | Aurum Inc.',
+    siteName: '오럼 | Aurum',
     locale: 'ko_KR',
   },
 
   // Twitter Cards
   twitter: {
     card: 'summary_large_image',
-    title: '(주)오럼 | 주식회사 오럼 | Aurum Inc. - 사람이 행복한 라이프 스타일',
-    description: '주식회사 오럼(Aurum Inc.)은 세상 모두가 더 행복해질 수 있도록, 오럼이 함께 합니다.',
+    title: '오럼 | Aurum - 사람이 행복한 라이프 스타일',
+    description: '주식회사 오럼(Aurum)은 세상 모두가 더 행복해질 수 있도록, 함께 합니다.',
     images: ['https://www.aurum.nexus/images/og-image.png'],
   },
 
@@ -88,8 +87,9 @@ const structuredData = {
     {
       "@type": "Organization",
       "@id": "https://www.aurum.nexus/#organization",
-      "name": "Aurum",
-      "alternateName": "오럼",
+      "name": "주식회사 오럼",
+      "legalName": "(주)오럼",
+      "alternateName": ["Aurum Inc.", "오럼", "Aurum", "아우럼"],
       "url": "https://www.aurum.nexus",
       "logo": {
         "@type": "ImageObject",
@@ -97,7 +97,7 @@ const structuredData = {
         "width": 400,
         "height": 400
       },
-      "description": "사람이 행복한, 라이프 스타일을 만듭니다.",
+      "description": "주식회사 오럼(Aurum Inc.) - 사람이 행복한 라이프 스타일을 만듭니다.",
       "foundingDate": "2024", // 실제 설립 연도로 수정
       "sameAs": [
         "https://www.instagram.com/aurum_official", // 실제 소셜미디어 URL로 수정
@@ -114,8 +114,8 @@ const structuredData = {
       "@type": "WebSite",
       "@id": "https://www.aurum.nexus/#website",
       "url": "https://www.aurum.nexus",
-      "name": "Aurum",
-      "description": "사람이 행복한, 라이프 스타일을 만듭니다.",
+      "name": "오럼 | Aurum",
+      "description": "주식회사 오럼(Aurum) - 사람이 행복한 라이프 스타일을 만듭니다.",
       "publisher": {
         "@id": "https://www.aurum.nexus/#organization"
       },
@@ -132,21 +132,21 @@ const structuredData = {
       "@type": "WebPage",
       "@id": "https://www.aurum.nexus/#webpage",
       "url": "https://www.aurum.nexus",
-      "name": "Aurum, 오럼 - 사람이 행복한 라이프 스타일",
+      "name": "오럼 | Aurum - 사람이 행복한 라이프 스타일",
       "isPartOf": {
         "@id": "https://www.aurum.nexus/#website"
       },
       "about": {
         "@id": "https://www.aurum.nexus/#organization"
       },
-      "description": "세상 모두가 더 행복해질 수 있도록, 오럼이 함께 합니다.",
+      "description": "주식회사 오럼(Aurum)은 세상 모두가 더 행복해질 수 있도록, 함께 합니다.",
       "breadcrumb": {
         "@type": "BreadcrumbList",
         "itemListElement": [
           {
             "@type": "ListItem",
             "position": 1,
-            "name": "홈",
+            "name": "오럼",
             "item": "https://www.aurum.nexus"
           }
         ]
