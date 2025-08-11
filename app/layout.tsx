@@ -13,10 +13,10 @@ import { ResponsiveProvider } from "./contexts/responsive-context"
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
-  maximumScale: 1, // 최대 확대 1배로 제한
-  minimumScale: 1, // 최소 축소 1배로 제한
-  userScalable: false, // 사용자 확대/축소 완전 차단
-  viewportFit: 'cover', // iPhone 노치 대응
+  maximumScale: 1,
+  minimumScale: 1,
+  userScalable: false,
+  viewportFit: 'cover',
 }
 
 export const metadata: Metadata = {
@@ -67,15 +67,100 @@ export const metadata: Metadata = {
 
   // 검증 메타태그 (필요시)
   verification: {
-    google: 'your-google-verification-code', // Google Search Console
+    google: 'your-google-verification-code', // Google Search Console에서 받은 코드로 교체
     // naver: 'your-naver-verification-code', // 네이버 웹마스터도구
   },
+
+  // 🆕 사이트링크를 위한 추가 메타데이터
+  alternates: {
+    canonical: 'https://www.aurum.nexus',
+  },
+}
+
+// 🆕 구조화된 데이터 스키마 (사이트링크 최적화)
+const structuredData = {
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "Organization",
+      "@id": "https://www.aurum.nexus/#organization",
+      "name": "Aurum",
+      "alternateName": "오럼",
+      "url": "https://www.aurum.nexus",
+      "logo": {
+        "@type": "ImageObject",
+        "url": "https://www.aurum.nexus/images/logo.png",
+        "width": 400,
+        "height": 400
+      },
+      "description": "사람이 행복한, 라이프 스타일을 만듭니다.",
+      "foundingDate": "2024", // 실제 설립 연도로 수정
+      "sameAs": [
+        "https://www.instagram.com/aurum_official", // 실제 소셜미디어 URL로 수정
+        "https://www.linkedin.com/company/aurum"
+      ],
+      "contactPoint": {
+        "@type": "ContactPoint",
+        "telephone": "+82-2-582-6101", // 실제 전화번호로 수정
+        "contactType": "customer service",
+        "availableLanguage": ["Korean", "English"]
+      }
+    },
+    {
+      "@type": "WebSite",
+      "@id": "https://www.aurum.nexus/#website",
+      "url": "https://www.aurum.nexus",
+      "name": "Aurum",
+      "description": "사람이 행복한, 라이프 스타일을 만듭니다.",
+      "publisher": {
+        "@id": "https://www.aurum.nexus/#organization"
+      },
+      "potentialAction": {
+        "@type": "SearchAction",
+        "target": {
+          "@type": "EntryPoint",
+          "urlTemplate": "https://www.aurum.nexus/search?q={search_term_string}"
+        },
+        "query-input": "required name=search_term_string"
+      }
+    },
+    {
+      "@type": "WebPage",
+      "@id": "https://www.aurum.nexus/#webpage",
+      "url": "https://www.aurum.nexus",
+      "name": "Aurum, 오럼 - 사람이 행복한 라이프 스타일",
+      "isPartOf": {
+        "@id": "https://www.aurum.nexus/#website"
+      },
+      "about": {
+        "@id": "https://www.aurum.nexus/#organization"
+      },
+      "description": "세상 모두가 더 행복해질 수 있도록, 오럼이 함께 합니다.",
+      "breadcrumb": {
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          {
+            "@type": "ListItem",
+            "position": 1,
+            "name": "홈",
+            "item": "https://www.aurum.nexus"
+          }
+        ]
+      }
+    }
+  ]
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="ko" className="scroll-smooth">
       <head>
+        {/* 🆕 Google Search Console 인증 메타태그 */}
+        <meta 
+          name="google-site-verification" 
+          content="ahNsH9XpaLexcmOc3-ZR-tJMxiN2i-Eiw1aklSS7wVE"
+        />
+
         {/* CDN 폰트 최적화 로딩 */}
         <link 
           rel="preconnect" 
@@ -92,7 +177,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" 
         />
         
-        {/* 커스텀 폰트 preload (URL 인코딩 적용) */}
+        {/* 커스텀 폰트 preload */}
         <link
           rel="preload"
           href="/fonts/OKMAN%20FONT.ttf"
@@ -100,9 +185,16 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           type="font/ttf"
           crossOrigin=""
         />
+
+        {/* 🆕 구조화된 데이터 추가 (사이트링크 최적화) */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify(structuredData),
+          }}
+        />
       </head>
       <body className="font-pretendard bg-white dark:bg-black text-black dark:text-white transition-colors duration-300 min-h-screen flex flex-col antialiased">
-        {/* 🔑 핵심: Site Wrapper로 모바일 overflow 제어 */}
         <div className="site-wrapper">
           <Providers>
             <ResponsiveProvider>
