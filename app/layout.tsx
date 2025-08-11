@@ -21,35 +21,39 @@ export const viewport: Viewport = {
 
 export const metadata: Metadata = {
   title: {
-    default: "Aurum, 오럼",
-    template: "%s | Aurum",
+    default: "(주)오럼 | 주식회사 오럼 | Aurum Inc.",
+    template: "%s | (주)오럼 | Aurum Inc.",
   },
-  description: "사람이 행복한, 라이프 스타일을 만듭니다.",
-  keywords: ["Aurum", "오럼", "브랜드", "마케팅", "엔터테인먼트", "라이프스타일"],
+  description: "주식회사 오럼(Aurum Inc.) - 사람이 행복한 라이프 스타일을 만듭니다. (주)오럼은 브랜드, 마케팅, 엔터테인먼트 분야의 전문 기업입니다.",
+  keywords: [
+    "(주)오럼", "주식회사 오럼", "오럼", "Aurum Inc", "Aurum", 
+    "브랜드", "마케팅", "엔터테인먼트", "라이프스타일",
+    "주식회사오럼", "오럼회사", "아우럼"
+  ],
   
   // Open Graph (Facebook, 카카오톡, 링크드인 등)
   openGraph: {
     type: 'website',
     url: 'https://www.aurum.nexus',
-    title: 'Aurum, 오럼 - 사람이 행복한 라이프 스타일',
-    description: '세상 모두가 더 행복해질 수 있도록, 오럼이 함께 합니다.',
+    title: '(주)오럼 | 주식회사 오럼 | Aurum Inc. - 사람이 행복한 라이프 스타일',
+    description: '주식회사 오럼(Aurum Inc.)은 세상 모두가 더 행복해질 수 있도록, 오럼이 함께 합니다.',
     images: [
       {
         url: 'https://www.aurum.nexus/images/og-image.png',
         width: 1200,
         height: 630,
-        alt: 'Aurum 미리보기 이미지',
+        alt: '(주)오럼 | Aurum Inc. 미리보기 이미지',
       }
     ],
-    siteName: 'Aurum',
+    siteName: '(주)오럼 | Aurum Inc.',
     locale: 'ko_KR',
   },
 
   // Twitter Cards
   twitter: {
     card: 'summary_large_image',
-    title: 'Aurum, 오럼 - 사람이 행복한 라이프 스타일',
-    description: '세상 모두가 더 행복해질 수 있도록, 오럼이 함께 합니다.',
+    title: '(주)오럼 | 주식회사 오럼 | Aurum Inc. - 사람이 행복한 라이프 스타일',
+    description: '주식회사 오럼(Aurum Inc.)은 세상 모두가 더 행복해질 수 있도록, 오럼이 함께 합니다.',
     images: ['https://www.aurum.nexus/images/og-image.png'],
   },
 
@@ -158,7 +162,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         {/* 🆕 Google Search Console 인증 메타태그 */}
         <meta 
           name="google-site-verification" 
-          content="ahNsH9XpaLexcmOc3-ZR-tJMxiN2i-Eiw1aklSS7wVE"
+          content="여기에_실제_구글_인증_코드를_붙여넣으세요" 
         />
 
         {/* CDN 폰트 최적화 로딩 */}
