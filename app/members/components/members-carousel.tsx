@@ -58,7 +58,7 @@ const members: Member[] = [
     department: "종합지원실",
     role: "Rookie",
     motto: "작지만 확실한 것부터.",
-    avatar: "/images/profiles/Hyun.png",
+    avatar: "/images/profiles/Ji-Hyun.png",
     color: "from-orange-500 to-orange-600",
   },
   {
@@ -78,15 +78,6 @@ const members: Member[] = [
     motto: "한 번 해보는 게 열 번 고민보다 낫다.",
     avatar: "/images/profiles/One.webp",
     color: "from-indigo-500 to-indigo-600",
-  },
-  {
-    id: 8,
-    name: "Hyojin",
-    department: "인프라사업부",
-    role: "Rookie",
-    motto: "모르는 건 물어보는 게 빠르다.",
-    avatar: "/images/profiles/Hyojin.png",
-    color: "from-pink-500 to-pink-600",
   },
   {
   id: 9,
@@ -114,15 +105,6 @@ const members: Member[] = [
   motto: "작은 걸음이 큰 변화를 만든다.",
   avatar: "/images/profiles/Sam.webp",
   color: "from-indigo-500 to-indigo-600",
-  },
-  {
-  id: 12,
-  name: "Min",
-  department: "종합지원실",
-  role: "Rookie",
-  motto: "처음이라서 더 즐겁다.",
-  avatar: "/images/profiles/Min.png",
-  color: "from-green-500 to-green-600",
   },
 ]
 
