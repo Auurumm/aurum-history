@@ -55,8 +55,8 @@ const members: Member[] = [
   {
     id: 5,
     name: "Hyun",
-    department: "인프라사업부",
-    role: "Maker",
+    department: "종합지원실",
+    role: "Rookie",
     motto: "작지만 확실한 것부터.",
     avatar: "/images/profiles/Hyun.png",
     color: "from-orange-500 to-orange-600",
