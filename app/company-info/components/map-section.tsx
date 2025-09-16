@@ -12,7 +12,7 @@ export default function MapSection() {
       <div className="max-w-7xl mx-auto">
         <div className="text-center mb-20">
           <h2 className="text-4xl sm:text-5xl font-bold text-gray-900 dark:text-white mb-8 leading-tight">
-            서울특별시 송파구 위례성대로12길 36, 4층 <br/> </>{t('directionsTitle')}
+            서울특별시 송파구 위례성대로12길 36, 4층 <br/> {t('directionsTitle')}
           </h2>
           <p className="text-xl text-gray-700 dark:text-gray-300 max-w-2xl mx-auto leading-loose">
             {t('directionsDescription')}
