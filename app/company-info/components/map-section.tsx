@@ -15,7 +15,7 @@ export default function MapSection() {
             {t('directionsTitle')}
           </h2>
           <p className="text-xl text-gray-700 dark:text-gray-300 max-w-2xl mx-auto leading-loose">
-            서울특별시 송파구 위례성대로12길 36, 4층 <br/> {t('directionsDescription')}
+            <strong>서울특별시 송파구 위례성대로12길 36, 4층</strong> <br/> {t('directionsDescription')}
           </p>
         </div>
 
