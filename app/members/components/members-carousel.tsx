@@ -90,11 +90,11 @@ const members: Member[] = [
   },
   {
   id: 10,
-  name: "Dragon",
+  name: "Siho",
   department: "종합지원실",
   role: "Rookie",
   motto: "배움에는 끝이 없다.",
-  avatar: "/images/profiles/Dragon.webp",
+  avatar: "/images/profiles/Siho.webp",
   color: "from-blue-500 to-blue-600",
   },
   {
