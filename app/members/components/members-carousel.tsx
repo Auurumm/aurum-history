@@ -94,7 +94,7 @@ const members: Member[] = [
   department: "종합지원실",
   role: "Rookie",
   motto: "배움에는 끝이 없다.",
-  avatar: "/images/profiles/Siho.webp",
+  avatar: "/images/profiles/Siho.png",
   color: "from-blue-500 to-blue-600",
   },
   {
