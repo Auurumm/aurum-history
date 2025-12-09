@@ -8,6 +8,33 @@ import CustomCursor from "./components/custom-cursor"
 import ScrollToTop from "./components/scroll-to-top"
 import ZoomPrevention from "./components/zoom-prevention"
 import { ResponsiveProvider } from "./contexts/responsive-context"
+import { AuthProvider } from '@/contexts/AuthContext';
+
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  return (
+    <html lang="ko">
+      <body>
+        <AuthProvider>
+          <Providers>
+            <ResponsiveProvider>
+              <CustomCursor />
+              <ZoomPrevention />
+              <ScrollToTop />
+              <Header />
+              {children}
+              <Footer />
+            </ResponsiveProvider>
+          </Providers>
+        </AuthProvider>
+      </body>
+    </html>
+  );
+}
+
 
 // ✅ 뷰포트 설정 - 확대/축소 완전 비활성화
 export const viewport: Viewport = {
@@ -153,67 +180,4 @@ const structuredData = {
       }
     }
   ]
-}
-
-export default function RootLayout({ children }: { children: React.ReactNode }) {
-  return (
-    <html lang="ko" className="scroll-smooth">
-      <head>
-        {/* 🆕 Google Search Console 인증 메타태그 */}
-        <meta 
-          name="google-site-verification" 
-          content="여기에_실제_구글_인증_코드를_붙여넣으세요" 
-        />
-
-        {/* CDN 폰트 최적화 로딩 */}
-        <link 
-          rel="preconnect" 
-          href="https://cdn.jsdelivr.net" 
-          crossOrigin=""
-        />
-        <link 
-          rel="preload" 
-          href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" 
-          as="style"
-        />
-        <link 
-          rel="stylesheet" 
-          href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" 
-        />
-        
-        {/* 커스텀 폰트 preload */}
-        <link
-          rel="preload"
-          href="/fonts/OKMAN%20FONT.ttf"
-          as="font"
-          type="font/ttf"
-          crossOrigin=""
-        />
-
-        {/* 🆕 구조화된 데이터 추가 (사이트링크 최적화) */}
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{
-            __html: JSON.stringify(structuredData),
-          }}
-        />
-      </head>
-      <body className="font-pretendard bg-white dark:bg-black text-black dark:text-white transition-colors duration-300 min-h-screen flex flex-col antialiased">
-        <div className="site-wrapper">
-          <Providers>
-            <ResponsiveProvider>
-              <ZoomPrevention />
-              <CustomCursor />
-              <ScrollToTop />
-              <Header />
-              <main className="flex-grow flex flex-col">
-                <div className="flex-grow">{children}</div>
-              </main>
-              <Footer />
-            </ResponsiveProvider>
-          </Providers>
-        </div>
-      </body>
-    </html>
-  )
 }
