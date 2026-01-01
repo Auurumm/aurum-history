@@ -43,8 +43,8 @@ export default function Footer() {
           <div className="flex justify-end mb-4">
             <select className="text-base bg-transparent border border-gray-300 dark:border-gray-600 rounded px-4 py-2 text-gray-600 dark:text-gray-400">
               <option value="main">관련 사이트</option>
-              <option value="site1">사이트 1</option>
-              <option value="site2">사이트 2</option>
+              {/* <option value="site1">사이트 1</option>
+              <option value="site2">사이트 2</option>  */}
             </select>
           </div>
 
