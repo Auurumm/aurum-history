@@ -10,7 +10,7 @@ import ZoomPrevention from "./components/zoom-prevention"
 import { ResponsiveProvider } from "./contexts/responsive-context"
 import { AuthProvider } from '@/contexts/AuthContext';
 
-// 🆕 구조화된 데이터 스키마 (사이트링크 최적화)
+// 구조화된 데이터 스키마 (사이트링크 최적화)
 const structuredData = {
   "@context": "https://schema.org",
   "@graph": [
@@ -23,19 +23,15 @@ const structuredData = {
       "url": "https://www.aurum.nexus",
       "logo": {
         "@type": "ImageObject",
-        "url": "https://www.aurum.nexus/images/logo.png",
+        "url": "https://www.aurum.nexus/favicon.ico",
         "width": 400,
         "height": 400
       },
       "description": "주식회사 오럼(Aurum Inc.) - 사람이 행복한 라이프 스타일을 만듭니다.",
-      "foundingDate": "2024",
-      "sameAs": [
-        "https://www.instagram.com/aurum_official",
-        "https://www.linkedin.com/company/aurum"
-      ],
+      "foundingDate": "2019",
       "contactPoint": {
         "@type": "ContactPoint",
-        "telephone": "+82-2-582-6101",
+        "telephone": "+82-2-417-7009",
         "contactType": "customer service",
         "availableLanguage": ["Korean", "English"]
       }
@@ -44,7 +40,7 @@ const structuredData = {
       "@type": "WebSite",
       "@id": "https://www.aurum.nexus/#website",
       "url": "https://www.aurum.nexus",
-      "name": "주식회사 오럼 | Aurum",
+      "name": "오럼 | Aurum",
       "description": "주식회사 오럼(Aurum Inc.) - 사람이 행복한 라이프 스타일을 만듭니다.",
       "publisher": {
         "@id": "https://www.aurum.nexus/#organization"
@@ -117,7 +113,7 @@ export default function RootLayout({
 }
 
 
-// ✅ 뷰포트 설정 - 확대/축소 완전 비활성화
+// 뷰포트 설정 - 확대/축소 완전 비활성화
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
