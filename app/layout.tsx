@@ -125,8 +125,8 @@ export const viewport: Viewport = {
 
 export const metadata: Metadata = {
   title: {
-    default: "주식회사 오럼 | Aurum",
-    template: "주식회사 오럼 | Aurum | %s",
+    default: "오럼 | Aurum",
+    template: "오럼 | Aurum | %s",
   },
   description: "주식회사 오럼(Aurum Inc.) - 사람이 행복한 라이프 스타일을 만듭니다. 브랜드, 마케팅, 엔터테인먼트, 라이프 사업을 운영합니다.",
   keywords: [
