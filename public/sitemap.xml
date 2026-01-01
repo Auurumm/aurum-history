@@ -1,49 +1,98 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
-        xmlns:xhtml="http://www.w3.org/1999/xhtml">
-  
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">
   <!-- 메인 페이지 -->
   <url>
     <loc>https://www.aurum.nexus</loc>
-    <lastmod>2025-08-11</lastmod>
+    <lastmod>2025-01-01</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
   </url>
-  
-  <!-- 주요 섹션들 (실제 페이지가 있다면 추가) -->
-  <url> 
+
+  <!-- 회사소개 섹션 -->
+  <url>
     <loc>https://www.aurum.nexus/company-info</loc>
-    <lastmod>2025-08-11</lastmod>
+    <lastmod>2025-01-01</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://www.aurum.nexus/history</loc>
+    <lastmod>2025-01-01</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
-  
   <url>
-    <loc>https://www.aurum.nexus/announcements</loc>
-    <lastmod>2025-08-11</lastmod>
+    <loc>https://www.aurum.nexus/members</loc>
+    <lastmod>2025-01-01</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
-  
+
+  <!-- 서비스 섹션 -->
   <url>
-    <loc>https://www.aurum.nexus/career</loc>
-    <lastmod>2025-08-11</lastmod>
+    <loc>https://www.aurum.nexus/brand</loc>
+    <lastmod>2025-01-01</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://www.aurum.nexus/marketing</loc>
+    <lastmod>2025-01-01</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://www.aurum.nexus/entertainment</loc>
+    <lastmod>2025-01-01</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://www.aurum.nexus/life</loc>
+    <lastmod>2025-01-01</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <!-- 커뮤니티 섹션 -->
+  <url>
+    <loc>https://www.aurum.nexus/gallery</loc>
+    <lastmod>2025-01-01</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
-  
   <url>
-    <loc>https://www.aurum.nexus/wonders</loc>
-    <lastmod>2025-08-11</lastmod>
+    <loc>https://www.aurum.nexus/announcements</loc>
+    <lastmod>2025-01-01</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://www.aurum.nexus/traces</loc>
+    <lastmod>2025-01-01</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
-  
   <url>
-    <loc>https://www.aurum.nexus/traces</loc>
-    <lastmod>2025-08-11</lastmod>
+    <loc>https://www.aurum.nexus/wonders</loc>
+    <lastmod>2025-01-01</lastmod>
     <changefreq>monthly</changefreq>
-    <priority>0.6</priority>
+    <priority>0.7</priority>
   </url>
 
+  <!-- 채용 -->
+  <url>
+    <loc>https://www.aurum.nexus/career</loc>
+    <lastmod>2025-01-01</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+
+  <!-- 검색 -->
+  <url>
+    <loc>https://www.aurum.nexus/search</loc>
+    <lastmod>2025-01-01</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
 </urlset>
