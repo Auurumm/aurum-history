@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { useRouter, useSearchParams } from "next/navigation"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Filter, X, ChevronLeft, ChevronRight, MoreHorizontal, RefreshCw } from "lucide-react"
@@ -18,6 +19,9 @@ interface GalleryItem {
 const categories = ["전체", "사무실", "구성원", "일상", "워크숍", "이벤트", "외관"]
 
 export default function GalleryGrid() {
+  const router = useRouter()
+  const searchParams = useSearchParams()
+  
   const [activeCategory, setActiveCategory] = useState("전체")
   const [visibleItems, setVisibleItems] = useState(6)
   const [selectedItem, setSelectedItem] = useState<GalleryItem | null>(null)
@@ -30,20 +34,17 @@ export default function GalleryGrid() {
   const loadGalleryData = async () => {
     setIsLoading(true)
     try {
-      // Firestore에서 최신 데이터 가져오기
       const firestoreItems = await getAllGalleryItems()
       
       if (firestoreItems.length > 0) {
         setItems(firestoreItems)
         
-        // Firestore 데이터를 localStorage에도 백업 저장
         try {
           localStorage.setItem('gallery-items', JSON.stringify(firestoreItems))
         } catch (error) {
           // 조용히 실패 처리
         }
       } else {
-        // Firestore에 데이터가 없으면 localStorage 폴백
         const savedItems = localStorage.getItem('gallery-items')
         if (savedItems) {
           try {
@@ -57,7 +58,6 @@ export default function GalleryGrid() {
         }
       }
     } catch (error: unknown) {
-      // 오류 발생시 localStorage 폴백
       try {
         const savedItems = localStorage.getItem('gallery-items')
         if (savedItems) {
@@ -79,10 +79,23 @@ export default function GalleryGrid() {
     loadGalleryData()
   }, [])
 
+  // URL 쿼리 파라미터로 모달 자동 오픈
+  useEffect(() => {
+    const itemId = searchParams.get('id')
+    const imageIndex = searchParams.get('img')
+    
+    if (itemId && items.length > 0) {
+      const item = items.find(i => i.id === itemId)
+      if (item) {
+        setSelectedItem(item)
+        setCurrentImageIndex(imageIndex ? parseInt(imageIndex, 10) : 0)
+      }
+    }
+  }, [searchParams, items])
+
   // 관리자에서 데이터 변경 감지
   useEffect(() => {
     const handleStorageChange = (e?: StorageEvent) => {
-      // 다른 탭에서 localStorage가 변경된 경우에만 반응
       if (e && e.key === 'gallery-items') {
         loadGalleryData()
       }
@@ -92,10 +105,7 @@ export default function GalleryGrid() {
       loadGalleryData()
     }
 
-    // 다른 탭에서 localStorage 변경 감지
     window.addEventListener('storage', handleStorageChange)
-    
-    // 같은 탭에서 갤러리 업데이트 감지
     window.addEventListener('gallery-updated', handleGalleryUpdate)
     
     return () => {
@@ -108,7 +118,7 @@ export default function GalleryGrid() {
   useEffect(() => {
     const interval = setInterval(() => {
       loadGalleryData()
-    }, 5 * 60 * 1000) // 5분
+    }, 5 * 60 * 1000)
 
     return () => clearInterval(interval)
   }, [])
@@ -122,25 +132,65 @@ export default function GalleryGrid() {
     setVisibleItems((prev) => Math.min(prev + 6, filteredItems.length))
   }
 
+  // 모달 열기 - URL 업데이트
   const openModal = (item: GalleryItem, imageIndex: number = 0) => {
     setSelectedItem(item)
     setCurrentImageIndex(imageIndex)
+    
+    // URL 쿼리 파라미터 업데이트
+    const params = new URLSearchParams(searchParams.toString())
+    if (item.id) {
+      params.set('id', item.id)
+      if (imageIndex > 0) {
+        params.set('img', imageIndex.toString())
+      } else {
+        params.delete('img')
+      }
+      router.push(`/gallery?${params.toString()}`, { scroll: false })
+    }
   }
 
+  // 모달 닫기 - URL 원복
   const closeModal = () => {
     setSelectedItem(null)
+    setCurrentImageIndex(0)
+    
+    // URL에서 쿼리 파라미터 제거
+    router.push('/gallery', { scroll: false })
   }
 
   const goToNext = () => {
     if (!selectedItem) return
     const nextIndex = (currentImageIndex + 1) % selectedItem.images.length
     setCurrentImageIndex(nextIndex)
+    
+    // URL의 이미지 인덱스 업데이트
+    if (selectedItem.id) {
+      const params = new URLSearchParams(searchParams.toString())
+      if (nextIndex > 0) {
+        params.set('img', nextIndex.toString())
+      } else {
+        params.delete('img')
+      }
+      router.push(`/gallery?${params.toString()}`, { scroll: false })
+    }
   }
 
   const goToPrevious = () => {
     if (!selectedItem) return
     const prevIndex = currentImageIndex === 0 ? selectedItem.images.length - 1 : currentImageIndex - 1
     setCurrentImageIndex(prevIndex)
+    
+    // URL의 이미지 인덱스 업데이트
+    if (selectedItem.id) {
+      const params = new URLSearchParams(searchParams.toString())
+      if (prevIndex > 0) {
+        params.set('img', prevIndex.toString())
+      } else {
+        params.delete('img')
+      }
+      router.push(`/gallery?${params.toString()}`, { scroll: false })
+    }
   }
 
   // 카드 내 이미지 변경
@@ -434,7 +484,19 @@ export default function GalleryGrid() {
                       {selectedItem.images.map((image, index) => (
                         <button
                           key={index}
-                          onClick={() => setCurrentImageIndex(index)}
+                          onClick={() => {
+                            setCurrentImageIndex(index)
+                            // URL 업데이트
+                            if (selectedItem.id) {
+                              const params = new URLSearchParams(searchParams.toString())
+                              if (index > 0) {
+                                params.set('img', index.toString())
+                              } else {
+                                params.delete('img')
+                              }
+                              router.push(`/gallery?${params.toString()}`, { scroll: false })
+                            }
+                          }}
                           className={`relative aspect-square rounded overflow-hidden transition-all ${
                             index === currentImageIndex 
                               ? 'ring-2 ring-yellow-400' 
