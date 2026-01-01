@@ -149,7 +149,7 @@ export const metadata: Metadata = {
         alt: '주식회사 오럼 | Aurum 미리보기 이미지',
       }
     ],
-    siteName: '주식회사 오럼 | Aurum',
+    siteName: '오럼 | Aurum',
     locale: 'ko_KR',
   },
 
