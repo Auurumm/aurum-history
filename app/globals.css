@@ -1,3 +1,7 @@
+/* ✅ 구글 폰트 로딩 최적화 */
+@import url('https://fonts.googleapis.com/css2?family=East+Sea+Dokdo&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Black+Han+Sans&display=swap');
+
 /* ✅ Pretendard 폰트 정의 */
 @font-face {
   font-family: 'Pretendard';
@@ -30,11 +34,6 @@
   font-style: normal;
   font-display: swap;
 }
-
-/* ✅ 구글 폰트 로딩 최적화 */
-@import url('https://fonts.googleapis.com/css2?family=East+Sea+Dokdo&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Black+Han+Sans&display=swap');
-
 
 
 /* ✅ 커스텀 폰트 정의 - 최우선 적용 */
