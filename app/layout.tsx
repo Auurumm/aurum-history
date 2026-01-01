@@ -49,7 +49,7 @@ export const viewport: Viewport = {
 export const metadata: Metadata = {
   title: {
     default: "오럼 | Aurum",
-    template: "%s | 오럼 | Aurum",
+    template: "오럼 | Aurum | %s",  // ✅ 순서 변경됨
   },
   description: "주식회사 오럼(Aurum Inc.) - 사람이 행복한 라이프 스타일을 만듭니다.",
   keywords: [
@@ -97,7 +97,7 @@ export const metadata: Metadata = {
 
   // 검증 메타태그 (필요시)
   verification: {
-    google: 'your-google-verification-code', // Google Search Console에서 받은 코드로 교체
+    google: 'ahNsH9XpaLexcmOc3-ZR-tJMxiN2i-Eiw1aklSS7wVE',
     // naver: 'your-naver-verification-code', // 네이버 웹마스터도구
   },
 
