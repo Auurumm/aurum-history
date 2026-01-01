@@ -54,7 +54,7 @@ const members: Member[] = [
   },
   {
     id: 5,
-    name: "Hyun",
+    name: "Sera",
     department: "종합지원실",
     role: "Rookie",
     motto: "작지만 확실한 것부터.",
@@ -63,7 +63,7 @@ const members: Member[] = [
   },
   {
     id: 6,
-    name: "Eunji",
+    name: "Natalie",
     department: "마케팅사업부",
     role: "Builder",
     motto: "조용하게, 그러나 단단하게.",
@@ -72,7 +72,7 @@ const members: Member[] = [
   },
   {
     id: 7,
-    name: "Won",
+    name: "James",
     department: "종합지원실",
     role: "Maker",
     motto: "한 번 해보는 게 열 번 고민보다 낫다.",
@@ -81,7 +81,7 @@ const members: Member[] = [
   },
   {
   id: 9,
-  name: "Jihye",
+  name: "Christine",
   department: "종합지원실",
   role: "Rookie",
   motto: "도전은 늘 설레는 일이다.",
@@ -90,7 +90,7 @@ const members: Member[] = [
   },
   {
   id: 10,
-  name: "Siho",
+  name: "Ethan",
   department: "종합지원실",
   role: "Rookie",
   motto: "배움에는 끝이 없다.",
@@ -99,7 +99,7 @@ const members: Member[] = [
   },
   {
   id: 11,
-  name: "Sam",
+  name: "Emily",
   department: "종합지원실",
   role: "Rookie",
   motto: "작은 걸음이 큰 변화를 만든다.",
@@ -108,7 +108,7 @@ const members: Member[] = [
   },
   {
   id: 12,
-  name: "Da-hyun",
+  name: "Hannah",
   department: "종합지원실",
   role: "Rookie",
   motto: "우리는 늘 답을 찾을 것이다",
